@@ -8,7 +8,13 @@ target/
 *.war
 *.ear
 *.rar
+
+# Enviroment variables
 .env
+.env.*
+!.env.example
+src/main/resources/application-local.yml
+src/main/resources/application-*.local.yml
 
 ### STS ###
 .apt_generated
@@ -48,3 +54,15 @@ logs/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Arquivos de Swap/Temporários de Editores
+*.swp
+*.swo
+*~
+*.bak
