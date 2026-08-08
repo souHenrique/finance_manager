@@ -5,6 +5,9 @@ spring:
     password:
     driver-class-name: org.h2.Driver
 
+  flyway:
+    enabled: false
+
   h2:
     console:
       enabled: true
@@ -12,6 +15,7 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+
   jackson:
     date-format: yyyy-MM-dd'T'HH:mm:ss
     time-zone: UTC
