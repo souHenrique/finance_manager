@@ -1,0 +1,92 @@
+package com.amorim.finance_manager.user.service;
+
+import com.amorim.finance_manager.shared.exception.DuplicateEmailException;
+import com.amorim.finance_manager.user.dto.RegisterRequest;
+import com.amorim.finance_manager.user.dto.UserResponse;
+import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.mapper.UserMapper;
+import com.amorim.finance_manager.user.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserService userService;
+
+    @Test
+    void shouldRegisterUser() {
+        RegisterRequest request = new RegisterRequest(
+                "Henrique",
+                "henrique@example.com",
+                "SenhaSegura123"
+        );
+
+        User user = new User();
+        UserResponse response = new UserResponse(
+                UUID.randomUUID(),
+                "Henrique",
+                "henrique@example.com",
+                null,
+                null
+        );
+
+        when(userRepository.existsByEmail("henrique@example.com"))
+                .thenReturn(false);
+
+        when(passwordEncoder.encode("SenhaSegura123"))
+                .thenReturn("$2a$10$hash");
+
+        when(userMapper.toEntity(request, "$2a$10$hash"))
+                .thenReturn(user);
+
+        when(userRepository.saveAndFlush(user))
+                .thenReturn(user);
+
+        when(userMapper.toResponse(user))
+                .thenReturn(response);
+
+        userService.register(request);
+
+        verify(passwordEncoder).encode("SenhaSegura123");
+        verify(userRepository).saveAndFlush(user);
+        verify(userMapper).toResponse(user);
+    }
+
+    @Test
+    void shouldRejectDuplicateEmail() {
+        RegisterRequest request = new RegisterRequest(
+                "Henrique",
+                "henrique@example.com",
+                "SenhaSegura123"
+        );
+
+        when(userRepository.existsByEmail("henrique@example.com"))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> userService.register(request))
+                .isInstanceOf(DuplicateEmailException.class);
+
+        verify(passwordEncoder, never()).encode(any());
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+}

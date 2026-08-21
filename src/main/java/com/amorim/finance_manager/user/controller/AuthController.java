@@ -1,35 +1,30 @@
 package com.amorim.finance_manager.user.controller;
 
-import com.amorim.finance_manager.security.TokenService;
-import com.amorim.finance_manager.user.dto.LoginRequest;
-import com.amorim.finance_manager.user.dto.LoginResponse;
-import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.dto.RegisterRequest;
+import com.amorim.finance_manager.user.dto.UserResponse;
+import com.amorim.finance_manager.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/auth")
 @AllArgsConstructor
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
-    private final TokenService tokenService;
+    private final UserService userService;
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
-        var usernamePassword = new UsernamePasswordAuthenticationToken(request.email(), request.password());
+    @PostMapping("/register")
+    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest request) {
+        UserResponse response = userService.register(request);
 
-        var auth = this.authenticationManager.authenticate(usernamePassword);
-
-        var token = tokenService.generateToken((User) auth.getPrincipal());
-
-        return ResponseEntity.ok(new LoginResponse(token));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 }
