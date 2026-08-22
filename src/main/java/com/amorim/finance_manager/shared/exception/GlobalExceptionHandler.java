@@ -56,4 +56,14 @@ public class GlobalExceptionHandler {
                 "Credenciais inválidas"
         );
     }
+
+    @ExceptionHandler(UnauthenticatedUserException.class)
+    public ProblemDetail handleUnauthenticatedUser() {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Usuário não autenticado");
+    }
+
+    @ExceptionHandler(InvalidProfileUpdateException.class)
+    public ProblemDetail handleInvalidProfileUpdate(InvalidProfileUpdateException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
 }

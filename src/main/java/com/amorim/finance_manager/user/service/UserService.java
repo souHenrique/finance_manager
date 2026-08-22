@@ -28,7 +28,8 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(request.password());
 
-        User user = userMapper.toEntity(request, encodedPassword);
+        User user = userMapper.toEntity(request);
+        user.setPasswordHash(encodedPassword);
 
         try {
             User savedUser = userRepository.saveAndFlush(user);

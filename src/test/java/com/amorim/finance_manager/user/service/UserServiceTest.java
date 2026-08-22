@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -56,7 +57,7 @@ class UserServiceTest {
         when(passwordEncoder.encode("SenhaSegura123"))
                 .thenReturn("$2a$10$hash");
 
-        when(userMapper.toEntity(request, "$2a$10$hash"))
+        when(userMapper.toEntity(request))
                 .thenReturn(user);
 
         when(userRepository.saveAndFlush(user))
@@ -67,9 +68,17 @@ class UserServiceTest {
 
         userService.register(request);
 
-        verify(passwordEncoder).encode("SenhaSegura123");
-        verify(userRepository).saveAndFlush(user);
-        verify(userMapper).toResponse(user);
+        assertThat(user.getPasswordHash())
+                .isEqualTo("$2a$10$hash");
+
+        verify(passwordEncoder)
+                .encode("SenhaSegura123");
+
+        verify(userMapper)
+                .toEntity(request);
+
+        verify(userRepository)
+                .saveAndFlush(user);
     }
 
     @Test
