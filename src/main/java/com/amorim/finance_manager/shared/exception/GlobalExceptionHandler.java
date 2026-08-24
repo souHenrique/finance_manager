@@ -66,4 +66,19 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInvalidProfileUpdate(InvalidProfileUpdateException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ProblemDetail handleAccountNotFound() {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Conta não encontrada");
+    }
+
+    @ExceptionHandler(InvalidAccountUpdateException.class)
+    public ProblemDetail handleInvalidAccountUpdate(
+            InvalidAccountUpdateException exception
+    ) {
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+    }
 }
