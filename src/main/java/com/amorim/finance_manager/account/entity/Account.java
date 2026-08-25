@@ -1,6 +1,7 @@
 package com.amorim.finance_manager.account.entity;
 
 import jakarta.persistence.*;
+import com.amorim.finance_manager.shared.exception.InactiveAccountException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -71,5 +72,11 @@ public class Account {
     @PreUpdate
     void onUpdate() {
         updatedAt = Instant.now();
+    }
+
+    public void ensureActive() {
+        if (status == AccountStatus.INACTIVE) {
+            throw new InactiveAccountException();
+        }
     }
 }

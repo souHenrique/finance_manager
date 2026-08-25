@@ -71,6 +71,17 @@ public class AccountService {
         return accountMapper.toResponse(updatedAccount);
     }
 
+    @Transactional
+    public AccountResponse updateStatus(UUID accountId, AccountStatus status) {
+        Account account = findOwnedAccount(accountId);
+
+        account.setStatus(status);
+
+        Account updatedAccount = accountRepository.saveAndFlush(account);
+
+        return accountMapper.toResponse(updatedAccount);
+    }
+
     private Account findOwnedAccount(UUID accountId) {
         UUID userId = currentUserService.getCurrentUserId();
 
@@ -82,8 +93,7 @@ public class AccountService {
     private void validateUpdate(UpdateAccountRequest request) {
         if (request.name() == null
                 && request.type() == null
-                && request.institution() == null
-                && request.status() == null) {
+                && request.institution() == null) {
             throw new InvalidAccountUpdateException("Informe ao menos um campo para atualização");
         }
 

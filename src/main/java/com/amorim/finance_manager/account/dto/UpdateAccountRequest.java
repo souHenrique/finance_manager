@@ -1,6 +1,5 @@
 package com.amorim.finance_manager.account.dto;
 
-import com.amorim.finance_manager.account.entity.AccountStatus;
 import com.amorim.finance_manager.account.entity.AccountType;
 import jakarta.validation.constraints.Size;
 
@@ -12,9 +11,7 @@ public record UpdateAccountRequest(
         AccountType type,
 
         @Size(max = 160)
-        String institution,
-
-        AccountStatus status
+        String institution
 ) {
     public UpdateAccountRequest {
         name = name == null ? null : name.trim();

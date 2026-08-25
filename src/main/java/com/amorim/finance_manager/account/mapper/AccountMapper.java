@@ -25,6 +25,7 @@ public interface AccountMapper {
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "initialBalance", ignore = true)
     @Mapping(target = "currentBalance", ignore = true)
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

@@ -9,6 +9,7 @@ import com.amorim.finance_manager.account.entity.AccountType;
 import com.amorim.finance_manager.account.mapper.AccountMapper;
 import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.shared.exception.AccountNotFoundException;
+import com.amorim.finance_manager.shared.exception.InactiveAccountException;
 import com.amorim.finance_manager.shared.exception.InvalidAccountUpdateException;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import org.junit.jupiter.api.Test;
@@ -250,8 +251,7 @@ public class AccountServiceTest {
                 new UpdateAccountRequest(
                         "New Name",
                         null,
-                        "New Institution",
-                        null
+                        "New Institution"
                 );
 
         AccountResponse response =
@@ -337,7 +337,6 @@ public class AccountServiceTest {
                 new UpdateAccountRequest(
                         "Updated Account",
                         null,
-                        null,
                         null
                 );
 
@@ -368,10 +367,109 @@ public class AccountServiceTest {
     }
 
     @Test
+    void shouldUpdateAccountStatusAndKeepBalancesUnchanged() {
+        BigDecimal initialBalance = new BigDecimal("2000.00");
+        BigDecimal currentBalance = new BigDecimal("1750.45");
+
+        Account account = createAccount(
+                ACCOUNT_ID,
+                USER_ID,
+                "Account",
+                initialBalance,
+                currentBalance
+        );
+
+        AccountResponse response = new AccountResponse(
+                ACCOUNT_ID,
+                "Account",
+                AccountType.CHECKING,
+                "Example Bank",
+                initialBalance,
+                currentBalance,
+                AccountStatus.INACTIVE,
+                1L,
+                null,
+                null
+        );
+
+        when(currentUserService.getCurrentUserId())
+                .thenReturn(USER_ID);
+
+        when(accountRepository.findByIdAndUserId(ACCOUNT_ID, USER_ID))
+                .thenReturn(Optional.of(account));
+
+        when(accountRepository.saveAndFlush(account))
+                .thenReturn(account);
+
+        when(accountMapper.toResponse(account))
+                .thenReturn(response);
+
+        AccountResponse result = accountService.updateStatus(
+                ACCOUNT_ID,
+                AccountStatus.INACTIVE
+        );
+
+        assertThat(account.getStatus())
+                .isEqualTo(AccountStatus.INACTIVE);
+        assertThat(account.getInitialBalance())
+                .isEqualByComparingTo(initialBalance);
+        assertThat(account.getCurrentBalance())
+                .isEqualByComparingTo(currentBalance);
+        assertThat(result)
+                .isEqualTo(response);
+
+        verify(accountRepository)
+                .findByIdAndUserId(ACCOUNT_ID, USER_ID);
+        verify(accountRepository)
+                .saveAndFlush(account);
+        verify(accountMapper)
+                .toResponse(account);
+        verify(accountMapper, never())
+                .updateEntity(any(), any());
+    }
+
+    @Test
+    void shouldRejectStatusUpdateForAnotherUsersAccount() {
+        when(currentUserService.getCurrentUserId())
+                .thenReturn(USER_ID);
+
+        when(accountRepository.findByIdAndUserId(ACCOUNT_ID, USER_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> accountService.updateStatus(
+                ACCOUNT_ID,
+                AccountStatus.INACTIVE
+        ))
+                .isInstanceOf(AccountNotFoundException.class);
+
+        verify(accountRepository)
+                .findByIdAndUserId(ACCOUNT_ID, USER_ID);
+        verify(accountRepository, never())
+                .saveAndFlush(any(Account.class));
+        verify(accountMapper, never())
+                .toResponse(any(Account.class));
+    }
+
+    @Test
+    void shouldRejectMovementForInactiveAccount() {
+        Account account = createAccount(
+                ACCOUNT_ID,
+                USER_ID,
+                "Inactive Account",
+                new BigDecimal("1000.00"),
+                new BigDecimal("1000.00")
+        );
+        account.setStatus(AccountStatus.INACTIVE);
+
+        assertThatThrownBy(account::ensureActive)
+                .isInstanceOf(InactiveAccountException.class)
+                .hasMessage("A conta está inativa e não pode receber movimentações");
+    }
+
+    @Test
     void shouldRejectEmptyUpdate() {
         UpdateAccountRequest request =
                 new UpdateAccountRequest(
-                        null,
                         null,
                         null,
                         null

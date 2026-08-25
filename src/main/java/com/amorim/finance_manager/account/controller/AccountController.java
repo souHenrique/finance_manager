@@ -3,6 +3,7 @@ package com.amorim.finance_manager.account.controller;
 import com.amorim.finance_manager.account.dto.AccountResponse;
 import com.amorim.finance_manager.account.dto.CreateAccountRequest;
 import com.amorim.finance_manager.account.dto.UpdateAccountRequest;
+import com.amorim.finance_manager.account.dto.UpdateAccountStatusRequest;
 import com.amorim.finance_manager.account.service.AccountService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -42,5 +43,13 @@ public class AccountController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateAccountRequest request) {
         return ResponseEntity.ok(accountService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<AccountResponse> updateStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateAccountStatusRequest request
+    ) {
+        return ResponseEntity.ok(accountService.updateStatus(id, request.status()));
     }
 }

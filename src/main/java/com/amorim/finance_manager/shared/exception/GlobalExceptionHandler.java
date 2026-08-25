@@ -81,4 +81,9 @@ public class GlobalExceptionHandler {
                 exception.getMessage()
         );
     }
+
+    @ExceptionHandler(InactiveAccountException.class)
+    public ProblemDetail handleInactiveAccount(InactiveAccountException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
 }

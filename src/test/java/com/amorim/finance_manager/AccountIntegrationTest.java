@@ -1,6 +1,7 @@
 package com.amorim.finance_manager;
 
 import com.amorim.finance_manager.account.entity.Account;
+import com.amorim.finance_manager.account.entity.AccountStatus;
 import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -341,6 +342,239 @@ class AccountIntegrationTest {
                 .isEqualByComparingTo(
                         beforeUpdate.getCurrentBalance()
                 );
+    }
+
+    @Test
+    void shouldInactivateAccountAndKeepBalancesUnchanged()
+            throws Exception {
+
+        TestUser user = registerUser("User A");
+        String token = login(user);
+
+        UUID accountId = createAccount(
+                token,
+                "Account",
+                "CHECKING",
+                "Bank",
+                new BigDecimal("2000.00")
+        );
+
+        String body = """
+                {
+                  "status": "INACTIVE"
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(
+                        patch("/api/v1/accounts/{id}/status", accountId)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status")
+                        .value("INACTIVE"))
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        assertThat(new BigDecimal(
+                response.get("initialBalance").asText()
+        ))
+                .isEqualByComparingTo("2000.00");
+
+        assertThat(new BigDecimal(
+                response.get("currentBalance").asText()
+        ))
+                .isEqualByComparingTo("2000.00");
+
+        Account account = accountRepository
+                .findById(accountId)
+                .orElseThrow();
+
+        assertThat(account.getStatus())
+                .isEqualTo(AccountStatus.INACTIVE);
+    }
+
+    @Test
+    void shouldListInactiveAccount()
+            throws Exception {
+
+        TestUser user = registerUser("User A");
+        String token = login(user);
+
+        UUID accountId = createAccount(
+                token,
+                "Inactive Account",
+                "SAVINGS",
+                "Bank",
+                new BigDecimal("500.00")
+        );
+
+        mockMvc.perform(
+                        patch("/api/v1/accounts/{id}/status", accountId)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"status\":\"INACTIVE\"}")
+                )
+                .andExpect(status().isOk());
+
+        mockMvc.perform(
+                        get("/api/v1/accounts")
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id")
+                        .value(accountId.toString()))
+                .andExpect(jsonPath("$[0].status")
+                        .value("INACTIVE"));
+    }
+
+    @Test
+    void shouldRejectStatusUpdateForAnotherUsersAccount()
+            throws Exception {
+
+        TestUser userA = registerUser("User A");
+        TestUser userB = registerUser("User B");
+
+        String tokenA = login(userA);
+        String tokenB = login(userB);
+
+        UUID accountIdA = createAccount(
+                tokenA,
+                "Account A",
+                "CHECKING",
+                "Bank A",
+                new BigDecimal("100.00")
+        );
+
+        mockMvc.perform(
+                        patch("/api/v1/accounts/{id}/status", accountIdA)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + tokenB
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"status\":\"INACTIVE\"}")
+                )
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(
+                        get("/api/v1/accounts/{id}", accountIdA)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + tokenA
+                                )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status")
+                        .value("ACTIVE"));
+    }
+
+    @Test
+    void shouldNotChangeBalancesThroughMetadataPatch()
+            throws Exception {
+
+        TestUser user = registerUser("User A");
+        String token = login(user);
+
+        UUID accountId = createAccount(
+                token,
+                "Account",
+                "CHECKING",
+                "Bank",
+                new BigDecimal("1234.56")
+        );
+
+        String body = """
+                {
+                  "name": "Updated Account",
+                  "initialBalance": 999999.99,
+                  "currentBalance": 999999.99
+                }
+                """;
+
+        MvcResult result = mockMvc.perform(
+                        patch("/api/v1/accounts/{id}", accountId)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(body)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name")
+                        .value("Updated Account"))
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(
+                result.getResponse().getContentAsString()
+        );
+
+        assertThat(new BigDecimal(
+                response.get("initialBalance").asText()
+        ))
+                .isEqualByComparingTo("1234.56");
+
+        assertThat(new BigDecimal(
+                response.get("currentBalance").asText()
+        ))
+                .isEqualByComparingTo("1234.56");
+    }
+
+    @Test
+    void shouldRejectStatusUpdateWithoutJwt()
+            throws Exception {
+
+        mockMvc.perform(
+                        patch(
+                                "/api/v1/accounts/{id}/status",
+                                UUID.randomUUID()
+                        )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"status\":\"INACTIVE\"}")
+                )
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRejectInvalidStatusValueWithAuthenticatedRequest()
+            throws Exception {
+
+        TestUser user = registerUser("User A");
+        String token = login(user);
+
+        UUID accountId = createAccount(
+                token,
+                "Account",
+                "CHECKING",
+                "Bank",
+                new BigDecimal("100.00")
+        );
+
+        mockMvc.perform(
+                        patch("/api/v1/accounts/{id}/status", accountId)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"status\":\"INVALID\"}")
+                )
+                .andExpect(status().isBadRequest());
     }
 
     @Test
