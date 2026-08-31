@@ -128,4 +128,34 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(AccountBalanceConflictException.class)
+    public ProblemDetail handleAccountBalanceConflict(
+            AccountBalanceConflictException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Conflito de atualização");
+        problem.setProperty("code", "ACCOUNT_BALANCE_CONFLICT");
+
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidBalanceAmountException.class)
+    public ProblemDetail handleInvalidBalanceAmount(
+            InvalidBalanceAmountException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Valor de movimentação inválido");
+        problem.setProperty("code", "INVALID_BALANCE_AMOUNT");
+
+        return problem;
+    }
 }
