@@ -57,10 +57,6 @@ public class AccountBalanceIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        /*
-         * Este teste usa exclusivamente o PostgreSQL temporário
-         * criado pelo Testcontainers.
-         */
         jdbcTemplate.execute(
                 """
                 TRUNCATE TABLE
@@ -126,10 +122,6 @@ public class AccountBalanceIntegrationTest {
                     .filter(Objects::nonNull)
                     .toList();
 
-            /*
-             * Uma atualização deve vencer e a outra deve
-             * falhar por causa da versão antiga.
-             */
             assertThat(failures).hasSize(1);
 
             assertThat(failures.get(0))
@@ -179,10 +171,6 @@ public class AccountBalanceIntegrationTest {
                             new BigDecimal("40.00")
                     );
 
-                    /*
-                     * Simula uma falha depois que as duas
-                     * alterações já foram enviadas ao banco.
-                     */
                     throw new IllegalStateException(
                             "Falha simulada"
                     );
@@ -219,19 +207,9 @@ public class AccountBalanceIntegrationTest {
                         .findByIdAndUserId(accountId, userId)
                         .orElseThrow();
 
-                /*
-                 * Garante que as duas transações carreguem
-                 * a mesma versão antes de atualizar.
-                 */
                 bothTransactionsLoaded.countDown();
                 await(bothTransactionsLoaded);
 
-                /*
-                 * A alteração direta é usada apenas neste teste
-                 * para controlar o instante entre leitura e escrita.
-                 * No código de produção, o saldo deve ser alterado
-                 * exclusivamente pelo AccountBalanceService.
-                 */
                 account.setCurrentBalance(
                         account.getCurrentBalance().add(amount)
                 );

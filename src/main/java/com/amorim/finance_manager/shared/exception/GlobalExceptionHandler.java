@@ -158,4 +158,34 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ProblemDetail handleTransactionNotFound(
+            TransactionNotFoundException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Transação não encontrada");
+        problem.setProperty("code", "TRANSACTION_NOT_FOUND");
+
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidTransactionException.class)
+    public ProblemDetail handleInvalidTransaction(
+            InvalidTransactionException exception
+    ) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Transação inválida");
+        problem.setProperty("code", "INVALID_TRANSACTION");
+
+        return problem;
+    }
 }

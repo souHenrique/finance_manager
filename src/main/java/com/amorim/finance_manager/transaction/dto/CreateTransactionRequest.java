@@ -1,6 +1,7 @@
 package com.amorim.finance_manager.transaction.dto;
 
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
+import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
 import jakarta.validation.constraints.*;
 
@@ -35,12 +36,17 @@ public record CreateTransactionRequest(
         @NotNull(message = "Tipo é obrigatório")
         TransactionType type,
 
+        @NotNull(message = "Status é obrigatório")
+        TransactionStatus status,
+
+        @NotNull(message = "Método de pagamento é obrigatório")
         PaymentMethod paymentMethod,
 
         UUID sourceAccountId,
 
         UUID destinationAccountId,
 
+        @NotNull(message = "Categoria é obrigatória")
         UUID categoryId,
 
         UUID creditCardId,
