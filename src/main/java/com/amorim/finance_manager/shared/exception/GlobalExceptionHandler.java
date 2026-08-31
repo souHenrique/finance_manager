@@ -86,4 +86,46 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleInactiveAccount(InactiveAccountException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
     }
+
+    @ExceptionHandler(CategoryNotFoundException.class)
+    public ProblemDetail handleCategoryNotFound(CategoryNotFoundException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Categoria não encontrada");
+        problem.setProperty("code", "CATEGORY_NOT_FOUND");
+
+        return problem;
+    }
+
+    @ExceptionHandler(IncompatibleCategoryTypeException.class)
+    public ProblemDetail handleIncompatibleCategoryType(IncompatibleCategoryTypeException exception) {
+        ProblemDetail problem =  ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Tipo de categoria incompatível");
+        problem.setProperty("code", "CATEGORY_TYPE_MISMATCH");
+
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidCategoryUpdateException.class)
+    public ProblemDetail handleInvalidCategoryUpdate(InvalidCategoryUpdateException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Atualização de categoria inválida");
+        problem.setProperty(
+                "code",
+                "INVALID_CATEGORY_UPDATE"
+        );
+
+        return problem;
+    }
 }
