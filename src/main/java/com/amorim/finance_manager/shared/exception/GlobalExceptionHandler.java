@@ -188,4 +188,17 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(InvalidTransferException.class)
+    public ProblemDetail handleInvalidTransfer(InvalidTransferException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Transferência inválida");
+        problem.setProperty("code", "INVALID_TRANSFER");
+
+        return problem;
+    }
 }
