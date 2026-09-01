@@ -201,7 +201,39 @@ class AccountIntegrationTest {
                                         "Bearer " + tokenB
                                 )
                 )
-                .andExpect(status().isNotFound());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Conta não encontrada"))
+                .andExpect(jsonPath("$.path").value("/api/v1/accounts/" + accountIdA))
+                .andExpect(jsonPath("$.fieldErrors").isArray())
+                .andExpect(jsonPath("$.fieldErrors").isEmpty());
+    }
+
+    @Test
+    void shouldReturnStandardNotFoundPayloadForMissingAccount()
+            throws Exception {
+
+        TestUser user = registerUser("User A");
+        String token = login(user);
+        UUID missingAccountId = UUID.randomUUID();
+
+        mockMvc.perform(
+                        get("/api/v1/accounts/{id}", missingAccountId)
+                                .header(
+                                        HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + token
+                                )
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.code").value("ACCOUNT_NOT_FOUND"))
+                .andExpect(jsonPath("$.message").value("Conta não encontrada"))
+                .andExpect(jsonPath("$.path").value("/api/v1/accounts/" + missingAccountId))
+                .andExpect(jsonPath("$.fieldErrors").isArray())
+                .andExpect(jsonPath("$.fieldErrors").isEmpty());
     }
 
     @Test
@@ -574,7 +606,15 @@ class AccountIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"status\":\"INVALID\"}")
                 )
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.timestamp").isString())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.code").value("INVALID_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Requisição inválida ou malformada"))
+                .andExpect(jsonPath("$.path")
+                        .value("/api/v1/accounts/" + accountId + "/status"))
+                .andExpect(jsonPath("$.fieldErrors").isArray())
+                .andExpect(jsonPath("$.fieldErrors").isEmpty());
     }
 
     @Test

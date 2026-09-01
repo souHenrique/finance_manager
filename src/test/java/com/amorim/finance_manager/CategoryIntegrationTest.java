@@ -411,7 +411,7 @@ class CategoryIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code")
                         .value("INVALID_CATEGORY_UPDATE"))
-                .andExpect(jsonPath("$.detail")
+                .andExpect(jsonPath("$.message")
                         .value("Informe ao menos um campo para atualização"));
     }
 

@@ -186,7 +186,7 @@ public class GlobalExceptionHandler {
     ) {
         return response(
                 HttpStatus.BAD_REQUEST,
-                ApiErrorCode.INVALID_TRANSFER,
+                ApiErrorCode.INVALID_ACCOUNT_UPDATE,
                 exception.getMessage(),
                 request
         );
@@ -226,7 +226,7 @@ public class GlobalExceptionHandler {
     ) {
         return response(
                 HttpStatus.BAD_REQUEST,
-                ApiErrorCode.INVALID_TRANSFER,
+                ApiErrorCode.CATEGORY_TYPE_MISMATCH,
                 exception.getMessage(),
                 request
         );
@@ -239,25 +239,10 @@ public class GlobalExceptionHandler {
     ) {
         return response(
                 HttpStatus.BAD_REQUEST,
-                ApiErrorCode.INVALID_TRANSFER,
+                ApiErrorCode.INVALID_CATEGORY_UPDATE,
                 exception.getMessage(),
                 request
         );
-    }
-
-    @ExceptionHandler(AccountBalanceConflictException.class)
-    public ResponseEntity<ApiError> handleAccountBalanceConflict(
-            AccountBalanceConflictException exception
-    ) {
-        ResponseEntity<ApiError> problem = ResponseEntity<ApiError>.forStatusAndDetail(
-                HttpStatus.CONFLICT,
-                exception.getMessage()
-        );
-
-        problem.setTitle("Conflito de atualização");
-        problem.setProperty("code", "ACCOUNT_BALANCE_CONFLICT");
-
-        return problem;
     }
 
     @ExceptionHandler(InvalidBalanceAmountException.class)
@@ -307,7 +292,7 @@ public class GlobalExceptionHandler {
         return response(
                 HttpStatus.BAD_REQUEST,
                 ApiErrorCode.INVALID_TRANSFER,
-                exception.getMessage(), ,
+                exception.getMessage(),
                 request
         );
     }
@@ -318,16 +303,16 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         return response(
-                HttpStatus.CONFLICT
-        )
+                HttpStatus.CONFLICT,
+                ApiErrorCode.TRANSACTION_ALREADY_CANCELLED,
+                exception.getMessage(),
+                request
+        );
     }
 
-    @ExceptionHandler({
-            InvalidTransactionStatusException.class,
-            TransactionAlreadyCancelledException.class
-    })
+    @ExceptionHandler(InvalidTransactionStatusException.class)
     public ResponseEntity<ApiError> handleInvalidTransactionStatus(
-            RuntimeException exception,
+            InvalidTransactionStatusException exception,
             HttpServletRequest request
     ) {
         return response(
@@ -348,6 +333,22 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT,
                 ApiErrorCode.OPTIMISTIC_LOCK_CONFLICT,
                 "O recurso foi alterado por outra operação. Atualize os dados e tente novamente.",
+                request
+        );
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleUnexpectedException(Exception exception, HttpServletRequest request) {
+        log.error(
+                "Erro inesperado ao processar {}",
+                request.getRequestURI(),
+                exception
+        );
+
+        return response(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ApiErrorCode.INTERNAL_SERVER_ERROR,
+                "Ocorreu um erro interno inesperado",
                 request
         );
     }
