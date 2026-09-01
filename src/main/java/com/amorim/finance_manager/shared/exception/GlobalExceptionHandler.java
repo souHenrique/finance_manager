@@ -1,139 +1,255 @@
 package com.amorim.finance_manager.shared.exception;
 
+import jakarta.persistence.OptimisticLockException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
-import org.springframework.validation.FieldError;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateEmailException.class)
-    public ProblemDetail handleDuplicateEmail(DuplicateEmailException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleDuplicateEmail(
+            DuplicateEmailException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.CONFLICT,
-                exception.getMessage()
+                ApiErrorCode.EMAIL_ALREADY_EXISTS,
+                exception.getMessage(),
+                request
         );
-        problem.setTitle("E-mail já cadastrado");
-        problem.setProperty("code", "EMAIL_ALREADY_EXISTS");
-
-        return problem;
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(
-            MethodArgumentNotValidException exception
+    public ResponseEntity<ApiError> handleValidation(
+            MethodArgumentNotValidException exception,
+            HttpServletRequest request
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
-                HttpStatus.BAD_REQUEST,
-                "Dados de entrada inválidos"
-        );
-
-        problem.setTitle("Erro de validação");
-
-        var errors = exception.getBindingResult()
+        List<FieldErrorResponse> fieldErrors = exception
+                .getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .collect(
-                        java.util.stream.Collectors.toMap(
-                                FieldError::getField,
-                                error -> error.getDefaultMessage(),
-                                (first, second) -> first
-                        )
-                );
+                .map(error -> new FieldErrorResponse(
+                        error.getField(),
+                        Optional.ofNullable(error.getDefaultMessage())
+                                .orElse("Valor inválido")
+                ))
+                .sorted(
+                        Comparator.comparing(FieldErrorResponse::field)
+                        .thenComparing(FieldErrorResponse::message)
+                )
+                .toList();
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.VALIDATION_ERROR,
+                "Dados de entrada inválidos",
+                request,
+                fieldErrors
+        );
+    }
 
-        problem.setProperty("errors", errors);
+    @ExceptionHandler(HandlerMethodValidationException.class)
+    public ResponseEntity<ApiError> handleMethodValidation(
+            HandlerMethodValidationException exception,
+            HttpServletRequest request
+    ) {
+        List<FieldErrorResponse> fieldErrors = exception
+                .getParameterValidationResults()
+                .stream()
+                .flatMap(result -> result
+                        .getResolvableErrors()
+                        .stream()
+                        .map(error -> new FieldErrorResponse(
+                                Optional.ofNullable(
+                                        result.getMethodParameter().getParameterName()
+                                ).orElse("request"),
+                                Optional.ofNullable(error.getDefaultMessage())
+                                        .orElse("Valor inválido")
+                        ))
+                )
+                .toList();
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.VALIDATION_ERROR,
+                "Dados de entrada inválidos",
+                request,
+                fieldErrors
+        );
+    }
 
-        return problem;
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(
+            ConstraintViolationException exception,
+            HttpServletRequest request
+    ) {
+        List<FieldErrorResponse> fieldErrors = exception
+                .getConstraintViolations()
+                .stream()
+                .map(violation -> new FieldErrorResponse(
+                        violation.getPropertyPath().toString(),
+                        violation.getMessage()
+                ))
+                .toList();
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.VALIDATION_ERROR,
+                "Dados de entrada inválidos",
+                request,
+                fieldErrors
+        );
+    }
+
+    @ExceptionHandler({
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    public ResponseEntity<ApiError> handleInvalidRequest(Exception exception, HttpServletRequest request) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_REQUEST,
+                "Requisição inválida ou malformada",
+                request
+        );
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ProblemDetail handleInvalidCredentials() {
-        return ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.UNAUTHORIZED,
-                "Credenciais inválidas"
+                ApiErrorCode.INVALID_CREDENTIALS,
+                "Credenciais inválidas",
+                request
         );
     }
 
     @ExceptionHandler(UnauthenticatedUserException.class)
-    public ProblemDetail handleUnauthenticatedUser() {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Usuário não autenticado");
+    public ResponseEntity<ApiError> handleUnauthenticatedUser(
+            UnauthenticatedUserException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.UNAUTHORIZED,
+                ApiErrorCode.UNAUTHORIZED,
+                "Usuário não autenticado",
+                request
+        );
     }
 
     @ExceptionHandler(InvalidProfileUpdateException.class)
-    public ProblemDetail handleInvalidProfileUpdate(InvalidProfileUpdateException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    public ResponseEntity<ApiError> handleInvalidProfileUpdate(
+            InvalidProfileUpdateException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_PROFILE_UPDATE,
+                exception.getMessage(),
+                request
+        );
     }
 
     @ExceptionHandler(AccountNotFoundException.class)
-    public ProblemDetail handleAccountNotFound() {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Conta não encontrada");
+    public ResponseEntity<ApiError> handleAccountNotFound(
+            AccountNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCode.ACCOUNT_NOT_FOUND,
+                exception.getMessage(),
+                request
+        );
     }
 
     @ExceptionHandler(InvalidAccountUpdateException.class)
-    public ProblemDetail handleInvalidAccountUpdate(
-            InvalidAccountUpdateException exception
+    public ResponseEntity<ApiError> handleInvalidAccountUpdate(
+            InvalidAccountUpdateException exception,
+            HttpServletRequest request
     ) {
-        return ProblemDetail.forStatusAndDetail(
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSFER,
+                exception.getMessage(),
+                request
         );
     }
 
     @ExceptionHandler(InactiveAccountException.class)
-    public ProblemDetail handleInactiveAccount(InactiveAccountException exception) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+    public ResponseEntity<ApiError> handleInactiveAccount(
+            InactiveAccountException exception,
+            HttpServletRequest request
+
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INACTIVE_ACCOUNT,
+                exception.getMessage(),
+                request
+        );
     }
 
     @ExceptionHandler(CategoryNotFoundException.class)
-    public ProblemDetail handleCategoryNotFound(CategoryNotFoundException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleCategoryNotFound(
+            CategoryNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.NOT_FOUND,
-                exception.getMessage()
+                ApiErrorCode.CATEGORY_NOT_FOUND,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Categoria não encontrada");
-        problem.setProperty("code", "CATEGORY_NOT_FOUND");
-
-        return problem;
     }
 
     @ExceptionHandler(IncompatibleCategoryTypeException.class)
-    public ProblemDetail handleIncompatibleCategoryType(IncompatibleCategoryTypeException exception) {
-        ProblemDetail problem =  ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleIncompatibleCategoryType(
+            IncompatibleCategoryTypeException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSFER,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Tipo de categoria incompatível");
-        problem.setProperty("code", "CATEGORY_TYPE_MISMATCH");
-
-        return problem;
     }
 
     @ExceptionHandler(InvalidCategoryUpdateException.class)
-    public ProblemDetail handleInvalidCategoryUpdate(InvalidCategoryUpdateException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleInvalidCategoryUpdate(
+            InvalidCategoryUpdateException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSFER,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Atualização de categoria inválida");
-        problem.setProperty(
-                "code",
-                "INVALID_CATEGORY_UPDATE"
-        );
-
-        return problem;
     }
 
     @ExceptionHandler(AccountBalanceConflictException.class)
-    public ProblemDetail handleAccountBalanceConflict(
+    public ResponseEntity<ApiError> handleAccountBalanceConflict(
             AccountBalanceConflictException exception
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        ResponseEntity<ApiError> problem = ResponseEntity<ApiError>.forStatusAndDetail(
                 HttpStatus.CONFLICT,
                 exception.getMessage()
         );
@@ -145,73 +261,128 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidBalanceAmountException.class)
-    public ProblemDetail handleInvalidBalanceAmount(
-            InvalidBalanceAmountException exception
+    public ResponseEntity<ApiError> handleInvalidBalanceAmount(
+            InvalidBalanceAmountException exception,
+            HttpServletRequest request
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_BALANCE_AMOUNT,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Valor de movimentação inválido");
-        problem.setProperty("code", "INVALID_BALANCE_AMOUNT");
-
-        return problem;
     }
 
     @ExceptionHandler(TransactionNotFoundException.class)
-    public ProblemDetail handleTransactionNotFound(
-            TransactionNotFoundException exception
+    public ResponseEntity<ApiError> handleTransactionNotFound(
+            TransactionNotFoundException exception,
+            HttpServletRequest request
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        return response(
                 HttpStatus.NOT_FOUND,
-                exception.getMessage()
+                ApiErrorCode.TRANSACTION_NOT_FOUND,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Transação não encontrada");
-        problem.setProperty("code", "TRANSACTION_NOT_FOUND");
-
-        return problem;
     }
 
     @ExceptionHandler(InvalidTransactionException.class)
-    public ProblemDetail handleInvalidTransaction(
-            InvalidTransactionException exception
+    public ResponseEntity<ApiError> handleInvalidTransaction(
+            InvalidTransactionException exception,
+            HttpServletRequest request
     ) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSACTION,
+                exception.getMessage(),
+                request
         );
-
-        problem.setTitle("Transação inválida");
-        problem.setProperty("code", "INVALID_TRANSACTION");
-
-        return problem;
     }
 
     @ExceptionHandler(InvalidTransferException.class)
-    public ProblemDetail handleInvalidTransfer(InvalidTransferException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleInvalidTransfer(
+            InvalidTransferException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.BAD_REQUEST,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSFER,
+                exception.getMessage(), ,
+                request
         );
-
-        problem.setTitle("Transferência inválida");
-        problem.setProperty("code", "INVALID_TRANSFER");
-
-        return problem;
     }
 
     @ExceptionHandler(TransactionAlreadyCancelledException.class)
-    public ProblemDetail handleTransactionAlreadyCancelled(TransactionAlreadyCancelledException exception) {
-        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+    public ResponseEntity<ApiError> handleTransactionAlreadyCancelled(
+            TransactionAlreadyCancelledException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT
+        )
+    }
+
+    @ExceptionHandler({
+            InvalidTransactionStatusException.class,
+            TransactionAlreadyCancelledException.class
+    })
+    public ResponseEntity<ApiError> handleInvalidTransactionStatus(
+            RuntimeException exception,
+            HttpServletRequest request
+    ) {
+        return response(
                 HttpStatus.CONFLICT,
-                exception.getMessage()
+                ApiErrorCode.INVALID_TRANSACTION_STATUS,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler({
+            AccountBalanceConflictException.class,
+            OptimisticLockingFailureException.class,
+            OptimisticLockException.class
+    })
+    public ResponseEntity<ApiError> handleOptimisticLock(Exception exception, HttpServletRequest request) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.OPTIMISTIC_LOCK_CONFLICT,
+                "O recurso foi alterado por outra operação. Atualize os dados e tente novamente.",
+                request
+        );
+    }
+
+    private ResponseEntity<ApiError> response(
+            HttpStatus status,
+            ApiErrorCode code,
+            String message,
+            HttpServletRequest request
+    ) {
+        ApiError error = ApiError.of(
+                status,
+                code,
+                message,
+                request.getRequestURI()
         );
 
-        problem.setTitle("Transação já está cancelada");
-        problem.setProperty("code", "TRANSACTION_ALREADY_CANCELLED");
+        return ResponseEntity.status(status).body(error);
+    }
 
-        return problem;
+    private ResponseEntity<ApiError> response(
+            HttpStatus status,
+            ApiErrorCode code,
+            String message,
+            HttpServletRequest request,
+            List<FieldErrorResponse> fieldErrors
+    ) {
+        ApiError error = ApiError.of(
+                status,
+                code,
+                message,
+                request.getRequestURI(),
+                fieldErrors
+        );
+
+        return ResponseEntity.status(status).body(error);
     }
 }

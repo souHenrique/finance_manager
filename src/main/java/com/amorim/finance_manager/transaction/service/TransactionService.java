@@ -83,11 +83,11 @@ public class TransactionService {
                 .orElseThrow(TransactionNotFoundException::new);
 
         if (transaction.getStatus() == TransactionStatus.CANCELLED) {
-            throw new InvalidTransactionException("Transação não pode ser editada");
+            throw new InvalidTransactionStatusException("Transação cancelada não pode ser editada");
         }
 
         if (request.status() == TransactionStatus.CANCELLED) {
-            throw new InvalidTransactionException("Utilize o endpoint de cancelamento");
+            throw new InvalidTransactionStatusException("Utilize o endpoint de cancelamento");
         }
 
         transactionImpactService.reverse(userId, transaction);
