@@ -2,6 +2,7 @@ package com.amorim.finance_manager.transaction.controller;
 
 import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
+import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
 import com.amorim.finance_manager.transaction.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +29,18 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(transactionService.findById(id));
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<TransactionResponse> update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateTransactionRequest request
+    ) {
+        return ResponseEntity.ok(transactionService.update(id, request));
+    }
+
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<TransactionResponse> cancel(@PathVariable UUID id) {
+        return ResponseEntity.ok(transactionService.cancel(id));
     }
 }

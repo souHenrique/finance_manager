@@ -201,4 +201,17 @@ public class GlobalExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(TransactionAlreadyCancelledException.class)
+    public ProblemDetail handleTransactionAlreadyCancelled(TransactionAlreadyCancelledException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Transação já está cancelada");
+        problem.setProperty("code", "TRANSACTION_ALREADY_CANCELLED");
+
+        return problem;
+    }
 }
