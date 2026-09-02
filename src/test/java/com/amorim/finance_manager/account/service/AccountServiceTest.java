@@ -11,6 +11,7 @@ import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.shared.exception.AccountNotFoundException;
 import com.amorim.finance_manager.shared.exception.InactiveAccountException;
 import com.amorim.finance_manager.shared.exception.InvalidAccountUpdateException;
+import com.amorim.finance_manager.testsupport.LogCapture;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,6 +118,98 @@ public class AccountServiceTest {
 
         verify(accountMapper)
                 .toResponse(account);
+    }
+
+    @Test
+    void shouldLogAccountCreationWithoutFinancialDetails() {
+        BigDecimal initialBalance = new BigDecimal("1500.75");
+        CreateAccountRequest request = new CreateAccountRequest(
+                "Checking Account",
+                AccountType.CHECKING,
+                "Confidential Bank",
+                initialBalance
+        );
+        Account account = createAccount(
+                ACCOUNT_ID,
+                USER_ID,
+                request.name(),
+                initialBalance,
+                initialBalance
+        );
+
+        when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
+        when(accountMapper.toEntity(request)).thenReturn(account);
+        when(accountRepository.saveAndFlush(account)).thenReturn(account);
+
+        try (LogCapture logs = LogCapture.forClass(AccountService.class)) {
+            accountService.create(request);
+
+            assertThat(logs.messages())
+                    .contains(
+                            "event=account.created accountId=" + ACCOUNT_ID
+                                    + " userId=" + USER_ID
+                    )
+                    .allSatisfy(message -> {
+                        assertThat(message).doesNotContain("1500.75");
+                        assertThat(message).doesNotContain("Confidential Bank");
+                    });
+        }
+    }
+
+    @Test
+    void shouldLogAccountUpdate() {
+        Account account = createAccount(
+                ACCOUNT_ID,
+                USER_ID,
+                "Old Name",
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00")
+        );
+        UpdateAccountRequest request = new UpdateAccountRequest(
+                "New Name",
+                null,
+                null
+        );
+
+        when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
+        when(accountRepository.findByIdAndUserId(ACCOUNT_ID, USER_ID))
+                .thenReturn(Optional.of(account));
+        when(accountRepository.saveAndFlush(account)).thenReturn(account);
+
+        try (LogCapture logs = LogCapture.forClass(AccountService.class)) {
+            accountService.update(ACCOUNT_ID, request);
+
+            assertThat(logs.messages()).contains(
+                    "event=account.updated accountId=" + ACCOUNT_ID
+                            + " userId=" + USER_ID
+            );
+        }
+    }
+
+    @Test
+    void shouldLogAccountStatusChange() {
+        Account account = createAccount(
+                ACCOUNT_ID,
+                USER_ID,
+                "Account",
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00")
+        );
+
+        when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
+        when(accountRepository.findByIdAndUserId(ACCOUNT_ID, USER_ID))
+                .thenReturn(Optional.of(account));
+        when(accountRepository.saveAndFlush(account)).thenReturn(account);
+
+        try (LogCapture logs = LogCapture.forClass(AccountService.class)) {
+            accountService.updateStatus(ACCOUNT_ID, AccountStatus.INACTIVE);
+
+            assertThat(logs.messages()).contains(
+                    "event=account.status_changed accountId=" + ACCOUNT_ID
+                            + " userId=" + USER_ID
+                            + " previousStatus=ACTIVE currentStatus=INACTIVE"
+            );
+        }
     }
 
     @Test

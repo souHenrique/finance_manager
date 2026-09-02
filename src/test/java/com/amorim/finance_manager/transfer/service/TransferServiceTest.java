@@ -3,6 +3,7 @@ package com.amorim.finance_manager.transfer.service;
 import com.amorim.finance_manager.shared.exception.AccountNotFoundException;
 import com.amorim.finance_manager.shared.exception.InactiveAccountException;
 import com.amorim.finance_manager.shared.exception.InvalidTransferException;
+import com.amorim.finance_manager.testsupport.LogCapture;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
 import com.amorim.finance_manager.transaction.entity.Transaction;
@@ -91,6 +92,30 @@ class TransferServiceTest {
 
         assertThat(transaction.getUserId()).isEqualTo(USER_ID);
         assertThat(result).isEqualTo(response);
+    }
+
+    @Test
+    void shouldLogCompletedTransferWithoutAmountOrDescription() {
+        CreateTransferRequest request = validRequest();
+        Transaction transaction = transferTransaction();
+
+        when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
+        when(transferMapper.toEntity(request)).thenReturn(transaction);
+        when(transactionRepository.saveAndFlush(transaction)).thenReturn(transaction);
+
+        try (LogCapture logs = LogCapture.forClass(TransferService.class)) {
+            transferService.transfer(request);
+
+            assertThat(logs.messages())
+                    .contains(
+                            "event=transfer.completed transactionId=" + TRANSACTION_ID
+                                    + " userId=" + USER_ID
+                    )
+                    .allSatisfy(message -> {
+                        assertThat(message).doesNotContain(AMOUNT.toPlainString());
+                        assertThat(message).doesNotContain(request.description());
+                    });
+        }
     }
 
     @Test

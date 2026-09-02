@@ -20,3 +20,11 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000}
+
+logging:
+  level:
+    root: INFO
+    com.amorim.finance_manager: INFO
+
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [requestId=%X{requestId:-none}] %logger{36} - %msg%n"

@@ -11,6 +11,7 @@ import com.amorim.finance_manager.shared.exception.AccountNotFoundException;
 import com.amorim.finance_manager.shared.exception.InvalidAccountUpdateException;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class AccountService {
 
     private final AccountRepository accountRepository;
@@ -36,6 +38,12 @@ public class AccountService {
         account.setStatus(AccountStatus.ACTIVE);
 
         Account savedAccount = accountRepository.saveAndFlush(account);
+
+        log.info(
+                "event=account.created accountId={} userId={}",
+                savedAccount.getId(),
+                savedAccount.getUserId()
+        );
 
         return accountMapper.toResponse(savedAccount);
     }
@@ -68,6 +76,12 @@ public class AccountService {
 
         Account updatedAccount = accountRepository.saveAndFlush(account);
 
+        log.info(
+                "event=account.updated accountId={} userId={}",
+                updatedAccount.getId(),
+                updatedAccount.getUserId()
+        );
+
         return accountMapper.toResponse(updatedAccount);
     }
 
@@ -75,9 +89,19 @@ public class AccountService {
     public AccountResponse updateStatus(UUID accountId, AccountStatus status) {
         Account account = findOwnedAccount(accountId);
 
+        AccountStatus previousStatus = account.getStatus();
+
         account.setStatus(status);
 
         Account updatedAccount = accountRepository.saveAndFlush(account);
+
+        log.info(
+                "event=account.status_changed accountId={} userId={} previousStatus={} currentStatus={}",
+                updatedAccount.getId(),
+                updatedAccount.getUserId(),
+                previousStatus,
+                updatedAccount.getStatus()
+        );
 
         return accountMapper.toResponse(updatedAccount);
     }

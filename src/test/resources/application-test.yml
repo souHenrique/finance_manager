@@ -18,3 +18,8 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000}
+
+logging:
+  level:
+    root: WARN
+    com.amorim.finance_manager: INFO

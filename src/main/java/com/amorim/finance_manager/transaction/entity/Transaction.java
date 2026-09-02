@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.AuditTable;
+import org.hibernate.envers.Audited;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -12,6 +14,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
+@Audited
+@AuditTable(value = "transactions_aud")
 @Table(
         name = "transactions",
         indexes = {

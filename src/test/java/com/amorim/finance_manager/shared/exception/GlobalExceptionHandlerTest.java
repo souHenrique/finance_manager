@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.shared.exception;
 
+import com.amorim.finance_manager.testsupport.LogCapture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.OptimisticLockingFailureException;
@@ -131,6 +132,21 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldLogConflictWithStableCodeAndRequestContext() {
+        try (LogCapture logs = LogCapture.forClass(GlobalExceptionHandler.class)) {
+            handler.handleOptimisticLock(
+                    new OptimisticLockingFailureException("Conflito de versão"),
+                    request
+            );
+
+            assertThat(logs.messages()).contains(
+                    "event=api.conflict code=OPTIMISTIC_LOCK_CONFLICT"
+                            + " method=GET path=" + PATH
+            );
+        }
+    }
+
+    @Test
     void shouldMapUnexpectedExceptionWithoutExposingInternalDetails() {
         ResponseEntity<ApiError> response = handler.handleUnexpectedException(
                 new IllegalStateException("Detalhe interno sensível"),
@@ -148,6 +164,20 @@ class GlobalExceptionHandlerTest {
                 .isNotNull()
                 .extracting(ApiError::message)
                 .isNotEqualTo("Detalhe interno sensível");
+    }
+
+    @Test
+    void shouldLogUnexpectedExceptionWithStableEvent() {
+        try (LogCapture logs = LogCapture.forClass(GlobalExceptionHandler.class)) {
+            handler.handleUnexpectedException(
+                    new IllegalStateException("Internal detail"),
+                    request
+            );
+
+            assertThat(logs.messages()).contains(
+                    "event=api.unexpected_error method=GET path=" + PATH
+            );
+        }
     }
 
     private void assertError(

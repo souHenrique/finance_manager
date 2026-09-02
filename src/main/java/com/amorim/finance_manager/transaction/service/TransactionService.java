@@ -19,6 +19,7 @@ import com.amorim.finance_manager.transaction.mapper.TransactionMapper;
 import com.amorim.finance_manager.transaction.repository.TransactionRepository;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
@@ -60,6 +62,14 @@ public class TransactionService {
 
         Transaction saved = transactionRepository.saveAndFlush(transaction);
 
+        log.info(
+                "event=transaction.created transactionId={} userId={} type={} status={}",
+                saved.getId(),
+                saved.getUserId(),
+                saved.getType(),
+                saved.getStatus()
+        );
+
         return transactionMapper.toResponse(saved);
     }
 
@@ -81,6 +91,8 @@ public class TransactionService {
         Transaction transaction = transactionRepository
                 .findByIdAndUserId(transactionId, userId)
                 .orElseThrow(TransactionNotFoundException::new);
+
+        TransactionStatus previousStatus = transaction.getStatus();
 
         if (transaction.getStatus() == TransactionStatus.CANCELLED) {
             throw new InvalidTransactionStatusException("Transação cancelada não pode ser editada");
@@ -104,6 +116,14 @@ public class TransactionService {
 
         Transaction saved = transactionRepository.saveAndFlush(transaction);
 
+        log.info(
+                "event=transaction.updated transactionId={} userId={} previousStatus={} currentStatus={}",
+                saved.getId(),
+                saved.getUserId(),
+                previousStatus,
+                saved.getStatus()
+        );
+
         return transactionMapper.toResponse(saved);
     }
 
@@ -123,6 +143,14 @@ public class TransactionService {
         transaction.setStatus(TransactionStatus.CANCELLED);
 
         Transaction saved = transactionRepository.saveAndFlush(transaction);
+
+        log.info(
+                "event=transaction.cancelled transactionId={} userId={} type={} status={}",
+                saved.getId(),
+                userId,
+                saved.getType(),
+                saved.getStatus()
+        );
 
         return transactionMapper.toResponse(saved);
     }

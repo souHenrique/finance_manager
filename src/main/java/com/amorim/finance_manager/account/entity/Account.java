@@ -6,12 +6,17 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.envers.AuditTable;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
+@Audited
+@AuditTable(value = "accounts_aud")
 @Table(
         name = "accounts",
         indexes = {
@@ -52,6 +57,7 @@ public class Account {
     @Column(nullable = false, length = 30)
     private AccountStatus status;
 
+    @NotAudited
     @Version
     @Column(nullable = false)
     private Long version;

@@ -10,6 +10,7 @@ import com.amorim.finance_manager.transfer.dto.CreateTransferRequest;
 import com.amorim.finance_manager.transfer.mapper.TransferMapper;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransferService {
 
     private final AccountBalanceService accountBalanceService;
@@ -41,6 +43,12 @@ public class TransferService {
         transaction.setUserId(userId);
 
         Transaction saved = transactionRepository.saveAndFlush(transaction);
+
+        log.info(
+                "event=transfer.completed transactionId={} userId={}",
+                saved.getId(),
+                saved.getUserId()
+        );
 
         return transactionMapper.toResponse(saved);
     }

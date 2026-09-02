@@ -10,3 +10,11 @@ spring:
 
   jpa:
     show-sql: false
+
+logging:
+  level:
+    root: INFO
+    com.amorim.finance_manager: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: OFF

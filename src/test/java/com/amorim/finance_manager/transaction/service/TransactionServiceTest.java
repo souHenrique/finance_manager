@@ -14,8 +14,10 @@ import com.amorim.finance_manager.shared.exception.InactiveAccountException;
 import com.amorim.finance_manager.shared.exception.IncompatibleCategoryTypeException;
 import com.amorim.finance_manager.shared.exception.InvalidTransactionException;
 import com.amorim.finance_manager.shared.exception.TransactionNotFoundException;
+import com.amorim.finance_manager.testsupport.LogCapture;
 import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
+import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
@@ -81,6 +83,9 @@ class TransactionServiceTest {
     @Mock
     private CurrentUserService currentUserService;
 
+    @Mock
+    private TransactionImpactService transactionImpactService;
+
     @InjectMocks
     private TransactionService transactionService;
 
@@ -106,6 +111,91 @@ class TransactionServiceTest {
         verify(accountBalanceService, never()).debit(any(), any(), any());
         assertThat(transaction.getUserId()).isEqualTo(USER_ID);
         assertThat(result).isEqualTo(response);
+    }
+
+    @Test
+    void shouldLogTransactionCreationWithoutFinancialDetails() {
+        CreateTransactionRequest request = completedExpense(PaymentMethod.DEBIT);
+        Transaction transaction = transactionFrom(request);
+        TransactionResponse response = responseFrom(request);
+
+        mockCategory(activeCategory(CategoryType.EXPENSE));
+        mockSuccessfulPersistence(request, transaction, response);
+
+        try (LogCapture logs = LogCapture.forClass(TransactionService.class)) {
+            transactionService.create(request);
+
+            assertThat(logs.messages())
+                    .contains(
+                            "event=transaction.created transactionId=" + TRANSACTION_ID
+                                    + " userId=" + USER_ID
+                                    + " type=EXPENSE status=COMPLETED"
+                    )
+                    .allSatisfy(message -> {
+                        assertThat(message).doesNotContain(AMOUNT.toPlainString());
+                        assertThat(message).doesNotContain(request.description());
+                    });
+        }
+    }
+
+    @Test
+    void shouldLogTransactionUpdate() {
+        CreateTransactionRequest originalRequest = completedExpense(PaymentMethod.DEBIT);
+        Transaction transaction = transactionFrom(originalRequest);
+        transaction.setUserId(USER_ID);
+        UpdateTransactionRequest updateRequest = new UpdateTransactionRequest(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+
+        when(transactionRepository.findByIdAndUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
+        mockCategory(activeCategory(CategoryType.EXPENSE));
+        when(accountRepository.findByIdAndUserId(ACCOUNT_ID, USER_ID))
+                .thenReturn(Optional.of(activeAccount()));
+        when(transactionRepository.saveAndFlush(transaction)).thenReturn(transaction);
+
+        try (LogCapture logs = LogCapture.forClass(TransactionService.class)) {
+            transactionService.update(TRANSACTION_ID, updateRequest);
+
+            assertThat(logs.messages()).contains(
+                    "event=transaction.updated transactionId=" + TRANSACTION_ID
+                            + " userId=" + USER_ID
+                            + " previousStatus=COMPLETED currentStatus=COMPLETED"
+            );
+        }
+    }
+
+    @Test
+    void shouldLogTransactionCancellation() {
+        CreateTransactionRequest request = completedExpense(PaymentMethod.DEBIT);
+        Transaction transaction = transactionFrom(request);
+        transaction.setUserId(USER_ID);
+
+        when(transactionRepository.findByIdAndUserId(TRANSACTION_ID, USER_ID))
+                .thenReturn(Optional.of(transaction));
+        when(transactionRepository.saveAndFlush(transaction)).thenReturn(transaction);
+
+        try (LogCapture logs = LogCapture.forClass(TransactionService.class)) {
+            transactionService.cancel(TRANSACTION_ID);
+
+            assertThat(logs.messages())
+                    .contains(
+                            "event=transaction.cancelled transactionId=" + TRANSACTION_ID
+                                    + " userId=" + USER_ID
+                                    + " type=EXPENSE status=CANCELLED"
+                    )
+                    .allSatisfy(message ->
+                            assertThat(message).doesNotContain(AMOUNT.toPlainString())
+                    );
+        }
     }
 
     @Test

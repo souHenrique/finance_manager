@@ -340,7 +340,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnexpectedException(Exception exception, HttpServletRequest request) {
         log.error(
-                "Erro inesperado ao processar {}",
+                "event=api.unexpected_error method={} path={}",
+                request.getMethod(),
                 request.getRequestURI(),
                 exception
         );
@@ -359,6 +360,15 @@ public class GlobalExceptionHandler {
             String message,
             HttpServletRequest request
     ) {
+        if (status == HttpStatus.CONFLICT) {
+            log.warn(
+                    "event=api.conflict code={} method={} path={}",
+                    code,
+                    request.getMethod(),
+                    request.getRequestURI()
+            );
+        }
+
         ApiError error = ApiError.of(
                 status,
                 code,
