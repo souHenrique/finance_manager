@@ -3,6 +3,7 @@ package com.amorim.finance_manager.report.service;
 import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
 import com.amorim.finance_manager.report.dto.*;
+import com.amorim.finance_manager.report.projection.AnnualCashFlowAggregate;
 import com.amorim.finance_manager.report.projection.CashFlowAggregate;
 import com.amorim.finance_manager.report.repository.CashFlowReportRepository;
 import com.amorim.finance_manager.shared.exception.InvalidReportPeriodException;
@@ -17,12 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -105,6 +103,67 @@ public class CashFlowReportService {
         );
     }
 
+    public MonthlyCashFlowResponse monthly(Integer year, Integer month) {
+        validateYearMonth(year, month);
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.withDayOfMonth(start.lengthOfMonth());
+
+        UUID userId = currentUserService.getCurrentUserId();
+
+        List<CashFlowAggregate> rows = aggregate(userId, start, end);
+        Map<UUID, String> categoryNames = loadCategoryNames(userId, rows);
+
+        return new MonthlyCashFlowResponse(
+                year,
+                month,
+                start,
+                end,
+                calculator.summarize(rows, categoryNames)
+        );
+    }
+
+    public AnnualCashFlowResponse annual(Integer year) {
+        validateYear(year);
+
+        LocalDate start = LocalDate.of(year, 1, 1);
+        LocalDate end = LocalDate.of(year, 12, 31);
+
+        UUID userId = currentUserService.getCurrentUserId();
+
+        List<AnnualCashFlowAggregate> rows =
+                reportRepository.aggregateByMonth(
+                        userId,
+                        start,
+                        end,
+                        TransactionStatus.COMPLETED,
+                        CASH_TYPES
+                );
+
+        Map<Integer, List<AnnualCashFlowAggregate>> rowsByMonth =
+                rows.stream()
+                        .collect(Collectors.groupingBy(
+                                AnnualCashFlowAggregate::month
+                        ));
+
+        List<AnnualCashFlowMonthResponse> evolution =
+                IntStream.rangeClosed(1, 12)
+                        .mapToObj(month -> new AnnualCashFlowMonthResponse(
+                                month,
+                                calculator.summarizeTotals(
+                                        rowsByMonth.getOrDefault(month, List.of())
+                                )
+                        ))
+                        .toList();
+
+        return new AnnualCashFlowResponse(
+                year,
+                start,
+                end,
+                evolution
+        );
+    }
+
     private List<CashFlowAggregate> aggregate(
             UUID userId,
             LocalDate start,
@@ -157,5 +216,17 @@ public class CashFlowReportService {
         }
     }
 
+    private void validateYear(Integer year) {
+        if (year == null || year < 1 || year > 9999) {
+            throw new InvalidReportPeriodException("O ano deve estar entre 1 e 9999");
+        }
+    }
 
+    private void validateYearMonth(Integer year, Integer month) {
+        validateYear(year);
+
+        if (month == null || month < 1 || month > 12) {
+            throw new InvalidReportPeriodException("O mês deve estar entre 1 e 12");
+        }
+    }
 }

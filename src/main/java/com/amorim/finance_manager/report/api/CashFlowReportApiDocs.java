@@ -1,8 +1,6 @@
 package com.amorim.finance_manager.report.api;
 
-import com.amorim.finance_manager.report.dto.CashFlowReportRequest;
-import com.amorim.finance_manager.report.dto.DailyCashFlowResponse;
-import com.amorim.finance_manager.report.dto.WeeklyCashFlowResponse;
+import com.amorim.finance_manager.report.dto.*;
 import com.amorim.finance_manager.shared.exception.ApiError;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -198,4 +196,172 @@ public interface CashFlowReportApiDocs {
             )
     })
     ResponseEntity<WeeklyCashFlowResponse> weekly(@ParameterObject CashFlowReportRequest request);
+
+    @Operation(
+            summary = "Consultar relatório de caixa mensal",
+            description = """
+                Retorna o fluxo de caixa do usuário autenticado para o mês e ano informados.
+
+                Considera somente movimentações com status COMPLETED, selecionadas
+                pela effectiveDate dentro do mês consultado.
+
+                INCOME compõe as entradas. EXPENSE e CREDIT_CARD_PAYMENT compõem
+                as saídas. TRANSFER, CREDIT_CARD_PURCHASE e ADJUSTMENT não
+                compõem os totais.
+
+                O pagamento de fatura é contado como saída de caixa, mas não é
+                incluído no agrupamento de despesas por categoria. Compras no
+                cartão não são contabilizadas, evitando dupla contagem.
+
+                net representa entradas menos saídas do mês e não corresponde
+                ao saldo atual das contas.
+
+                As receitas e despesas diretas são agrupadas por categoria.
+                Sem movimentações elegíveis, retorna HTTP 200, valores zerados
+                e listas de categorias vazias.
+
+                Os parâmetros year e month são obrigatórios. O ano deve estar
+                entre 1 e 9999 e o mês entre 1 e 12.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Relatório mensal calculado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = MonthlyCashFlowResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Relatório mensal",
+                                    value = MONTHLY_CASH_FLOW_RESPONSE
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = """
+                        Ano ou mês ausente, malformado ou fora
+                        do intervalo permitido.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Período mensal inválido",
+                                    value = MONTHLY_CASH_VALIDATION_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticação ausente ou token inválido",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Não autenticado",
+                                    value = MONTHLY_CASH_UNAUTHORIZED_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Erro interno",
+                                    value = MONTHLY_CASH_INTERNAL_ERROR
+                            )
+                    )
+            )
+    })
+    ResponseEntity<MonthlyCashFlowResponse> monthly(@ParameterObject MonthlyCashFlowReportRequest request);
+
+    @Operation(
+            summary = "Consultar evolução anual do fluxo de caixa",
+            description = """
+                Retorna a evolução mensal do fluxo de caixa do usuário autenticado
+                para o ano informado.
+
+                O resultado contém obrigatoriamente os 12 meses do ano, ordenados
+                de janeiro a dezembro. Meses sem movimentações elegíveis são
+                retornados com entradas, saídas e resultado iguais a zero.
+
+                Considera somente movimentações com status COMPLETED, selecionadas
+                pela effectiveDate entre o primeiro e o último dia do ano.
+
+                INCOME compõe as entradas. EXPENSE e CREDIT_CARD_PAYMENT compõem
+                as saídas. TRANSFER, CREDIT_CARD_PURCHASE e ADJUSTMENT não
+                compõem os totais.
+
+                O pagamento de fatura é contado como saída de caixa. A compra no
+                cartão não é contabilizada no regime de caixa, evitando dupla
+                contagem.
+
+                Para cada mês, net representa entradas menos saídas. Os valores
+                não correspondem ao saldo atual das contas.
+
+                O parâmetro year é obrigatório e deve estar entre 1 e 9999.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Evolução anual calculada com os 12 meses",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = AnnualCashFlowResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Evolução anual",
+                                    value = ANNUAL_CASH_FLOW_RESPONSE
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = """
+                        Ano ausente, malformado ou fora
+                        do intervalo permitido.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Ano inválido",
+                                    value = ANNUAL_CASH_VALIDATION_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Autenticação ausente ou token inválido",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Não autenticado",
+                                    value = ANNUAL_CASH_UNAUTHORIZED_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    name = "Erro interno",
+                                    value = ANNUAL_CASH_INTERNAL_ERROR
+                            )
+                    )
+            )
+    })
+    ResponseEntity<AnnualCashFlowResponse> annual(@ParameterObject AnnualCashFlowReportRequest request);
 }

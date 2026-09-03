@@ -58,7 +58,9 @@ class OpenApiIntegrationTest {
             "post /api/v1/transactions/{id}/cancel",
             "post /api/v1/transfers",
             "get /api/v1/reports/cash/daily",
-            "get /api/v1/reports/cash/weekly"
+            "get /api/v1/reports/cash/weekly",
+            "get /api/v1/reports/cash/monthly",
+            "get /api/v1/reports/cash/annual"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(

@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.report.repository;
 
+import com.amorim.finance_manager.report.projection.AnnualCashFlowAggregate;
 import com.amorim.finance_manager.report.projection.CashFlowAggregate;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
@@ -37,5 +38,29 @@ public interface CashFlowReportRepository extends Repository<Transaction, UUID> 
             @Param("endDate") LocalDate endDate,
             @Param("status")TransactionStatus status,
             @Param("types")Collection<TransactionType> types
+    );
+
+    @Query("""
+        select new com.amorim.finance_manager.report.projection.AnnualCashFlowAggregate(
+            month(t.effectiveDate),
+            t.type,
+            sum(t.amount)
+        )
+        from Transaction t
+        where t.userId = :userId
+          and t.status = :status
+          and t.effectiveDate is not null
+          and t.effectiveDate >= :startDate
+          and t.effectiveDate <= :endDate
+          and t.type in :types
+        group by month(t.effectiveDate), t.type
+        order by month(t.effectiveDate)
+        """)
+    List<AnnualCashFlowAggregate> aggregateByMonth(
+            @Param("userId") UUID userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("status") TransactionStatus status,
+            @Param("types") Collection<TransactionType> types
     );
 }

@@ -2,7 +2,9 @@ package com.amorim.finance_manager.report.service;
 
 import com.amorim.finance_manager.report.dto.CashFlowComparisonResponse;
 import com.amorim.finance_manager.report.dto.CashFlowSummaryResponse;
+import com.amorim.finance_manager.report.dto.CashFlowTotalsResponse;
 import com.amorim.finance_manager.report.dto.CategoryCashFlowResponse;
+import com.amorim.finance_manager.report.projection.AnnualCashFlowAggregate;
 import com.amorim.finance_manager.report.projection.CashFlowAggregate;
 import org.springframework.stereotype.Component;
 
@@ -103,5 +105,27 @@ public class CashFlowCalculator {
                                 )
                 )
                 .toList();
+    }
+
+    public CashFlowTotalsResponse summarizeTotals(List<AnnualCashFlowAggregate> rows) {
+        BigDecimal inflows = ZERO;
+        BigDecimal outflows = ZERO;
+
+        for (AnnualCashFlowAggregate row : rows) {
+            switch (row.type()) {
+                case INCOME -> inflows = inflows.add(row.amount());
+
+                case EXPENSE, CREDIT_CARD_PAYMENT -> outflows = outflows.add(row.amount());
+
+                default -> throw new IllegalArgumentException(
+                        "Tipo não elegível para relatório anual de caixa: " + row.type()
+                );
+            }
+        }
+        return new CashFlowTotalsResponse(
+                inflows,
+                outflows,
+                inflows.subtract(outflows)
+        );
     }
 }

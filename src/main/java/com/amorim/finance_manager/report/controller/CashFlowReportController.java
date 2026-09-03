@@ -2,9 +2,7 @@ package com.amorim.finance_manager.report.controller;
 
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.report.api.CashFlowReportApiDocs;
-import com.amorim.finance_manager.report.dto.CashFlowReportRequest;
-import com.amorim.finance_manager.report.dto.DailyCashFlowResponse;
-import com.amorim.finance_manager.report.dto.WeeklyCashFlowResponse;
+import com.amorim.finance_manager.report.dto.*;
 import com.amorim.finance_manager.report.service.CashFlowReportService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,5 +33,21 @@ public class CashFlowReportController implements CashFlowReportApiDocs {
     @GetMapping("/weekly")
     public ResponseEntity<WeeklyCashFlowResponse> weekly(@Valid @ModelAttribute CashFlowReportRequest request) {
         return ResponseEntity.ok(reportService.weekly(request.date()));
+    }
+
+    @Override
+    @GetMapping("/monthly")
+    public ResponseEntity<MonthlyCashFlowResponse> monthly(
+            @Valid @ModelAttribute MonthlyCashFlowReportRequest request
+    ) {
+        return ResponseEntity.ok(reportService.monthly(request.year(), request.month()));
+    }
+
+    @Override
+    @GetMapping("/annual")
+    public ResponseEntity<AnnualCashFlowResponse> annual(
+            @Valid @ModelAttribute AnnualCashFlowReportRequest request
+    ) {
+        return ResponseEntity.ok(reportService.annual(request.year()));
     }
 }

@@ -1,7 +1,6 @@
 package com.amorim.finance_manager.report.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 

@@ -759,4 +759,219 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String MONTHLY_CASH_FLOW_RESPONSE = """
+    {
+      "year": 2026,
+      "month": 9,
+      "startDate": "2026-09-01",
+      "endDate": "2026-09-30",
+      "summary": {
+        "inflows": 5000.00,
+        "outflows": 1500.00,
+        "net": 3500.00,
+        "invoicePayments": 1200.00,
+        "incomeCategories": [
+          {
+            "categoryId": "14e7b32a-e52f-4e04-9812-4c8067129684",
+            "name": "Salário",
+            "amount": 5000.00
+          }
+        ],
+        "expenseCategories": [
+          {
+            "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+            "name": "Supermercado",
+            "amount": 300.00
+          }
+        ]
+      }
+    }
+    """;
+
+    public static final String ANNUAL_CASH_FLOW_RESPONSE = """
+    {
+      "year": 2026,
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "evolution": [
+        {
+          "month": 1,
+          "totals": {
+            "inflows": 5000.00,
+            "outflows": 1500.00,
+            "net": 3500.00
+          }
+        },
+        {
+          "month": 2,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 3,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 4,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 5,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 6,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 7,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 8,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 9,
+          "totals": {
+            "inflows": 5000.00,
+            "outflows": 1200.00,
+            "net": 3800.00
+          }
+        },
+        {
+          "month": 10,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 11,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        },
+        {
+          "month": 12,
+          "totals": {
+            "inflows": 0.00,
+            "outflows": 0.00,
+            "net": 0.00
+          }
+        }
+      ]
+    }
+    """;
+
+    public static final String MONTHLY_CASH_VALIDATION_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Dados de entrada inválidos",
+      "path": "/api/v1/reports/cash/monthly",
+      "fieldErrors": [
+        {
+          "field": "month",
+          "message": "O mês é obrigatório"
+        },
+        {
+          "field": "year",
+          "message": "O ano é obrigatório"
+        }
+      ]
+    }
+    """;
+
+    public static final String ANNUAL_CASH_VALIDATION_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Dados de entrada inválidos",
+      "path": "/api/v1/reports/cash/annual",
+      "fieldErrors": [
+        {
+          "field": "year",
+          "message": "O ano é obrigatório"
+        }
+      ]
+    }
+    """;
+
+    public static final String MONTHLY_CASH_UNAUTHORIZED_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Autenticação necessária ou token inválido",
+      "path": "/api/v1/reports/cash/monthly",
+      "fieldErrors": []
+    }
+    """;
+
+    public static final String ANNUAL_CASH_UNAUTHORIZED_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 401,
+      "code": "UNAUTHORIZED",
+      "message": "Autenticação necessária ou token inválido",
+      "path": "/api/v1/reports/cash/annual",
+      "fieldErrors": []
+    }
+    """;
+
+    public static final String MONTHLY_CASH_INTERNAL_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 500,
+      "code": "INTERNAL_SERVER_ERROR",
+      "message": "Ocorreu um erro interno inesperado",
+      "path": "/api/v1/reports/cash/monthly",
+      "fieldErrors": []
+    }
+    """;
+
+    public static final String ANNUAL_CASH_INTERNAL_ERROR = """
+    {
+      "timestamp": "2026-09-03T12:00:00Z",
+      "status": 500,
+      "code": "INTERNAL_SERVER_ERROR",
+      "message": "Ocorreu um erro interno inesperado",
+      "path": "/api/v1/reports/cash/annual",
+      "fieldErrors": []
+    }
+    """;
 }
