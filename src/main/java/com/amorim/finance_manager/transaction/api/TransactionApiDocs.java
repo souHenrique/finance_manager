@@ -1,9 +1,7 @@
 package com.amorim.finance_manager.transaction.api;
 
 import com.amorim.finance_manager.shared.exception.ApiError;
-import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
-import com.amorim.finance_manager.transaction.dto.TransactionResponse;
-import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
+import com.amorim.finance_manager.transaction.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
@@ -315,5 +315,59 @@ public interface TransactionApiDocs {
                     schema = @Schema(type = "string", format = "uuid")
             )
             UUID id
+    );
+
+    @Operation(
+            summary = "Listar transações",
+            description = """
+                Lista somente transações do usuário autenticado.
+                Os filtros são opcionais e combinados com AND.
+                O período considera competenceDate, com limites inclusivos.
+                accountId considera origem ou destino.
+                A descrição usa busca parcial sem diferenciar maiúsculas e minúsculas.
+                Sem filtro de status, inclui todos os status.
+                A paginação começa em zero, com tamanho padrão 20 e máximo efetivo 100.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Página de transações, podendo estar vazia",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(
+                                    implementation = TransactionPageResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Página vazia",
+                                    value = TRANSACTION_PAGE_RESPONSE
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Filtros ou ordenação inválidos",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            )
+    })
+    ResponseEntity<TransactionPageResponse> list(
+            @ParameterObject TransactionFilterRequest filters,
+            @ParameterObject Pageable pageable
     );
 }

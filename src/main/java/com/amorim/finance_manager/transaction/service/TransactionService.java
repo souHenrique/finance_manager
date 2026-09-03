@@ -9,6 +9,7 @@ import com.amorim.finance_manager.category.entity.CategoryType;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
 import com.amorim.finance_manager.shared.exception.*;
 import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
+import com.amorim.finance_manager.transaction.dto.TransactionFilterRequest;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
@@ -17,12 +18,18 @@ import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
 import com.amorim.finance_manager.transaction.mapper.TransactionMapper;
 import com.amorim.finance_manager.transaction.repository.TransactionRepository;
+import com.amorim.finance_manager.transaction.specification.TransactionSpecifications;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -154,6 +161,24 @@ public class TransactionService {
 
         return transactionMapper.toResponse(saved);
     }
+
+    @Transactional(readOnly = true)
+    public Page<TransactionResponse> list(
+            TransactionFilterRequest filters,
+            Pageable pageable
+    ) {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        validateFilters(filters);
+
+        Pageable safePageable = normalizePageable(pageable);
+
+        return transactionRepository.findAll(
+                TransactionSpecifications.withFilters(userId, filters),
+                safePageable
+        ).map(transactionMapper::toResponse);
+    }
+
 
     private void applyBalance(CreateTransactionRequest request, UUID userId, UUID accountId) {
         if (request.type() == TransactionType.INCOME) {
@@ -377,4 +402,74 @@ public class TransactionService {
 
         validateOwnedActiveAccount(transaction.getDestinationAccountId(), userId);
     }
+
+    private void validateFilters(TransactionFilterRequest filters) {
+        if (filters.startDate() != null
+                && filters.endDate() != null
+                && filters.startDate().isAfter(filters.endDate())) {
+
+            throw new InvalidTransactionException(
+                    "A data inicial não pode ser posterior à data final"
+            );
+        }
+
+        if (filters.minAmount() != null
+                && filters.maxAmount() != null
+                && filters.minAmount().compareTo(filters.maxAmount()) > 0) {
+
+            throw new InvalidTransactionException(
+                    "O valor mínimo não pode ser maior que o valor máximo"
+            );
+        }
+    }
+
+    private Pageable normalizePageable(Pageable pageable) {
+        if (pageable.isUnpaged()) {
+            throw new InvalidTransactionException(
+                    "A consulta de transações deve ser paginada"
+            );
+        }
+
+        Sort sort = pageable.getSort().isSorted()
+                ? pageable.getSort()
+                : Sort.by(Sort.Direction.DESC, "competenceDate");
+
+        for (Sort.Order order : sort) {
+            if (!ALLOWED_SORT_FIELDS.contains(order.getProperty())) {
+                throw new InvalidTransactionException(
+                        "Campo de ordenação inválido: " + order.getProperty()
+                );
+            }
+
+            if (order.isIgnoreCase()
+                    && !"description".equals(order.getProperty())) {
+                throw new InvalidTransactionException(
+                        "Ordenação ignorecase é permitida somente para description"
+                );
+            }
+        }
+
+        if (sort.getOrderFor("id") == null) {
+            sort = sort.and(Sort.by(Sort.Direction.ASC, "id"));
+        }
+
+        return PageRequest.of(
+                pageable.getPageNumber(),
+                Math.min(pageable.getPageSize(), 100),
+                sort
+        );
+    }
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "id",
+            "description",
+            "amount",
+            "competenceDate",
+            "effectiveDate",
+            "dueDate",
+            "type",
+            "status",
+            "createdAt",
+            "updatedAt"
+    );
 }

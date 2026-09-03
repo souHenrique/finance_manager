@@ -13,6 +13,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.amorim.finance_manager.transaction.dto.TransactionFilterRequest;
+import com.amorim.finance_manager.transaction.dto.TransactionPageResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 
 import java.util.UUID;
 
@@ -52,5 +57,24 @@ public class TransactionController implements TransactionApiDocs {
     @PostMapping("/{id}/cancel")
     public ResponseEntity<TransactionResponse> cancel(@PathVariable UUID id) {
         return ResponseEntity.ok(transactionService.cancel(id));
+    }
+
+    @Override
+    @GetMapping
+    public ResponseEntity<TransactionPageResponse> list(
+            @Valid @ModelAttribute TransactionFilterRequest filters,
+            @PageableDefault(
+                    page = 0,
+                    size = 20,
+                    sort = "competenceDate",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(
+                TransactionPageResponse.from(
+                        transactionService.list(filters, pageable)
+                )
+        );
     }
 }

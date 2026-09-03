@@ -565,4 +565,16 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String TRANSACTION_PAGE_RESPONSE = """
+        {
+          "content": [],
+          "page": 0,
+          "size": 20,
+          "totalElements": 0,
+          "totalPages": 0,
+          "first": true,
+          "last": true
+        }
+        """;
 }

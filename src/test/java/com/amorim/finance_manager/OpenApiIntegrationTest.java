@@ -1,5 +1,7 @@
 package com.amorim.finance_manager;
 
+import com.amorim.finance_manager.transaction.entity.TransactionStatus;
+import com.amorim.finance_manager.transaction.entity.TransactionType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +14,11 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,6 +47,7 @@ class OpenApiIntegrationTest {
             "get /api/v1/categories/{id}",
             "patch /api/v1/categories/{id}",
             "post /api/v1/transactions",
+            "get /api/v1/transactions",
             "get /api/v1/transactions/{id}",
             "patch /api/v1/transactions/{id}",
             "post /api/v1/transactions/{id}/cancel",
@@ -82,6 +89,7 @@ class OpenApiIntegrationTest {
             "CreateTransactionRequest",
             "UpdateTransactionRequest",
             "TransactionResponse",
+            "TransactionPageResponse",
             "CreateTransferRequest",
             "ApiError",
             "FieldErrorResponse"
@@ -197,6 +205,110 @@ class OpenApiIntegrationTest {
                     .as("Entity %s não pode ser contrato público", entityName)
                     .isTrue();
         }
+    }
+
+    @Test
+    void shouldDocumentAllTransactionSearchParametersWithoutExposingUserIdOrRequestBody() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation = findOperation(document, "get /api/v1/transactions");
+        Map<String, JsonNode> parameters = new LinkedHashMap<>();
+
+        for (JsonNode parameter : operation.path("parameters")) {
+            String name = parameter.path("name").asString();
+            assertThat(parameters.put(name, parameter)).as("parâmetro %s não deve se repetir", name).isNull();
+            assertThat(parameter.path("in").asString()).as(name).isEqualTo("query");
+            assertThat(parameter.path("required").asBoolean()).as(name).isFalse();
+            assertThat(parameter.path("description").asString()).as(name).isNotBlank();
+        }
+
+        assertThat(parameters).containsOnlyKeys(
+                "startDate", "endDate", "categoryId", "accountId", "creditCardId",
+                "type", "status", "minAmount", "maxAmount", "description", "page", "size", "sort"
+        );
+        assertThat(parameters).doesNotContainKeys("userId", "filters", "pageable");
+        assertThat(operation.path("requestBody").isMissingNode()).isTrue();
+        assertThat(usesBearerAuth(operation)).isTrue();
+
+        for (String name : List.of("startDate", "endDate")) {
+            JsonNode schema = resolveSchema(document, parameters.get(name).path("schema"));
+            assertThat(schema.path("type").asString()).as(name).isEqualTo("string");
+            assertThat(schema.path("format").asString()).as(name).isEqualTo("date");
+        }
+        for (String name : List.of("categoryId", "accountId", "creditCardId")) {
+            JsonNode schema = resolveSchema(document, parameters.get(name).path("schema"));
+            assertThat(schema.path("type").asString()).as(name).isEqualTo("string");
+            assertThat(schema.path("format").asString()).as(name).isEqualTo("uuid");
+        }
+        for (String name : List.of("minAmount", "maxAmount")) {
+            JsonNode schema = resolveSchema(document, parameters.get(name).path("schema"));
+            assertThat(schema.path("type").asString()).as(name).isEqualTo("number");
+        }
+
+        assertEnumValues(document, parameters.get("type").path("schema"),
+                Arrays.stream(TransactionType.values()).map(Enum::name).toList());
+        assertEnumValues(document, parameters.get("status").path("schema"),
+                Arrays.stream(TransactionStatus.values()).map(Enum::name).toList());
+        assertThat(parameters.get("description").path("schema").path("type").asString()).isEqualTo("string");
+        assertThat(parameters.get("page").path("schema").path("type").asString()).isEqualTo("integer");
+        assertThat(parameters.get("page").path("schema").path("default").isNumber()).isTrue();
+        assertThat(parameters.get("page").path("schema").path("default").asInt()).isZero();
+        assertThat(parameters.get("size").path("schema").path("type").asString()).isEqualTo("integer");
+        assertThat(parameters.get("size").path("schema").path("default").asInt()).isEqualTo(20);
+        assertThat(parameters.get("sort").path("schema").path("type").asString()).isEqualTo("array");
+        assertThat(parameters.get("sort").path("schema").path("items").path("type").asString()).isEqualTo("string");
+    }
+
+    @Test
+    void shouldDocumentTransactionPageDtoExampleAndStandardErrors() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation = findOperation(document, "get /api/v1/transactions");
+        JsonNode response = operation.path("responses").path("200")
+                .path("content").path("application/json");
+
+        assertThat(response.path("schema").path("$ref").asString())
+                .isEqualTo("#/components/schemas/TransactionPageResponse");
+
+        JsonNode properties = resolveSchema(document, response.path("schema")).path("properties");
+        assertThat(properties.properties().stream().map(Map.Entry::getKey).toList())
+                .containsExactlyInAnyOrder("content", "page", "size", "totalElements", "totalPages", "first", "last");
+        assertThat(properties.path("content").path("type").asString()).isEqualTo("array");
+        assertThat(properties.path("content").path("items").path("$ref").asString())
+                .isEqualTo("#/components/schemas/TransactionResponse");
+
+        JsonNode example = response.path("examples").path("Página vazia").path("value");
+        assertThat(example.isObject()).isTrue();
+        assertThat(example.path("content").isArray()).isTrue();
+        assertThat(example.path("content").size()).isZero();
+        assertThat(example.path("page").asInt()).isZero();
+        assertThat(example.path("size").asInt()).isEqualTo(20);
+        assertThat(example.path("totalElements").asLong()).isZero();
+        assertThat(example.path("totalPages").asInt()).isZero();
+        assertThat(example.path("first").asBoolean()).isTrue();
+        assertThat(example.path("last").asBoolean()).isTrue();
+
+        for (String code : List.of("400", "401", "500")) {
+            JsonNode errorResponse = operation.path("responses").path(code);
+            assertThat(errorResponse.path("description").asString()).as(code).isNotBlank();
+            assertThat(contentReferencesSchema(errorResponse.path("content"), "ApiError")).as(code).isTrue();
+        }
+    }
+
+    private JsonNode resolveSchema(JsonNode document, JsonNode schema) {
+        String reference = schema.path("$ref").asString();
+        if (reference.startsWith("#/")) {
+            JsonNode resolved = document.at(reference.substring(1));
+            assertThat(resolved.isMissingNode()).as(reference).isFalse();
+            return resolved;
+        }
+        return schema;
+    }
+
+    private void assertEnumValues(JsonNode document, JsonNode schema, List<String> expected) {
+        List<String> actual = new ArrayList<>();
+        for (JsonNode value : resolveSchema(document, schema).path("enum")) {
+            actual.add(value.asString());
+        }
+        assertThat(actual).containsExactlyInAnyOrderElementsOf(expected);
     }
 
     private JsonNode loadOpenApiDocument() throws Exception {
