@@ -3,6 +3,8 @@ package com.amorim.finance_manager;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -14,6 +16,9 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -51,7 +56,9 @@ class OpenApiIntegrationTest {
             "get /api/v1/transactions/{id}",
             "patch /api/v1/transactions/{id}",
             "post /api/v1/transactions/{id}/cancel",
-            "post /api/v1/transfers"
+            "post /api/v1/transfers",
+            "get /api/v1/reports/cash/daily",
+            "get /api/v1/reports/cash/weekly"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(
@@ -90,6 +97,12 @@ class OpenApiIntegrationTest {
             "UpdateTransactionRequest",
             "TransactionResponse",
             "TransactionPageResponse",
+            "CategoryCashFlowResponse",
+            "CashFlowSummaryResponse",
+            "DailyCashFlowResponse",
+            "CashFlowPeriodResponse",
+            "CashFlowComparisonResponse",
+            "WeeklyCashFlowResponse",
             "CreateTransferRequest",
             "ApiError",
             "FieldErrorResponse"
@@ -291,6 +304,167 @@ class OpenApiIntegrationTest {
             assertThat(errorResponse.path("description").asString()).as(code).isNotBlank();
             assertThat(contentReferencesSchema(errorResponse.path("content"), "ApiError")).as(code).isTrue();
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"daily", "weekly"})
+    void shouldDocumentCashReportsWithRequiredDateAndJwtWithoutUserIdOrRequestBody(String period) throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation = findOperation(document, "get /api/v1/reports/cash/" + period);
+        JsonNode parameters = operation.path("parameters");
+
+        assertThat(parameters.isArray()).isTrue();
+        assertThat(parameters.size()).isEqualTo(1);
+        JsonNode date = parameters.get(0);
+        assertThat(date.path("name").asString()).isEqualTo("date");
+        assertThat(date.path("in").asString()).isEqualTo("query");
+        assertThat(date.path("required").asBoolean()).isTrue();
+        assertThat(date.path("description").asString()).isNotBlank();
+        JsonNode dateSchema = resolveSchema(document, date.path("schema"));
+        assertThat(dateSchema.path("type").asString()).isEqualTo("string");
+        assertThat(dateSchema.path("format").asString()).isEqualTo("date");
+        String example = date.path("example").asString();
+        if (example.isBlank()) example = dateSchema.path("example").asString();
+        assertThat(example).isNotBlank();
+        assertThat(LocalDate.parse(example)).isNotNull();
+        assertThat(operation.path("requestBody").isMissingNode()).isTrue();
+        assertThat(usesBearerAuth(operation)).isTrue();
+        String expectedSchema = period.equals("daily") ? "DailyCashFlowResponse" : "WeeklyCashFlowResponse";
+        assertThat(contentReferencesSchema(operation.path("responses").path("200").path("content"), expectedSchema))
+                .isTrue();
+    }
+
+    @Test
+    void shouldPublishCashReportDtoFieldsAndReferencesWithoutEntitiesOrInternalProjections() throws Exception {
+        JsonNode schemas = loadOpenApiDocument().path("components").path("schemas");
+        Map<String, List<String>> fields = Map.of(
+                "DailyCashFlowResponse", List.of("date", "summary"),
+                "WeeklyCashFlowResponse", List.of("currentWeek", "previousWeek", "comparison"),
+                "CashFlowPeriodResponse", List.of("startDate", "endDate", "summary"),
+                "CashFlowSummaryResponse", List.of("inflows", "outflows", "net", "invoicePayments",
+                        "incomeCategories", "expenseCategories"),
+                "CashFlowComparisonResponse", List.of("inflowsDifference", "outflowsDifference", "netDifference"),
+                "CategoryCashFlowResponse", List.of("categoryId", "name", "amount")
+        );
+        for (var expected : fields.entrySet()) {
+            assertThat(schemas.path(expected.getKey()).path("properties").properties().stream().map(Map.Entry::getKey).toList())
+                    .as(expected.getKey()).containsExactlyInAnyOrderElementsOf(expected.getValue());
+        }
+        JsonNode summary = schemas.path("CashFlowSummaryResponse").path("properties");
+        for (String field : List.of("inflows", "outflows", "net", "invoicePayments")) {
+            assertThat(summary.path(field).path("type").asString()).as(field).isEqualTo("number");
+        }
+        for (String field : List.of("incomeCategories", "expenseCategories")) {
+            assertThat(summary.path(field).path("type").asString()).isEqualTo("array");
+            assertThat(summary.path(field).path("items").path("$ref").asString())
+                    .isEqualTo("#/components/schemas/CategoryCashFlowResponse");
+        }
+        assertThat(schemas.path("DailyCashFlowResponse").path("properties").path("summary").path("$ref").asString())
+                .isEqualTo("#/components/schemas/CashFlowSummaryResponse");
+        assertThat(schemas.path("CashFlowPeriodResponse").path("properties").path("summary").path("$ref").asString())
+                .isEqualTo("#/components/schemas/CashFlowSummaryResponse");
+        JsonNode weekly = schemas.path("WeeklyCashFlowResponse").path("properties");
+        for (String field : List.of("currentWeek", "previousWeek")) {
+            assertThat(weekly.path(field).path("$ref").asString()).isEqualTo("#/components/schemas/CashFlowPeriodResponse");
+        }
+        assertThat(weekly.path("comparison").path("$ref").asString())
+                .isEqualTo("#/components/schemas/CashFlowComparisonResponse");
+        assertThat(schemas.path("CategoryCashFlowResponse").path("properties").path("categoryId").path("format").asString())
+                .isEqualTo("uuid");
+        assertThat(schemas.path("CashFlowAggregate").isMissingNode()).isTrue();
+        assertThat(schemas.path("Transaction").isMissingNode()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"daily", "weekly"})
+    void shouldProvideCashReportSuccessExamplesWithConsistentMoneyAndWeekComparisons(String period) throws Exception {
+        JsonNode operation = findOperation(loadOpenApiDocument(), "get /api/v1/reports/cash/" + period);
+        JsonNode examples = operation.path("responses").path("200").path("content")
+                .path("application/json").path("examples");
+        assertThat(examples.size()).isPositive();
+
+        for (var entry : examples.properties()) {
+            JsonNode example = entry.getValue().path("value");
+            assertThat(example.isObject()).as(entry.getKey()).isTrue();
+            if (period.equals("daily")) {
+                assertThat(LocalDate.parse(example.path("date").asString())).isNotNull();
+                assertCashSummaryExample(example.path("summary"));
+            } else {
+                JsonNode current = example.path("currentWeek");
+                JsonNode previous = example.path("previousWeek");
+                for (JsonNode week : List.of(current, previous)) {
+                    LocalDate start = LocalDate.parse(week.path("startDate").asString());
+                    assertThat(start.getDayOfWeek()).isEqualTo(java.time.DayOfWeek.MONDAY);
+                    assertThat(LocalDate.parse(week.path("endDate").asString())).isEqualTo(start.plusDays(6));
+                    assertCashSummaryExample(week.path("summary"));
+                }
+                assertThat(LocalDate.parse(previous.path("endDate").asString()).plusDays(1))
+                        .isEqualTo(LocalDate.parse(current.path("startDate").asString()));
+                for (String field : List.of("inflows", "outflows", "net")) {
+                    JsonNode difference = example.path("comparison").path(field + "Difference");
+                    assertThat(difference.isNumber()).isTrue();
+                    assertThat(difference.decimalValue()).isEqualByComparingTo(
+                            current.path("summary").path(field).decimalValue()
+                                    .subtract(previous.path("summary").path(field).decimalValue()));
+                }
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"daily", "weekly"})
+    void shouldDocumentCashReportErrorsWithApiErrorAndEndpointSpecificExamples(String period) throws Exception {
+        String path = "/api/v1/reports/cash/" + period;
+        JsonNode operation = findOperation(loadOpenApiDocument(), "get " + path);
+        List<String> badRequestCodes = new ArrayList<>();
+
+        for (String statusCode : List.of("400", "401", "500")) {
+            JsonNode response = operation.path("responses").path(statusCode);
+            assertThat(response.path("description").asString()).as(statusCode).isNotBlank();
+            assertThat(contentReferencesSchema(response.path("content"), "ApiError")).isTrue();
+            JsonNode examples = response.path("content").path("application/json").path("examples");
+            assertThat(examples.size()).as(statusCode).isPositive();
+            for (var entry : examples.properties()) {
+                JsonNode error = entry.getValue().path("value");
+                assertThat(error.isObject()).isTrue();
+                assertThat(error.properties().stream().map(Map.Entry::getKey).toList())
+                        .containsExactlyInAnyOrder("timestamp", "status", "code", "message", "path", "fieldErrors");
+                assertThat(error.path("status").asInt()).isEqualTo(Integer.parseInt(statusCode));
+                assertThat(error.path("path").asString()).isEqualTo(path);
+                assertThat(Instant.parse(error.path("timestamp").asString())).isNotNull();
+                assertThat(error.path("message").asString()).isNotBlank();
+                assertThat(error.path("fieldErrors").isArray()).isTrue();
+                if (statusCode.equals("400")) badRequestCodes.add(error.path("code").asString());
+                else assertThat(error.path("code").asString()).isEqualTo(
+                        statusCode.equals("401") ? "UNAUTHORIZED" : "INTERNAL_SERVER_ERROR");
+            }
+        }
+        assertThat(badRequestCodes).contains("VALIDATION_ERROR", "INVALID_REPORT_PERIOD");
+    }
+
+    private void assertCashSummaryExample(JsonNode summary) {
+        assertThat(summary.properties().stream().map(Map.Entry::getKey).toList())
+                .containsExactlyInAnyOrder("inflows", "outflows", "net", "invoicePayments", "incomeCategories", "expenseCategories");
+        for (String field : List.of("inflows", "outflows", "net", "invoicePayments")) {
+            assertThat(summary.path(field).isNumber()).as(field).isTrue();
+        }
+        assertThat(summary.path("net").decimalValue()).isEqualByComparingTo(
+                summary.path("inflows").decimalValue().subtract(summary.path("outflows").decimalValue()));
+        assertThat(cashCategoryTotal(summary.path("incomeCategories")))
+                .isEqualByComparingTo(summary.path("inflows").decimalValue());
+        assertThat(cashCategoryTotal(summary.path("expenseCategories")).add(summary.path("invoicePayments").decimalValue()))
+                .isEqualByComparingTo(summary.path("outflows").decimalValue());
+    }
+
+    private BigDecimal cashCategoryTotal(JsonNode categories) {
+        assertThat(categories.isArray()).isTrue();
+        BigDecimal total = BigDecimal.ZERO;
+        for (JsonNode category : categories) {
+            assertThat(category.path("amount").isNumber()).isTrue();
+            assertThat(category.path("name").asString()).isNotBlank();
+            total = total.add(category.path("amount").decimalValue());
+        }
+        return total;
     }
 
     private JsonNode resolveSchema(JsonNode document, JsonNode schema) {

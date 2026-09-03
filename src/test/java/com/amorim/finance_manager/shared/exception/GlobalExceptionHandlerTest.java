@@ -147,6 +147,18 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldMapInvalidReportPeriodToBadRequestWithAStableCode() {
+        String message = "O período deve estar entre 0001-01-01 e 9999-12-31";
+
+        assertError(
+                handler.handleInvalidReportPeriod(new InvalidReportPeriodException(message), request),
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_REPORT_PERIOD,
+                message
+        );
+    }
+
+    @Test
     void shouldMapUnexpectedExceptionWithoutExposingInternalDetails() {
         ResponseEntity<ApiError> response = handler.handleUnexpectedException(
                 new IllegalStateException("Detalhe interno sensível"),

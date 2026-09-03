@@ -354,6 +354,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidReportPeriodException.class)
+    public ResponseEntity<ApiError> handleInvalidReportPeriod(
+            InvalidReportPeriodException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_REPORT_PERIOD,
+                exception.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiError> response(
             HttpStatus status,
             ApiErrorCode code,

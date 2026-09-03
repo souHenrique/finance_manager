@@ -577,4 +577,186 @@ public final class OpenApiExamples {
           "last": true
         }
         """;
+
+    public static final String DAILY_CASH_FLOW_RESPONSE = """
+        {
+          "date": "2026-09-03",
+          "summary": {
+            "inflows": 5000.00,
+            "outflows": 1500.00,
+            "net": 3500.00,
+            "invoicePayments": 1200.00,
+            "incomeCategories": [
+              {
+                "categoryId": "14e7b32a-e52f-4e04-9812-4c8067129684",
+                "name": "Salário",
+                "amount": 5000.00
+              }
+            ],
+            "expenseCategories": [
+              {
+                "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+                "name": "Supermercado",
+                "amount": 300.00
+              }
+            ]
+          }
+        }
+        """;
+
+    public static final String WEEKLY_CASH_FLOW_RESPONSE = """
+        {
+          "currentWeek": {
+            "startDate": "2026-08-31",
+            "endDate": "2026-09-06",
+            "summary": {
+              "inflows": 5000.00,
+              "outflows": 2000.00,
+              "net": 3000.00,
+              "invoicePayments": 1200.00,
+              "incomeCategories": [
+                {
+                  "categoryId": "14e7b32a-e52f-4e04-9812-4c8067129684",
+                  "name": "Salário",
+                  "amount": 5000.00
+                }
+              ],
+              "expenseCategories": [
+                {
+                  "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+                  "name": "Supermercado",
+                  "amount": 800.00
+                }
+              ]
+            }
+          },
+          "previousWeek": {
+            "startDate": "2026-08-24",
+            "endDate": "2026-08-30",
+            "summary": {
+              "inflows": 4500.00,
+              "outflows": 1800.00,
+              "net": 2700.00,
+              "invoicePayments": 1000.00,
+              "incomeCategories": [
+                {
+                  "categoryId": "14e7b32a-e52f-4e04-9812-4c8067129684",
+                  "name": "Salário",
+                  "amount": 4500.00
+                }
+              ],
+              "expenseCategories": [
+                {
+                  "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+                  "name": "Supermercado",
+                  "amount": 800.00
+                }
+              ]
+            }
+          },
+          "comparison": {
+            "inflowsDifference": 500.00,
+            "outflowsDifference": 200.00,
+            "netDifference": 300.00
+          }
+        }
+        """;
+
+    public static final String DAILY_CASH_DATE_REQUIRED_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_ERROR",
+          "message": "Dados de entrada inválidos",
+          "path": "/api/v1/reports/cash/daily",
+          "fieldErrors": [
+            {
+              "field": "date",
+              "message": "A data é obrigatória"
+            }
+          ]
+        }
+        """;
+
+    public static final String WEEKLY_CASH_DATE_REQUIRED_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_ERROR",
+          "message": "Dados de entrada inválidos",
+          "path": "/api/v1/reports/cash/weekly",
+          "fieldErrors": [
+            {
+              "field": "date",
+              "message": "A data é obrigatória"
+            }
+          ]
+        }
+        """;
+
+    public static final String DAILY_CASH_INVALID_PERIOD_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 400,
+          "code": "INVALID_REPORT_PERIOD",
+          "message": "O período deve estar entre 0001-01-01 e 9999-12-31",
+          "path": "/api/v1/reports/cash/daily",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String WEEKLY_CASH_INVALID_PERIOD_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 400,
+          "code": "INVALID_REPORT_PERIOD",
+          "message": "O período deve estar entre 0001-01-01 e 9999-12-31",
+          "path": "/api/v1/reports/cash/weekly",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String DAILY_CASH_UNAUTHORIZED_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "message": "Autenticação necessária ou token inválido",
+          "path": "/api/v1/reports/cash/daily",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String WEEKLY_CASH_UNAUTHORIZED_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "message": "Autenticação necessária ou token inválido",
+          "path": "/api/v1/reports/cash/weekly",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String DAILY_CASH_INTERNAL_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 500,
+          "code": "INTERNAL_SERVER_ERROR",
+          "message": "Ocorreu um erro interno inesperado",
+          "path": "/api/v1/reports/cash/daily",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String WEEKLY_CASH_INTERNAL_ERROR = """
+        {
+          "timestamp": "2026-09-03T12:00:00Z",
+          "status": 500,
+          "code": "INTERNAL_SERVER_ERROR",
+          "message": "Ocorreu um erro interno inesperado",
+          "path": "/api/v1/reports/cash/weekly",
+          "fieldErrors": []
+        }
+        """;
 }
