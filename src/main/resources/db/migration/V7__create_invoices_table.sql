@@ -84,3 +84,10 @@ CREATE INDEX idx_invoices_aud_entity_revision
 
 CREATE INDEX idx_transactions_invoice_id
     ON transactions (invoice_id);
+
+CREATE INDEX idx_invoices_card_reference
+    ON invoices (
+                 credit_card_id,
+                 reference_year DESC,
+                 reference_month DESC
+        );

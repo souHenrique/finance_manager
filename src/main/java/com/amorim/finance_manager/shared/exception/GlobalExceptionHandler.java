@@ -406,6 +406,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvoiceNotFoundException.class)
+    public ResponseEntity<ApiError> handleInvoiceNotFound(
+            InvoiceNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCode.INVOICE_NOT_FOUND,
+                exception.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiError> response(
             HttpStatus status,
             ApiErrorCode code,

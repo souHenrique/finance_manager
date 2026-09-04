@@ -1071,4 +1071,84 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String INVOICE_PAGE_RESPONSE = """
+        {
+          "content": [
+            {
+              "id": "72486234-ef50-4c7e-99a7-9193a28533a8",
+              "creditCardId": "0c736743-8885-43d1-813b-c096a4899201",
+              "referenceMonth": 9,
+              "referenceYear": 2026,
+              "closingDate": "2026-09-20",
+              "dueDate": "2026-09-28",
+              "totalAmount": 850.75,
+              "status": "OPEN",
+              "paidAt": null,
+              "version": 0
+            }
+          ],
+          "page": 0,
+          "size": 20,
+          "totalElements": 1,
+          "totalPages": 1,
+          "first": true,
+          "last": true
+        }
+        """;
+
+    public static final String INVOICE_DETAIL_RESPONSE = """
+        {
+          "id": "72486234-ef50-4c7e-99a7-9193a28533a8",
+          "creditCardId": "0c736743-8885-43d1-813b-c096a4899201",
+          "referenceMonth": 9,
+          "referenceYear": 2026,
+          "closingDate": "2026-09-20",
+          "dueDate": "2026-09-28",
+          "totalAmount": 850.75,
+          "status": "OPEN",
+          "paidAt": null,
+          "version": 0,
+          "transactions": [
+            {
+              "id": "75d4b4e7-8621-41fe-b71f-34c47e1b581b",
+              "description": "Compra no supermercado",
+              "amount": 350.75,
+              "competenceDate": "2026-09-04",
+              "effectiveDate": null,
+              "dueDate": "2026-09-28",
+              "type": "EXPENSE",
+              "status": "COMPLETED",
+              "paymentMethod": "CREDIT_CARD",
+              "categoryId": "6d342909-a042-4dde-b57f-b4f35696f5db",
+              "creditCardId": "0c736743-8885-43d1-813b-c096a4899201",
+              "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+              "installmentNumber": 1,
+              "installmentCount": 1
+            }
+          ]
+        }
+        """;
+
+    public static final String INVOICE_NOT_FOUND = """
+        {
+          "timestamp": "2026-09-04T14:30:00Z",
+          "status": 404,
+          "code": "INVOICE_NOT_FOUND",
+          "message": "Fatura não encontrada",
+          "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String INVALID_REQUEST_ERROR = """
+        {
+          "timestamp": "2026-09-04T14:30:00Z",
+          "status": 400,
+          "code": "INVALID_REQUEST",
+          "message": "Parâmetro de requisição inválido",
+          "path": "/api/v1/invoices",
+          "fieldErrors": []
+        }
+        """;
 }

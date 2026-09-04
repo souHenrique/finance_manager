@@ -4,6 +4,7 @@ import com.amorim.finance_manager.transaction.entity.Transaction;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,4 +13,6 @@ public interface TransactionRepository
         JpaSpecificationExecutor<Transaction> {
 
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+
+    List<Transaction> findAllByInvoiceIdAndUserIdOrderByCompetenceDateAscCreatedAtAsc(UUID invoiceId, UUID userId);
 }
