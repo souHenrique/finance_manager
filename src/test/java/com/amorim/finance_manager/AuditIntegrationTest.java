@@ -11,6 +11,9 @@ import com.amorim.finance_manager.category.repository.CategoryRepository;
 import com.amorim.finance_manager.creditcard.entity.CreditCard;
 import com.amorim.finance_manager.creditcard.entity.CreditCardStatus;
 import com.amorim.finance_manager.creditcard.repository.CreditCardRepository;
+import com.amorim.finance_manager.invoice.entity.Invoice;
+import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
+import com.amorim.finance_manager.invoice.repository.InvoiceRepository;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
@@ -58,6 +61,9 @@ class AuditIntegrationTest {
     private CreditCardRepository creditCardRepository;
 
     @Autowired
+    private InvoiceRepository invoiceRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -68,6 +74,7 @@ class AuditIntegrationTest {
         jdbcTemplate.execute(
                 """
                 TRUNCATE TABLE
+                    invoices_aud,
                     transactions_aud,
                     credit_cards_aud,
                     accounts_aud,
@@ -149,6 +156,33 @@ class AuditIntegrationTest {
                 .containsExactly(
                         new BigDecimal("5000.00"),
                         new BigDecimal("4500.00")
+                );
+    }
+
+    @Test
+    void shouldAuditInvoiceCreationAndStateChanges() {
+        User user = createUser();
+        Account account = createAccount(user.getId());
+        CreditCard creditCard = createCreditCard(user.getId(), account.getId());
+        Invoice invoice = createInvoice(creditCard.getId());
+
+        invoice.setTotalAmount(new BigDecimal("350.00"));
+        invoice.setStatus(InvoiceStatus.CLOSED);
+        invoiceRepository.saveAndFlush(invoice);
+
+        Long revisionCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM invoices_aud WHERE id = ?",
+                Long.class,
+                invoice.getId()
+        );
+
+        assertThat(revisionCount).isEqualTo(2L);
+        assertThat(invoiceStatuses(invoice.getId()))
+                .containsExactly("OPEN", "CLOSED");
+        assertThat(invoiceTotals(invoice.getId()))
+                .containsExactly(
+                        new BigDecimal("0.00"),
+                        new BigDecimal("350.00")
                 );
     }
 
@@ -238,6 +272,18 @@ class AuditIntegrationTest {
         return creditCardRepository.saveAndFlush(creditCard);
     }
 
+    private Invoice createInvoice(UUID creditCardId) {
+        Invoice invoice = new Invoice();
+        invoice.setCreditCardId(creditCardId);
+        invoice.setReferenceMonth(9);
+        invoice.setReferenceYear(2026);
+        invoice.setClosingDate(LocalDate.of(2026, 9, 10));
+        invoice.setDueDate(LocalDate.of(2026, 9, 17));
+        invoice.setTotalAmount(new BigDecimal("0.00"));
+        invoice.setStatus(InvoiceStatus.OPEN);
+        return invoiceRepository.saveAndFlush(invoice);
+    }
+
     private Transaction createTransaction(
             UUID userId,
             UUID accountId,
@@ -296,6 +342,22 @@ class AuditIntegrationTest {
                 "SELECT available_limit FROM credit_cards_aud WHERE id = ? ORDER BY rev",
                 BigDecimal.class,
                 creditCardId
+        );
+    }
+
+    private List<String> invoiceStatuses(UUID invoiceId) {
+        return jdbcTemplate.queryForList(
+                "SELECT status FROM invoices_aud WHERE id = ? ORDER BY rev",
+                String.class,
+                invoiceId
+        );
+    }
+
+    private List<BigDecimal> invoiceTotals(UUID invoiceId) {
+        return jdbcTemplate.queryForList(
+                "SELECT total_amount FROM invoices_aud WHERE id = ? ORDER BY rev",
+                BigDecimal.class,
+                invoiceId
         );
     }
 }
