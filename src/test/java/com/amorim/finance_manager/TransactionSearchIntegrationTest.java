@@ -8,6 +8,9 @@ import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.entity.CategoryStatus;
 import com.amorim.finance_manager.category.entity.CategoryType;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
+import com.amorim.finance_manager.creditcard.entity.CreditCard;
+import com.amorim.finance_manager.creditcard.entity.CreditCardStatus;
+import com.amorim.finance_manager.creditcard.repository.CreditCardRepository;
 import com.amorim.finance_manager.security.JwtService;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
 import com.amorim.finance_manager.transaction.entity.Transaction;
@@ -76,6 +79,8 @@ class TransactionSearchIntegrationTest {
     private CategoryRepository categoryRepository;
     @Autowired
     private TransactionRepository transactionRepository;
+    @Autowired
+    private CreditCardRepository creditCardRepository;
     @Autowired
     private JwtService jwtService;
     @Autowired
@@ -306,11 +311,11 @@ class TransactionSearchIntegrationTest {
 
     @Test
     void shouldFilterCreditCardIdWithoutImplementingCardCreationFlows() throws Exception {
-        UUID cardId = UUID.randomUUID();
+        UUID cardId = createCreditCard(userA).getId();
         Transaction expected = saveCardPurchase(userA, cardId);
-        saveCardPurchase(userA, UUID.randomUUID());
+        saveCardPurchase(userA, createCreditCard(userA).getId());
         save(userA, "Without card", "10.00");
-        saveCardPurchase(userB, UUID.randomUUID());
+        saveCardPurchase(userB, createCreditCard(userB).getId());
 
         assertOnly(search(userA, "creditCardId", cardId.toString(),
                 "type", "CREDIT_CARD_PURCHASE", "status", "COMPLETED"), expected);
@@ -457,7 +462,7 @@ class TransactionSearchIntegrationTest {
         save(userA, "Own expense", "10.00");
         save(userB, "Other expense", "10.00");
         save(userB, "Other income", "20.00", t -> makeIncome(t, userB));
-        UUID foreignCard = UUID.randomUUID();
+        UUID foreignCard = createCreditCard(userB).getId();
         saveCardPurchase(userB, foreignCard);
         UUID foreignId = switch (filter) {
             case "accountId" -> userB.accountId();
@@ -624,6 +629,19 @@ class TransactionSearchIntegrationTest {
             t.setSourceAccountId(null);
             t.setEffectiveDate(null);
         });
+    }
+
+    private CreditCard createCreditCard(TestUser owner) {
+        CreditCard creditCard = new CreditCard();
+        creditCard.setUserId(owner.id());
+        creditCard.setName("Search card " + UUID.randomUUID());
+        creditCard.setCreditLimit(new BigDecimal("5000.00"));
+        creditCard.setAvailableLimit(new BigDecimal("5000.00"));
+        creditCard.setClosingDay(10);
+        creditCard.setDueDay(17);
+        creditCard.setDefaultAccountId(owner.accountId());
+        creditCard.setStatus(CreditCardStatus.ACTIVE);
+        return creditCardRepository.saveAndFlush(creditCard);
     }
 
     private void makeIncome(Transaction transaction, TestUser owner) {

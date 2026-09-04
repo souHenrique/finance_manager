@@ -47,6 +47,10 @@ class OpenApiIntegrationTest {
             "get /api/v1/accounts/{id}",
             "patch /api/v1/accounts/{id}",
             "patch /api/v1/accounts/{id}/status",
+            "post /api/v1/credit-cards",
+            "get /api/v1/credit-cards",
+            "get /api/v1/credit-cards/{id}",
+            "patch /api/v1/credit-cards/{id}",
             "post /api/v1/categories",
             "get /api/v1/categories",
             "get /api/v1/categories/{id}",
@@ -70,6 +74,8 @@ class OpenApiIntegrationTest {
             "post /api/v1/accounts",
             "patch /api/v1/accounts/{id}",
             "patch /api/v1/accounts/{id}/status",
+            "post /api/v1/credit-cards",
+            "patch /api/v1/credit-cards/{id}",
             "post /api/v1/categories",
             "patch /api/v1/categories/{id}",
             "post /api/v1/transactions",
@@ -92,6 +98,9 @@ class OpenApiIntegrationTest {
             "UpdateAccountRequest",
             "UpdateAccountStatusRequest",
             "AccountResponse",
+            "CreateCreditCardRequest",
+            "UpdateCreditCardRequest",
+            "CreditCardResponse",
             "CreateCategoryRequest",
             "UpdateCategoryRequest",
             "CategoryResponse",
@@ -219,6 +228,85 @@ class OpenApiIntegrationTest {
             assertThat(schemas.path(entityName).isMissingNode())
                     .as("Entity %s não pode ser contrato público", entityName)
                     .isTrue();
+        }
+    }
+
+    @Test
+    void shouldDocumentCreditCardContractsAndKeepInternalOwnershipOutOfTheApi() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode schemas = document.path("components").path("schemas");
+        JsonNode create = findOperation(document, "post /api/v1/credit-cards");
+        JsonNode list = findOperation(document, "get /api/v1/credit-cards");
+        JsonNode find = findOperation(document, "get /api/v1/credit-cards/{id}");
+        JsonNode update = findOperation(document, "patch /api/v1/credit-cards/{id}");
+
+        assertThat(create.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(contentReferencesSchema(
+                create.path("requestBody").path("content"),
+                "CreateCreditCardRequest"
+        )).isTrue();
+        assertThat(contentReferencesSchema(
+                create.path("responses").path("201").path("content"),
+                "CreditCardResponse"
+        )).isTrue();
+
+        assertThat(list.path("responses").path("200")
+                .path("content").path("application/json")
+                .path("schema").path("type").asString()).isEqualTo("array");
+        assertThat(list.path("responses").path("200")
+                .path("content").path("application/json")
+                .path("schema").path("items").path("$ref").asString())
+                .isEqualTo("#/components/schemas/CreditCardResponse");
+
+        assertUuidPathParameter(find, "get /api/v1/credit-cards/{id}");
+        assertUuidPathParameter(update, "patch /api/v1/credit-cards/{id}");
+        assertThat(contentReferencesSchema(
+                update.path("requestBody").path("content"),
+                "UpdateCreditCardRequest"
+        )).isTrue();
+
+        assertThat(schemas.path("CreditCardResponse").path("properties")
+                .properties().stream().map(Map.Entry::getKey).toList())
+                .containsExactlyInAnyOrder(
+                        "id",
+                        "name",
+                        "creditLimit",
+                        "availableLimit",
+                        "closingDay",
+                        "dueDay",
+                        "defaultAccountId",
+                        "status",
+                        "version"
+                )
+                .doesNotContain("userId");
+
+        assertThat(schemas.path("CreateCreditCardRequest").path("required")
+                .valueStream().map(JsonNode::asString).toList())
+                .containsExactlyInAnyOrder(
+                        "name",
+                        "creditLimit",
+                        "closingDay",
+                        "dueDay",
+                        "defaultAccountId"
+                );
+        assertThat(schemas.path("UpdateCreditCardRequest")
+                .path("properties").has("availableLimit")).isFalse();
+        assertThat(schemas.path("UpdateCreditCardRequest")
+                .path("properties").path("status").path("enum")
+                .valueStream().map(JsonNode::asString).toList())
+                .containsExactlyInAnyOrder("ACTIVE", "INACTIVE", "BLOCKED");
+        assertThat(schemas.path("CreditCard").isMissingNode()).isTrue();
+
+        for (JsonNode operation : List.of(create, list, find, update)) {
+            assertThat(usesBearerAuth(operation)).isTrue();
+        }
+        for (String statusCode : List.of("400", "401", "404", "409", "500")) {
+            JsonNode response = update.path("responses").path(statusCode);
+            assertThat(response.isMissingNode()).as(statusCode).isFalse();
+            assertThat(contentReferencesSchema(
+                    response.path("content"),
+                    "ApiError"
+            )).as(statusCode).isTrue();
         }
     }
 

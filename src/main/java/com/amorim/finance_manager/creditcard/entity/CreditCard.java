@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Audited;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.hibernate.envers.AuditTable;
 
 import java.math.BigDecimal;
@@ -16,7 +17,7 @@ import java.util.UUID;
         indexes = {
                 @Index(
                         name = "idx_credit_cards_user_id",
-                        columnList = "userId"
+                        columnList = "user_id"
                 ),
                 @Index(
                         name = "idx_credit_cards_user_status",
@@ -70,6 +71,7 @@ public class CreditCard {
     @Column(nullable = false, length = 20)
     private CreditCardStatus status;
 
+    @NotAudited
     @Version
     @Column(nullable = false)
     private Long version;

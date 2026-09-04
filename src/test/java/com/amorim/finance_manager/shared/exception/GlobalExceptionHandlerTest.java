@@ -159,6 +159,41 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldMapCreditCardErrorsToStableStatusesAndCodes() {
+        assertError(
+                handler.handleCreditCardNotFound(
+                        new CreditCardNotFoundException(),
+                        request
+                ),
+                HttpStatus.NOT_FOUND,
+                ApiErrorCode.CREDIT_CARD_NOT_FOUND,
+                "Cartão de crédito não encontrado"
+        );
+
+        assertError(
+                handler.handleInvalidCreditCardUpdate(
+                        new InvalidCreditCardUpdateException(
+                                "Informe ao menos um campo para atualização"
+                        ),
+                        request
+                ),
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_CREDIT_CARD_UPDATE,
+                "Informe ao menos um campo para atualização"
+        );
+
+        assertError(
+                handler.handleCreditLimitConflict(
+                        new CreditLimitConflictException(),
+                        request
+                ),
+                HttpStatus.CONFLICT,
+                ApiErrorCode.CREDIT_LIMIT_CONFLICT,
+                "O novo limite não pode ser menor que o limite já comprometido"
+        );
+    }
+
+    @Test
     void shouldMapUnexpectedExceptionWithoutExposingInternalDetails() {
         ResponseEntity<ApiError> response = handler.handleUnexpectedException(
                 new IllegalStateException("Detalhe interno sensível"),

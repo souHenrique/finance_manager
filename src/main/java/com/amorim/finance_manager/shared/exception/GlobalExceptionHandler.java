@@ -367,6 +367,45 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(CreditCardNotFoundException.class)
+    public ResponseEntity<ApiError> handleCreditCardNotFound(
+            CreditCardNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCode.CREDIT_CARD_NOT_FOUND,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidCreditCardUpdateException.class)
+    public ResponseEntity<ApiError> handleInvalidCreditCardUpdate(
+            InvalidCreditCardUpdateException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_CREDIT_CARD_UPDATE,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CreditLimitConflictException.class)
+    public ResponseEntity<ApiError> handleCreditLimitConflict(
+            CreditLimitConflictException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.CREDIT_LIMIT_CONFLICT,
+                exception.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiError> response(
             HttpStatus status,
             ApiErrorCode code,

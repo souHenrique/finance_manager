@@ -4,8 +4,8 @@ CREATE TABLE credit_cards (
     name VARCHAR(120) NOT NULL,
     credit_limit NUMERIC(19, 2) NOT NULL,
     available_limit NUMERIC(19, 2) NOT NULL,
-    closing_day SMALLINT NOT NULL,
-    due_day SMALLINT NOT NULL,
+    closing_day INTEGER NOT NULL,
+    due_day INTEGER NOT NULL,
     default_account_id UUID NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     version BIGINT NOT NULL DEFAULT 0,
@@ -51,6 +51,29 @@ CREATE TABLE credit_cards (
           )
 );
 
+CREATE TABLE credit_cards_aud (
+    rev INTEGER NOT NULL,
+    revtype SMALLINT,
+    id UUID NOT NULL,
+
+    user_id UUID,
+    name VARCHAR(120),
+    credit_limit NUMERIC(19, 2),
+    available_limit NUMERIC(19, 2),
+    closing_day INTEGER,
+    due_day INTEGER,
+    default_account_id UUID,
+    status VARCHAR(20),
+
+    CONSTRAINT pk_credit_cards_aud
+      PRIMARY KEY (rev, id),
+
+    CONSTRAINT fk_credit_cards_aud_revision
+      FOREIGN KEY (rev)
+          REFERENCES audit_revision (rev)
+);
+
+
 CREATE INDEX idx_credit_cards_user_id
     ON credit_cards (user_id);
 
@@ -68,3 +91,6 @@ ALTER TABLE transactions
 
 CREATE INDEX idx_transactions_credit_card_id
     ON transactions (credit_card_id);
+
+CREATE INDEX idx_credit_cards_aud_entity_revision
+    ON credit_cards_aud (id, rev);

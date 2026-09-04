@@ -8,6 +8,9 @@ import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.entity.CategoryStatus;
 import com.amorim.finance_manager.category.entity.CategoryType;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
+import com.amorim.finance_manager.creditcard.entity.CreditCard;
+import com.amorim.finance_manager.creditcard.entity.CreditCardStatus;
+import com.amorim.finance_manager.creditcard.repository.CreditCardRepository;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
@@ -52,6 +55,9 @@ class AuditIntegrationTest {
     private TransactionRepository transactionRepository;
 
     @Autowired
+    private CreditCardRepository creditCardRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
@@ -63,9 +69,11 @@ class AuditIntegrationTest {
                 """
                 TRUNCATE TABLE
                     transactions_aud,
+                    credit_cards_aud,
                     accounts_aud,
                     audit_revision,
                     transactions,
+                    credit_cards,
                     categories,
                     accounts,
                     users
@@ -116,6 +124,32 @@ class AuditIntegrationTest {
         assertThat(revisionCount).isEqualTo(2L);
         assertThat(transactionStatuses(transaction.getId()))
                 .containsExactly("COMPLETED", "CANCELLED");
+    }
+
+    @Test
+    void shouldAuditCreditCardCreationAndStateChanges() {
+        User user = createUser();
+        Account account = createAccount(user.getId());
+        CreditCard creditCard = createCreditCard(user.getId(), account.getId());
+
+        creditCard.setAvailableLimit(new BigDecimal("4500.00"));
+        creditCard.setStatus(CreditCardStatus.BLOCKED);
+        creditCardRepository.saveAndFlush(creditCard);
+
+        Long revisionCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM credit_cards_aud WHERE id = ?",
+                Long.class,
+                creditCard.getId()
+        );
+
+        assertThat(revisionCount).isEqualTo(2L);
+        assertThat(creditCardStatuses(creditCard.getId()))
+                .containsExactly("ACTIVE", "BLOCKED");
+        assertThat(creditCardAvailableLimits(creditCard.getId()))
+                .containsExactly(
+                        new BigDecimal("5000.00"),
+                        new BigDecimal("4500.00")
+                );
     }
 
     @Test
@@ -191,6 +225,19 @@ class AuditIntegrationTest {
         return categoryRepository.saveAndFlush(category);
     }
 
+    private CreditCard createCreditCard(UUID userId, UUID accountId) {
+        CreditCard creditCard = new CreditCard();
+        creditCard.setUserId(userId);
+        creditCard.setName("Audit Credit Card");
+        creditCard.setCreditLimit(new BigDecimal("5000.00"));
+        creditCard.setAvailableLimit(new BigDecimal("5000.00"));
+        creditCard.setClosingDay(10);
+        creditCard.setDueDay(17);
+        creditCard.setDefaultAccountId(accountId);
+        creditCard.setStatus(CreditCardStatus.ACTIVE);
+        return creditCardRepository.saveAndFlush(creditCard);
+    }
+
     private Transaction createTransaction(
             UUID userId,
             UUID accountId,
@@ -233,6 +280,22 @@ class AuditIntegrationTest {
                 "SELECT status FROM transactions_aud WHERE id = ? ORDER BY rev",
                 String.class,
                 transactionId
+        );
+    }
+
+    private List<String> creditCardStatuses(UUID creditCardId) {
+        return jdbcTemplate.queryForList(
+                "SELECT status FROM credit_cards_aud WHERE id = ? ORDER BY rev",
+                String.class,
+                creditCardId
+        );
+    }
+
+    private List<BigDecimal> creditCardAvailableLimits(UUID creditCardId) {
+        return jdbcTemplate.queryForList(
+                "SELECT available_limit FROM credit_cards_aud WHERE id = ? ORDER BY rev",
+                BigDecimal.class,
+                creditCardId
         );
     }
 }

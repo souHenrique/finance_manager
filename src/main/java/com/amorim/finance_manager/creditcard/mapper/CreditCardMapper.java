@@ -1,6 +1,7 @@
 package com.amorim.finance_manager.creditcard.mapper;
 
 import com.amorim.finance_manager.creditcard.dto.CreateCreditCardRequest;
+import com.amorim.finance_manager.creditcard.dto.CreditCardResponse;
 import com.amorim.finance_manager.creditcard.dto.UpdateCreditCardRequest;
 import com.amorim.finance_manager.creditcard.entity.CreditCard;
 import org.mapstruct.*;

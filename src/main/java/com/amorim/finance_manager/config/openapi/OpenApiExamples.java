@@ -974,4 +974,101 @@ public final class OpenApiExamples {
       "fieldErrors": []
     }
     """;
+
+    public static final String CREATE_CREDIT_CARD_REQUEST = """
+        {
+          "name": "Cartão principal",
+          "creditLimit": 5000.00,
+          "closingDay": 10,
+          "dueDay": 17,
+          "defaultAccountId": "0f6d7313-77f8-4b48-a63d-5338dd95461e"
+        }
+        """;
+
+    public static final String UPDATE_CREDIT_CARD_REQUEST = """
+        {
+          "name": "Cartão viagens",
+          "creditLimit": 6500.00,
+          "closingDay": 12,
+          "dueDay": 19,
+          "status": "ACTIVE"
+        }
+        """;
+
+    public static final String CREDIT_CARD_RESPONSE = """
+        {
+          "id": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+          "name": "Cartão principal",
+          "creditLimit": 5000.00,
+          "availableLimit": 5000.00,
+          "closingDay": 10,
+          "dueDay": 17,
+          "defaultAccountId": "0f6d7313-77f8-4b48-a63d-5338dd95461e",
+          "status": "ACTIVE",
+          "version": 0
+        }
+        """;
+
+    public static final String UPDATED_CREDIT_CARD_RESPONSE = """
+        {
+          "id": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+          "name": "Cartão viagens",
+          "creditLimit": 6500.00,
+          "availableLimit": 6500.00,
+          "closingDay": 12,
+          "dueDay": 19,
+          "defaultAccountId": "0f6d7313-77f8-4b48-a63d-5338dd95461e",
+          "status": "ACTIVE",
+          "version": 1
+        }
+        """;
+
+    public static final String CREDIT_CARD_LIST_RESPONSE = """
+        [
+          {
+            "id": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+            "name": "Cartão principal",
+            "creditLimit": 5000.00,
+            "availableLimit": 5000.00,
+            "closingDay": 10,
+            "dueDay": 17,
+            "defaultAccountId": "0f6d7313-77f8-4b48-a63d-5338dd95461e",
+            "status": "ACTIVE",
+            "version": 0
+          }
+        ]
+        """;
+
+    public static final String CREDIT_CARD_NOT_FOUND = """
+        {
+          "timestamp": "2026-09-04T12:00:00Z",
+          "status": 404,
+          "code": "CREDIT_CARD_NOT_FOUND",
+          "message": "Cartão de crédito não encontrado",
+          "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String INVALID_CREDIT_CARD_UPDATE = """
+        {
+          "timestamp": "2026-09-04T12:00:00Z",
+          "status": 400,
+          "code": "INVALID_CREDIT_CARD_UPDATE",
+          "message": "Informe ao menos um campo para atualização",
+          "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String CREDIT_LIMIT_CONFLICT = """
+        {
+          "timestamp": "2026-09-04T12:00:00Z",
+          "status": 409,
+          "code": "CREDIT_LIMIT_CONFLICT",
+          "message": "O novo limite não pode ser menor que o limite já comprometido",
+          "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418",
+          "fieldErrors": []
+        }
+        """;
 }

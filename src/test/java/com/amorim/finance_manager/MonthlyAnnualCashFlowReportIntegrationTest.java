@@ -357,7 +357,6 @@ class MonthlyAnnualCashFlowReportIntegrationTest {
                 transaction.setPaymentMethod(PaymentMethod.TRANSFER);
             }
             case CREDIT_CARD_PURCHASE, CREDIT_CARD_PAYMENT -> {
-                transaction.setCreditCardId(UUID.randomUUID());
                 transaction.setInvoiceId(UUID.randomUUID());
                 if (type == TransactionType.CREDIT_CARD_PURCHASE) {
                     transaction.setPaymentMethod(PaymentMethod.CREDIT_CARD);
