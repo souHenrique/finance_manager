@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -50,14 +51,28 @@ class AccountIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     @BeforeEach
     void cleanDatabase() {
-        /*
-         * Accounts devem ser removidas antes dos usuários
-         * por causa da foreign key user_id.
-         */
-        accountRepository.deleteAll();
-        userRepository.deleteAll();
+        jdbcTemplate.execute(
+                """
+                TRUNCATE TABLE
+                    invoices_aud,
+                    transactions_aud,
+                    credit_cards_aud,
+                    accounts_aud,
+                    audit_revision,
+                    transactions,
+                    invoices,
+                    credit_cards,
+                    categories,
+                    accounts,
+                    users
+                CASCADE
+                """
+        );
     }
 
     @Test

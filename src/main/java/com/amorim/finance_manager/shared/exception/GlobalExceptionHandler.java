@@ -419,6 +419,32 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidCreditCardStatusException.class)
+    public ResponseEntity<ApiError> handleInvalidCreditCardStatus(
+            InvalidCreditCardStatusException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_CREDIT_CARD_STATUS,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidInvoiceStatusException.class)
+    public ResponseEntity<ApiError> handleInvalidInvoiceStatus(
+            InvalidInvoiceStatusException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_INVOICE_STATUS,
+                exception.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiError> response(
             HttpStatus status,
             ApiErrorCode code,

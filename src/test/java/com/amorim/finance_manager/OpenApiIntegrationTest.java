@@ -51,6 +51,7 @@ class OpenApiIntegrationTest {
             "get /api/v1/credit-cards",
             "get /api/v1/credit-cards/{id}",
             "patch /api/v1/credit-cards/{id}",
+            "post /api/v1/credit-cards/{id}/purchases",
             "get /api/v1/invoices",
             "get /api/v1/invoices/{id}",
             "get /api/v1/credit-cards/{id}/invoices",
@@ -79,6 +80,7 @@ class OpenApiIntegrationTest {
             "patch /api/v1/accounts/{id}/status",
             "post /api/v1/credit-cards",
             "patch /api/v1/credit-cards/{id}",
+            "post /api/v1/credit-cards/{id}/purchases",
             "post /api/v1/categories",
             "patch /api/v1/categories/{id}",
             "post /api/v1/transactions",
@@ -103,6 +105,7 @@ class OpenApiIntegrationTest {
             "AccountResponse",
             "CreateCreditCardRequest",
             "UpdateCreditCardRequest",
+            "CreateCreditCardPurchaseRequest",
             "CreditCardResponse",
             "InvoiceSummaryResponse",
             "InvoiceDetailResponse",
@@ -308,6 +311,65 @@ class OpenApiIntegrationTest {
         }
         for (String statusCode : List.of("400", "401", "404", "409", "500")) {
             JsonNode response = update.path("responses").path(statusCode);
+            assertThat(response.isMissingNode()).as(statusCode).isFalse();
+            assertThat(contentReferencesSchema(
+                    response.path("content"),
+                    "ApiError"
+            )).as(statusCode).isTrue();
+        }
+    }
+
+    @Test
+    void shouldDocumentTheCreditCardPurchaseContractAndStandardErrors() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode schemas = document.path("components").path("schemas");
+        JsonNode purchase = findOperation(
+                document,
+                "post /api/v1/credit-cards/{id}/purchases"
+        );
+
+        assertUuidPathParameter(
+                purchase,
+                "post /api/v1/credit-cards/{id}/purchases"
+        );
+        assertThat(purchase.path("requestBody").path("required").asBoolean()).isTrue();
+        assertThat(contentReferencesSchema(
+                purchase.path("requestBody").path("content"),
+                "CreateCreditCardPurchaseRequest"
+        )).isTrue();
+        assertThat(contentReferencesSchema(
+                purchase.path("responses").path("201").path("content"),
+                "TransactionResponse"
+        )).isTrue();
+        assertThat(usesBearerAuth(purchase)).isTrue();
+
+        assertThat(schemas.path("CreateCreditCardPurchaseRequest")
+                .path("required")
+                .valueStream()
+                .map(JsonNode::asString)
+                .toList())
+                .containsExactlyInAnyOrder(
+                        "description",
+                        "amount",
+                        "purchaseDate",
+                        "categoryId"
+                );
+
+        JsonNode properties = schemas.path("CreateCreditCardPurchaseRequest")
+                .path("properties");
+        assertThat(properties.path("description").path("maxLength").asInt())
+                .isEqualTo(255);
+        assertThat(properties.path("amount").path("minimum").asText())
+                .isEqualTo("0.01");
+        assertThat(properties.path("purchaseDate").path("type").asString())
+                .isEqualTo("string");
+        assertThat(properties.path("purchaseDate").path("format").asString())
+                .isEqualTo("date");
+        assertThat(properties.path("categoryId").path("format").asString())
+                .isEqualTo("uuid");
+
+        for (String statusCode : List.of("400", "401", "404", "409", "500")) {
+            JsonNode response = purchase.path("responses").path(statusCode);
             assertThat(response.isMissingNode()).as(statusCode).isFalse();
             assertThat(contentReferencesSchema(
                     response.path("content"),

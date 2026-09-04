@@ -108,6 +108,30 @@ public class InvoiceCycleService {
                 });
     }
 
+    @Transactional
+    public Invoice findOrCreate(CreditCard card, InvoiceCycle cycle) {
+        return invoiceRepository
+                .findByCreditCardIdAndReferenceMonthAndReferenceYear(
+                        card.getId(),
+                        cycle.referenceMonth(),
+                        cycle.referenceYear()
+                )
+                .orElseGet(() -> {
+                    Invoice invoice = new Invoice();
+
+                    invoice.setCreditCardId(card.getId());
+                    invoice.setReferenceMonth(cycle.referenceMonth());
+                    invoice.setReferenceYear(cycle.referenceYear());
+                    invoice.setClosingDate(cycle.closingDate());
+                    invoice.setDueDate(cycle.dueDate());
+                    invoice.setTotalAmount(BigDecimal.ZERO.setScale(2));
+                    invoice.setStatus(InvoiceStatus.OPEN);
+                    invoice.setPaidAt(null);
+
+                    return invoiceRepository.saveAndFlush(invoice);
+                });
+    }
+
     private LocalDate validDate(YearMonth month, int configuredDay) {
         int validDay = Math.min(
                 configuredDay,

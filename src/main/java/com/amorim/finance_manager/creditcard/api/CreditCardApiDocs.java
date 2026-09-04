@@ -1,9 +1,11 @@
 package com.amorim.finance_manager.creditcard.api;
 
+import com.amorim.finance_manager.creditcard.dto.CreateCreditCardPurchaseRequest;
 import com.amorim.finance_manager.creditcard.dto.CreateCreditCardRequest;
 import com.amorim.finance_manager.creditcard.dto.CreditCardResponse;
 import com.amorim.finance_manager.creditcard.dto.UpdateCreditCardRequest;
 import com.amorim.finance_manager.shared.exception.ApiError;
+import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -359,5 +361,143 @@ public interface CreditCardApiDocs {
             )
             UUID id,
             UpdateCreditCardRequest request
+    );
+
+    @Operation(
+            summary = "Registrar compra à vista no cartão",
+            description = """
+                Registra uma compra à vista no cartão do usuário autenticado.
+
+                A compra reduz o limite disponível, é vinculada à fatura
+                correspondente à data da compra e não altera o saldo bancário.
+                """,
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Dados da compra à vista",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation =
+                                            CreateCreditCardPurchaseRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    value =
+                                            CREATE_CREDIT_CARD_PURCHASE_REQUEST
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Compra registrada",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = TransactionResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    value = CREDIT_CARD_PURCHASE_RESPONSE
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Dados inválidos ou categoria incompatível",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    value = VALIDATION_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    value = UNAUTHORIZED_ERROR
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Cartão ou categoria não encontrado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Cartão não encontrado",
+                                            value = CREDIT_CARD_NOT_FOUND
+                                    ),
+                                    @ExampleObject(
+                                            name = "Categoria não encontrada",
+                                            value = CATEGORY_NOT_FOUND
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = """
+                        Cartão indisponível, fatura não aberta,
+                        limite insuficiente ou conflito concorrente
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Limite insuficiente",
+                                            value =
+                                                    CREDIT_CARD_PURCHASE_LIMIT_CONFLICT
+                                    ),
+                                    @ExampleObject(
+                                            name = "Cartão indisponível",
+                                            value =
+                                                    INVALID_CREDIT_CARD_STATUS_ERROR
+                                    ),
+                                    @ExampleObject(
+                                            name = "Fatura não aberta",
+                                            value =
+                                                    INVALID_INVOICE_STATUS_ERROR
+                                    ),
+                                    @ExampleObject(
+                                            name = "Conflito concorrente",
+                                            value =
+                                                    OPTIMISTIC_LOCK_CONFLICT
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = @ExampleObject(
+                                    value = INTERNAL_SERVER_ERROR
+                            )
+                    )
+            )
+    })
+    ResponseEntity<TransactionResponse> createPurchase(
+            @Parameter(
+                    name = "id",
+                    description = "Identificador UUID do cartão de crédito",
+                    required = true,
+                    example = "d89835ee-3463-4a35-a2e9-38d96ab17418",
+                    schema = @Schema(
+                            type = "string",
+                            format = "uuid"
+                    )
+            )
+            UUID id,
+            CreateCreditCardPurchaseRequest request
     );
 }

@@ -1151,4 +1151,70 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String CREATE_CREDIT_CARD_PURCHASE_REQUEST = """
+    {
+      "description": "Compra no supermercado",
+      "amount": 250.00,
+      "purchaseDate": "2026-09-11",
+      "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709"
+    }
+    """;
+
+    public static final String CREDIT_CARD_PURCHASE_RESPONSE = """
+    {
+      "id": "2cb0ba91-bfc4-43be-89ec-336ca64a6231",
+      "description": "Compra no supermercado",
+      "amount": 250.00,
+      "competenceDate": "2026-09-11",
+      "effectiveDate": null,
+      "dueDate": "2026-10-17",
+      "type": "CREDIT_CARD_PURCHASE",
+      "status": "COMPLETED",
+      "paymentMethod": "CREDIT_CARD",
+      "sourceAccountId": null,
+      "destinationAccountId": null,
+      "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+      "creditCardId": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+      "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+      "installmentGroupId": null,
+      "installmentNumber": 1,
+      "installmentCount": 1,
+      "createdAt": "2026-09-11T12:00:00Z",
+      "updatedAt": "2026-09-11T12:00:00Z"
+    }
+    """;
+
+    public static final String CREDIT_CARD_PURCHASE_LIMIT_CONFLICT = """
+    {
+      "timestamp": "2026-09-11T12:00:00Z",
+      "status": 409,
+      "code": "CREDIT_LIMIT_CONFLICT",
+      "message": "Limite disponível insuficiente para realizar a compra",
+      "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418/purchases",
+      "fieldErrors": []
+    }
+    """;
+
+    public static final String INVALID_CREDIT_CARD_STATUS_ERROR = """
+    {
+      "timestamp": "2026-09-11T12:00:00Z",
+      "status": 409,
+      "code": "INVALID_CREDIT_CARD_STATUS",
+      "message": "Apenas cartões ativos podem receber novas compras",
+      "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418/purchases",
+      "fieldErrors": []
+    }
+    """;
+
+    public static final String INVALID_INVOICE_STATUS_ERROR = """
+    {
+      "timestamp": "2026-09-11T12:00:00Z",
+      "status": 409,
+      "code": "INVALID_INVOICE_STATUS",
+      "message": "Apenas faturas abertas podem receber novas compras",
+      "path": "/api/v1/credit-cards/d89835ee-3463-4a35-a2e9-38d96ab17418/purchases",
+      "fieldErrors": []
+    }
+    """;
 }

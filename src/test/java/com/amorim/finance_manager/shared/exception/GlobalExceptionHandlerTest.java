@@ -194,6 +194,41 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void shouldMapCreditCardPurchaseStateErrorsToConflict() {
+        assertError(
+                handler.handleInvalidCreditCardStatus(
+                        new InvalidCreditCardStatusException(),
+                        request
+                ),
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_CREDIT_CARD_STATUS,
+                "Apenas cartões ativos podem receber novas compras"
+        );
+
+        assertError(
+                handler.handleInvalidInvoiceStatus(
+                        new InvalidInvoiceStatusException(),
+                        request
+                ),
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_INVOICE_STATUS,
+                "Apenas faturas abertas podem receber novas compras"
+        );
+
+        assertError(
+                handler.handleCreditLimitConflict(
+                        new CreditLimitConflictException(
+                                "Limite disponível insuficiente para realizar a compra"
+                        ),
+                        request
+                ),
+                HttpStatus.CONFLICT,
+                ApiErrorCode.CREDIT_LIMIT_CONFLICT,
+                "Limite disponível insuficiente para realizar a compra"
+        );
+    }
+
+    @Test
     void shouldMapUnexpectedExceptionWithoutExposingInternalDetails() {
         ResponseEntity<ApiError> response = handler.handleUnexpectedException(
                 new IllegalStateException("Detalhe interno sensível"),

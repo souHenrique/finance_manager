@@ -2,10 +2,13 @@ package com.amorim.finance_manager.creditcard.controller;
 
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.creditcard.api.CreditCardApiDocs;
+import com.amorim.finance_manager.creditcard.dto.CreateCreditCardPurchaseRequest;
 import com.amorim.finance_manager.creditcard.dto.CreateCreditCardRequest;
 import com.amorim.finance_manager.creditcard.dto.CreditCardResponse;
 import com.amorim.finance_manager.creditcard.dto.UpdateCreditCardRequest;
+import com.amorim.finance_manager.creditcard.service.CreditCardPurchaseService;
 import com.amorim.finance_manager.creditcard.service.CreditCardService;
+import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -28,6 +31,7 @@ import java.util.UUID;
 public class CreditCardController implements CreditCardApiDocs {
 
     private final CreditCardService creditCardService;
+    private final CreditCardPurchaseService creditCardPurchaseService;
 
     @Override
     @PostMapping
@@ -60,5 +64,16 @@ public class CreditCardController implements CreditCardApiDocs {
         return ResponseEntity.ok(
                 creditCardService.update(id, request)
         );
+    }
+
+    @Override
+    @PostMapping("/{id}/purchases")
+    public ResponseEntity<TransactionResponse> createPurchase(
+            @PathVariable UUID id,
+            @Valid @RequestBody CreateCreditCardPurchaseRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(creditCardPurchaseService.create(id, request));
     }
 }
