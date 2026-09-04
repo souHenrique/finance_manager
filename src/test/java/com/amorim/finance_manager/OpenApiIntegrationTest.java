@@ -337,10 +337,14 @@ class OpenApiIntegrationTest {
                 purchase.path("requestBody").path("content"),
                 "CreateCreditCardPurchaseRequest"
         )).isTrue();
-        assertThat(contentReferencesSchema(
-                purchase.path("responses").path("201").path("content"),
-                "TransactionResponse"
-        )).isTrue();
+        JsonNode successSchema = purchase.path("responses")
+                .path("201")
+                .path("content")
+                .path(MediaType.APPLICATION_JSON_VALUE)
+                .path("schema");
+        assertThat(successSchema.path("type").asString()).isEqualTo("array");
+        assertThat(successSchema.path("items").path("$ref").asString())
+                .endsWith("/TransactionResponse");
         assertThat(usesBearerAuth(purchase)).isTrue();
 
         assertThat(schemas.path("CreateCreditCardPurchaseRequest")
@@ -352,7 +356,8 @@ class OpenApiIntegrationTest {
                         "description",
                         "amount",
                         "purchaseDate",
-                        "categoryId"
+                        "categoryId",
+                        "installmentCount"
                 );
 
         JsonNode properties = schemas.path("CreateCreditCardPurchaseRequest")
@@ -367,6 +372,10 @@ class OpenApiIntegrationTest {
                 .isEqualTo("date");
         assertThat(properties.path("categoryId").path("format").asString())
                 .isEqualTo("uuid");
+        assertThat(properties.path("installmentCount").path("type").asString())
+                .isEqualTo("integer");
+        assertThat(properties.path("installmentCount").path("minimum").asText())
+                .isEqualTo("1");
 
         for (String statusCode : List.of("400", "401", "404", "409", "500")) {
             JsonNode response = purchase.path("responses").path(statusCode);

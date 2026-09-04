@@ -364,16 +364,18 @@ public interface CreditCardApiDocs {
     );
 
     @Operation(
-            summary = "Registrar compra à vista no cartão",
+            summary = "Registrar compra no cartão",
             description = """
-                Registra uma compra à vista no cartão do usuário autenticado.
+            Registra uma compra à vista ou parcelada no cartão
+            do usuário autenticado.
 
-                A compra reduz o limite disponível, é vinculada à fatura
-                correspondente à data da compra e não altera o saldo bancário.
-                """,
+            O limite disponível é reduzido pelo valor total da compra.
+            Cada parcela é vinculada à sua fatura mensal correspondente
+            e a compra não altera o saldo bancário.
+            """,
             requestBody = @RequestBody(
                     required = true,
-                    description = "Dados da compra à vista",
+                    description = "Dados da compra e quantidade de parcelas",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
@@ -390,14 +392,17 @@ public interface CreditCardApiDocs {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "201",
-                    description = "Compra registrada",
+                    description = "Compra registrada e parcelas geradas",
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(
-                                    implementation = TransactionResponse.class
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation =
+                                                    TransactionResponse.class
+                                    )
                             ),
                             examples = @ExampleObject(
-                                    value = CREDIT_CARD_PURCHASE_RESPONSE
+                                    value = CREDIT_CARD_PURCHASES_RESPONSE
                             )
                     )
             ),
@@ -486,7 +491,7 @@ public interface CreditCardApiDocs {
                     )
             )
     })
-    ResponseEntity<TransactionResponse> createPurchase(
+    ResponseEntity<List<TransactionResponse>> createPurchase(
             @Parameter(
                     name = "id",
                     description = "Identificador UUID do cartão de crédito",

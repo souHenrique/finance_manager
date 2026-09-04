@@ -68,7 +68,7 @@ public class CreditCardController implements CreditCardApiDocs {
 
     @Override
     @PostMapping("/{id}/purchases")
-    public ResponseEntity<TransactionResponse> createPurchase(
+    public ResponseEntity<List<TransactionResponse>> createPurchase(
             @PathVariable UUID id,
             @Valid @RequestBody CreateCreditCardPurchaseRequest request
     ) {

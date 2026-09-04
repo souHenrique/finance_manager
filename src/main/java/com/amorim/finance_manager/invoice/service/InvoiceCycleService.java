@@ -41,32 +41,17 @@ public class InvoiceCycleService {
 
         YearMonth purchaseMonth = YearMonth.from(purchaseDate);
 
-        LocalDate closingDateInPurchaseMonth =
-                validDate(purchaseMonth, closingDay);
+        LocalDate closingDateInPurchaseMonth = validDate(purchaseMonth, closingDay);
 
         YearMonth referenceMonth =
                 purchaseDate.isAfter(closingDateInPurchaseMonth)
                         ? purchaseMonth.plusMonths(1)
                         : purchaseMonth;
 
-        LocalDate closingDate =
-                validDate(referenceMonth, closingDay);
-
-        LocalDate dueDate =
-                validDate(referenceMonth, dueDay);
-
-        if (!dueDate.isAfter(closingDate)) {
-            dueDate = validDate(
-                    referenceMonth.plusMonths(1),
-                    dueDay
-            );
-        }
-
-        return new InvoiceCycle(
-                referenceMonth.getMonthValue(),
-                referenceMonth.getYear(),
-                closingDate,
-                dueDate
+        return buildCycle(
+                referenceMonth,
+                closingDay,
+                dueDay
         );
     }
 
@@ -147,5 +132,46 @@ public class InvoiceCycleService {
                     "Dia deve estar entre 1 e 31"
             );
         }
+    }
+
+    private InvoiceCycle buildCycle(YearMonth referenceMonth, int closingDay, int dueDay) {
+        LocalDate closingDate = validDate(referenceMonth, closingDay);
+
+        LocalDate dueDate = validDate(referenceMonth, dueDay);
+
+        if (!dueDate.isAfter(closingDate)) {
+            dueDate = validDate(referenceMonth.plusMonths(1), dueDay);
+        }
+
+        return new InvoiceCycle(
+                referenceMonth.getMonthValue(),
+                referenceMonth.getYear(),
+                closingDate,
+                dueDate
+        );
+    }
+
+    public InvoiceCycle shift(InvoiceCycle initialCycle, long monthOffset, int closingDay, int dueDay) {
+        Objects.requireNonNull(initialCycle, "Ciclo inicial é obrigatório");
+
+        if (monthOffset < 0) {
+            throw new IllegalArgumentException("Deslocamento de mês não pode ser negativo");
+        }
+
+        validateDay(closingDay);
+        validateDay(dueDay);
+
+        YearMonth referenceMonth = YearMonth
+                .of(
+                        initialCycle.referenceYear(),
+                        initialCycle.referenceMonth()
+                )
+                .plusMonths(monthOffset);
+
+        return buildCycle(
+                referenceMonth,
+                closingDay,
+                dueDay
+        );
     }
 }

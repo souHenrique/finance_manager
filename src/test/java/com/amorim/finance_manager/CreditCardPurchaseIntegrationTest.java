@@ -42,6 +42,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -136,26 +137,28 @@ class CreditCardPurchaseIntegrationTest {
                         .content(purchaseJson("Supermercado", "250.00", PURCHASE_DATE, userA.expenseCategoryId())))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.description").value("Supermercado"))
-                .andExpect(jsonPath("$.amount").value(250.00))
-                .andExpect(jsonPath("$.competenceDate").value("2026-09-11"))
-                .andExpect(jsonPath("$.effectiveDate").doesNotExist())
-                .andExpect(jsonPath("$.type").value("CREDIT_CARD_PURCHASE"))
-                .andExpect(jsonPath("$.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.paymentMethod").value("CREDIT_CARD"))
-                .andExpect(jsonPath("$.sourceAccountId").doesNotExist())
-                .andExpect(jsonPath("$.destinationAccountId").doesNotExist())
-                .andExpect(jsonPath("$.categoryId").value(userA.expenseCategoryId().toString()))
-                .andExpect(jsonPath("$.creditCardId").value(card.getId().toString()))
-                .andExpect(jsonPath("$.invoiceId").isNotEmpty())
-                .andExpect(jsonPath("$.installmentGroupId").doesNotExist())
-                .andExpect(jsonPath("$.installmentNumber").value(1))
-                .andExpect(jsonPath("$.installmentCount").value(1))
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].description").value("Supermercado"))
+                .andExpect(jsonPath("$[0].amount").value(250.00))
+                .andExpect(jsonPath("$[0].competenceDate").value("2026-09-11"))
+                .andExpect(jsonPath("$[0].effectiveDate").doesNotExist())
+                .andExpect(jsonPath("$[0].type").value("CREDIT_CARD_PURCHASE"))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"))
+                .andExpect(jsonPath("$[0].paymentMethod").value("CREDIT_CARD"))
+                .andExpect(jsonPath("$[0].sourceAccountId").doesNotExist())
+                .andExpect(jsonPath("$[0].destinationAccountId").doesNotExist())
+                .andExpect(jsonPath("$[0].categoryId").value(userA.expenseCategoryId().toString()))
+                .andExpect(jsonPath("$[0].creditCardId").value(card.getId().toString()))
+                .andExpect(jsonPath("$[0].invoiceId").isNotEmpty())
+                .andExpect(jsonPath("$[0].installmentGroupId").isNotEmpty())
+                .andExpect(jsonPath("$[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$[0].installmentCount").value(1))
                 .andReturn();
 
         JsonNode response = objectMapper.readTree(
                 result.getResponse().getContentAsString(StandardCharsets.UTF_8)
-        );
+        ).get(0);
         UUID transactionId = UUID.fromString(response.path("id").asString());
         UUID invoiceId = UUID.fromString(response.path("invoiceId").asString());
 
@@ -181,6 +184,128 @@ class CreditCardPurchaseIntegrationTest {
 
         Account account = accountRepository.findById(userA.accountId()).orElseThrow();
         assertThat(account.getCurrentBalance()).isEqualByComparingTo("1000.00");
+    }
+
+    @Test
+    void shouldCreateTwoInstallmentsInConsecutiveInvoices() throws Exception {
+        CreditCard card = createCard(userA, CreditCardStatus.ACTIVE, "1000.00", "1000.00");
+
+        MvcResult result = performPurchase(
+                userA,
+                card.getId(),
+                "Notebook",
+                "100.00",
+                PURCHASE_DATE,
+                2
+        )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].amount").value(50.00))
+                .andExpect(jsonPath("$[1].amount").value(50.00))
+                .andExpect(jsonPath("$[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$[1].installmentNumber").value(2))
+                .andExpect(jsonPath("$[0].installmentCount").value(2))
+                .andExpect(jsonPath("$[1].installmentCount").value(2))
+                .andReturn();
+
+        JsonNode response = objectMapper.readTree(
+                result.getResponse().getContentAsString(StandardCharsets.UTF_8)
+        );
+        assertThat(response.get(0).path("installmentGroupId").asString())
+                .isEqualTo(response.get(1).path("installmentGroupId").asString());
+        assertThat(response.get(0).path("invoiceId").asString())
+                .isNotEqualTo(response.get(1).path("invoiceId").asString());
+
+        List<Invoice> invoices = invoicesFor(card.getId());
+        assertThat(invoices).extracting(Invoice::getReferenceMonth)
+                .containsExactly(10, 11);
+        assertThat(invoices).extracting(Invoice::getReferenceYear)
+                .containsOnly(2026);
+        assertThat(invoices).extracting(Invoice::getTotalAmount)
+                .containsExactly(new BigDecimal("50.00"), new BigDecimal("50.00"));
+        assertThat(creditCardRepository.findById(card.getId()).orElseThrow().getAvailableLimit())
+                .isEqualByComparingTo("900.00");
+    }
+
+    @Test
+    void shouldKeepTheExactTotalWhenThreeInstallmentsAreNotEvenlyDivisible() throws Exception {
+        CreditCard card = createCard(userA, CreditCardStatus.ACTIVE, "1000.00", "1000.00");
+
+        performPurchase(
+                userA,
+                card.getId(),
+                "Non-divisible purchase",
+                "100.00",
+                PURCHASE_DATE,
+                3
+        )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].amount").value(33.33))
+                .andExpect(jsonPath("$[1].amount").value(33.33))
+                .andExpect(jsonPath("$[2].amount").value(33.34));
+
+        List<Transaction> installments = installmentsFor(card.getId());
+        assertThat(installments).extracting(Transaction::getInstallmentNumber)
+                .containsExactly(1, 2, 3);
+        assertThat(installments).extracting(Transaction::getInstallmentCount)
+                .containsOnly(3);
+        assertThat(installments.stream()
+                .map(Transaction::getInstallmentGroupId)
+                .distinct())
+                .hasSize(1)
+                .doesNotContainNull();
+
+        BigDecimal transactionTotal = installments.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal invoiceTotal = invoicesFor(card.getId()).stream()
+                .map(Invoice::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        assertThat(transactionTotal).isEqualByComparingTo("100.00");
+        assertThat(invoiceTotal).isEqualByComparingTo("100.00");
+        assertThat(installments.getLast().getAmount()).isEqualByComparingTo("33.34");
+    }
+
+    @Test
+    void shouldCreateTwelveInstallmentsAcrossTheYearBoundary() throws Exception {
+        CreditCard card = createCard(userA, CreditCardStatus.ACTIVE, "1000.00", "1000.00");
+        LocalDate decemberPurchase = LocalDate.of(2026, 12, 11);
+
+        performPurchase(
+                userA,
+                card.getId(),
+                "Annual purchase",
+                "120.00",
+                decemberPurchase,
+                12
+        )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.length()").value(12))
+                .andExpect(jsonPath("$[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$[11].installmentNumber").value(12))
+                .andExpect(jsonPath("$[11].installmentCount").value(12));
+
+        List<Invoice> invoices = invoicesFor(card.getId());
+        assertThat(invoices).hasSize(12);
+        assertThat(invoices).extracting(Invoice::getReferenceMonth)
+                .containsExactly(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+        assertThat(invoices).extracting(Invoice::getReferenceYear)
+                .containsOnly(2027);
+        assertThat(invoices).extracting(Invoice::getTotalAmount)
+                .containsOnly(new BigDecimal("10.00"));
+
+        List<Transaction> installments = installmentsFor(card.getId());
+        assertThat(installments).hasSize(12);
+        assertThat(installments.getFirst().getCompetenceDate())
+                .isEqualTo(LocalDate.of(2026, 12, 11));
+        assertThat(installments.getLast().getCompetenceDate())
+                .isEqualTo(LocalDate.of(2027, 11, 11));
+        assertThat(creditCardRepository.findById(card.getId()).orElseThrow().getAvailableLimit())
+                .isEqualByComparingTo("880.00");
+        assertThat(accountRepository.findById(userA.accountId()).orElseThrow().getCurrentBalance())
+                .isEqualByComparingTo("1000.00");
     }
 
     @Test
@@ -211,22 +336,33 @@ class CreditCardPurchaseIntegrationTest {
         List<InvalidRequest> invalidRequests = List.of(
                 new InvalidRequest(
                         "{\"description\":\"   \",\"amount\":10.00,\"purchaseDate\":\"2026-09-11\",\"categoryId\":\""
-                                + userA.expenseCategoryId() + "\"}",
+                                + userA.expenseCategoryId() + "\",\"installmentCount\":1}",
                         "description"
                 ),
                 new InvalidRequest(
                         "{\"description\":\"Compra\",\"amount\":0,\"purchaseDate\":\"2026-09-11\",\"categoryId\":\""
-                                + userA.expenseCategoryId() + "\"}",
+                                + userA.expenseCategoryId() + "\",\"installmentCount\":1}",
                         "amount"
                 ),
                 new InvalidRequest(
                         "{\"description\":\"Compra\",\"amount\":10.00,\"categoryId\":\""
-                                + userA.expenseCategoryId() + "\"}",
+                                + userA.expenseCategoryId() + "\",\"installmentCount\":1}",
                         "purchaseDate"
                 ),
                 new InvalidRequest(
-                        "{\"description\":\"Compra\",\"amount\":10.00,\"purchaseDate\":\"2026-09-11\"}",
+                        "{\"description\":\"Compra\",\"amount\":10.00,\"purchaseDate\":\"2026-09-11\","
+                                + "\"installmentCount\":1}",
                         "categoryId"
+                ),
+                new InvalidRequest(
+                        "{\"description\":\"Compra\",\"amount\":10.00,\"purchaseDate\":\"2026-09-11\",\"categoryId\":\""
+                                + userA.expenseCategoryId() + "\"}",
+                        "installmentCount"
+                ),
+                new InvalidRequest(
+                        "{\"description\":\"Compra\",\"amount\":10.00,\"purchaseDate\":\"2026-09-11\",\"categoryId\":\""
+                                + userA.expenseCategoryId() + "\",\"installmentCount\":0}",
+                        "installmentCount"
                 )
         );
 
@@ -323,7 +459,7 @@ class CreditCardPurchaseIntegrationTest {
                 "1000.00",
                 "99.99"
         );
-        performPurchase(userA, insufficient.getId(), "Too expensive", "100.00", PURCHASE_DATE)
+        performPurchase(userA, insufficient.getId(), "Too expensive", "100.00", PURCHASE_DATE, 12)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CREDIT_LIMIT_CONFLICT"));
 
@@ -360,6 +496,40 @@ class CreditCardPurchaseIntegrationTest {
         assertThat(transactionRepository.count()).isZero();
         assertThat(accountRepository.findById(userA.accountId()).orElseThrow().getCurrentBalance())
                 .isEqualByComparingTo("1000.00");
+    }
+
+    @Test
+    void shouldRollbackEarlierInstallmentsWhenAFutureInvoiceIsNotOpen() throws Exception {
+        CreditCard card = createCard(userA, CreditCardStatus.ACTIVE, "1000.00", "1000.00");
+        Invoice closedFutureInvoice = createInvoice(
+                card.getId(),
+                11,
+                2026,
+                InvoiceStatus.CLOSED,
+                "50.00"
+        );
+
+        performPurchase(
+                userA,
+                card.getId(),
+                "Atomic installments",
+                "100.00",
+                PURCHASE_DATE,
+                3
+        )
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("INVALID_INVOICE_STATUS"));
+
+        CreditCard persistedCard = creditCardRepository.findById(card.getId()).orElseThrow();
+        Invoice persistedClosedInvoice = invoiceRepository
+                .findById(closedFutureInvoice.getId())
+                .orElseThrow();
+
+        assertThat(persistedCard.getAvailableLimit()).isEqualByComparingTo("1000.00");
+        assertThat(persistedCard.getVersion()).isZero();
+        assertThat(persistedClosedInvoice.getTotalAmount()).isEqualByComparingTo("50.00");
+        assertThat(invoiceRepository.count()).isEqualTo(1L);
+        assertThat(transactionRepository.count()).isZero();
     }
 
     @Test
@@ -444,10 +614,27 @@ class CreditCardPurchaseIntegrationTest {
             String amount,
             LocalDate date
     ) throws Exception {
+        return performPurchase(user, cardId, description, amount, date, 1);
+    }
+
+    private org.springframework.test.web.servlet.ResultActions performPurchase(
+            TestUser user,
+            UUID cardId,
+            String description,
+            String amount,
+            LocalDate date,
+            int installmentCount
+    ) throws Exception {
         return mockMvc.perform(post(PURCHASE_PATH, cardId)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + user.token())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(purchaseJson(description, amount, date, user.expenseCategoryId())));
+                .content(purchaseJson(
+                        description,
+                        amount,
+                        date,
+                        user.expenseCategoryId(),
+                        installmentCount
+                )));
     }
 
     private HttpResult concurrentPurchase(
@@ -476,12 +663,41 @@ class CreditCardPurchaseIntegrationTest {
             LocalDate date,
             UUID categoryId
     ) throws Exception {
+        return purchaseJson(description, amount, date, categoryId, 1);
+    }
+
+    private String purchaseJson(
+            String description,
+            String amount,
+            LocalDate date,
+            UUID categoryId,
+            int installmentCount
+    ) throws Exception {
         return objectMapper.writeValueAsString(Map.of(
                 "description", description,
                 "amount", new BigDecimal(amount),
                 "purchaseDate", date.toString(),
-                "categoryId", categoryId
+                "categoryId", categoryId,
+                "installmentCount", installmentCount
         ));
+    }
+
+    private List<Invoice> invoicesFor(UUID cardId) {
+        return invoiceRepository.findAll()
+                .stream()
+                .filter(invoice -> invoice.getCreditCardId().equals(cardId))
+                .sorted(Comparator
+                        .comparing(Invoice::getReferenceYear)
+                        .thenComparing(Invoice::getReferenceMonth))
+                .toList();
+    }
+
+    private List<Transaction> installmentsFor(UUID cardId) {
+        return transactionRepository.findAll()
+                .stream()
+                .filter(transaction -> transaction.getCreditCardId().equals(cardId))
+                .sorted(Comparator.comparing(Transaction::getInstallmentNumber))
+                .toList();
     }
 
     private TestUser createUser(String name) {
@@ -565,12 +781,22 @@ class CreditCardPurchaseIntegrationTest {
             InvoiceStatus status,
             String totalAmount
     ) {
+        return createInvoice(cardId, 10, 2026, status, totalAmount);
+    }
+
+    private Invoice createInvoice(
+            UUID cardId,
+            int referenceMonth,
+            int referenceYear,
+            InvoiceStatus status,
+            String totalAmount
+    ) {
         Invoice invoice = new Invoice();
         invoice.setCreditCardId(cardId);
-        invoice.setReferenceMonth(10);
-        invoice.setReferenceYear(2026);
-        invoice.setClosingDate(LocalDate.of(2026, 10, 10));
-        invoice.setDueDate(LocalDate.of(2026, 10, 17));
+        invoice.setReferenceMonth(referenceMonth);
+        invoice.setReferenceYear(referenceYear);
+        invoice.setClosingDate(LocalDate.of(referenceYear, referenceMonth, 10));
+        invoice.setDueDate(LocalDate.of(referenceYear, referenceMonth, 17));
         invoice.setTotalAmount(new BigDecimal(totalAmount));
         invoice.setStatus(status);
         return invoiceRepository.saveAndFlush(invoice);

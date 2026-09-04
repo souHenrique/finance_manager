@@ -151,6 +151,76 @@ class InvoiceCycleServiceTest {
     }
 
     @Test
+    void shouldShiftInstallmentCyclesWithoutRepeatingShortMonths() {
+        InvoiceCycle initialCycle = service.calculate(
+                LocalDate.of(2026, 1, 31),
+                30,
+                5
+        );
+
+        InvoiceCycle secondCycle = service.shift(initialCycle, 1, 30, 5);
+        InvoiceCycle thirdCycle = service.shift(initialCycle, 2, 30, 5);
+
+        assertThat(initialCycle).isEqualTo(new InvoiceCycle(
+                2, 2026,
+                LocalDate.of(2026, 2, 28),
+                LocalDate.of(2026, 3, 5)
+        ));
+        assertThat(secondCycle).isEqualTo(new InvoiceCycle(
+                3, 2026,
+                LocalDate.of(2026, 3, 30),
+                LocalDate.of(2026, 4, 5)
+        ));
+        assertThat(thirdCycle).isEqualTo(new InvoiceCycle(
+                4, 2026,
+                LocalDate.of(2026, 4, 30),
+                LocalDate.of(2026, 5, 5)
+        ));
+    }
+
+    @Test
+    void shouldShiftInstallmentCyclesAcrossTheYearBoundary() {
+        InvoiceCycle initialCycle = service.calculate(
+                LocalDate.of(2026, 12, 11),
+                10,
+                17
+        );
+
+        InvoiceCycle secondCycle = service.shift(initialCycle, 1, 10, 17);
+        InvoiceCycle twelfthCycle = service.shift(initialCycle, 11, 10, 17);
+
+        assertThat(initialCycle.referenceMonth()).isEqualTo(1);
+        assertThat(initialCycle.referenceYear()).isEqualTo(2027);
+        assertThat(secondCycle.referenceMonth()).isEqualTo(2);
+        assertThat(secondCycle.referenceYear()).isEqualTo(2027);
+        assertThat(twelfthCycle.referenceMonth()).isEqualTo(12);
+        assertThat(twelfthCycle.referenceYear()).isEqualTo(2027);
+    }
+
+    @Test
+    void shouldRejectInvalidShiftArguments() {
+        InvoiceCycle cycle = new InvoiceCycle(
+                9,
+                2026,
+                LocalDate.of(2026, 9, 10),
+                LocalDate.of(2026, 9, 17)
+        );
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> service.shift(null, 0, 10, 17))
+                .withMessage("Ciclo inicial é obrigatório");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.shift(cycle, -1, 10, 17))
+                .withMessage("Deslocamento de mês não pode ser negativo");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.shift(cycle, 0, 0, 17))
+                .withMessage("Dia deve estar entre 1 e 31");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.shift(cycle, 0, 10, 32))
+                .withMessage("Dia deve estar entre 1 e 31");
+    }
+
+    @Test
     void shouldReturnTheExistingInvoiceWithoutCreatingADuplicate() {
         CreditCard card = card(10, 17);
         Invoice existing = invoice(9, 2026);

@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Schema(description = "Dados para registrar uma compra à vista no cartão")
+@Schema(description = "Dados para registrar uma compra à vista ou parcelada no cartão")
 public record CreateCreditCardPurchaseRequest(
 
         @NotBlank(message = "Descrição é obrigatória")
@@ -47,7 +47,16 @@ public record CreateCreditCardPurchaseRequest(
                 description = "Categoria de despesa da compra",
                 format = "uuid"
         )
-        UUID categoryId
+        UUID categoryId,
+
+        @NotNull(message = "Quantidade de parcelas é obrigatória")
+        @Positive(message = "Quantidade de parcelas deve ser maior que zero")
+        @Schema(
+                description = "Quantidade de parcelas da compra",
+                example = "3",
+                minimum = "1"
+        )
+        Integer installmentCount
 ) {
     public CreateCreditCardPurchaseRequest {
         description = description == null ? null : description.trim();

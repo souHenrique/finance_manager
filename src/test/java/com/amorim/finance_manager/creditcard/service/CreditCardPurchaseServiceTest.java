@@ -33,19 +33,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,10 +61,7 @@ class CreditCardPurchaseServiceTest {
     private static final UUID USER_ID = UUID.randomUUID();
     private static final UUID CARD_ID = UUID.randomUUID();
     private static final UUID CATEGORY_ID = UUID.randomUUID();
-    private static final UUID INVOICE_ID = UUID.randomUUID();
-    private static final UUID TRANSACTION_ID = UUID.randomUUID();
     private static final LocalDate PURCHASE_DATE = LocalDate.of(2026, 9, 11);
-    private static final LocalDate DUE_DATE = LocalDate.of(2026, 10, 17);
 
     @Mock
     private CreditCardRepository creditCardRepository;
@@ -90,48 +89,43 @@ class CreditCardPurchaseServiceTest {
                 invoiceCycleService,
                 transactionRepository,
                 transactionMapper,
-                currentUserService
+                currentUserService,
+                new InstallmentCalculator()
         );
     }
 
     @Test
-    void shouldCreateACompletedPurchaseAndUpdateCardAndInvoiceWithoutAccounts() {
-        CreateCreditCardPurchaseRequest request = request("100.00");
+    void shouldCreateOneIdentifiedInstallmentAndUpdateCardAndInvoice() {
+        CreateCreditCardPurchaseRequest request = request("100.00", 1);
         CreditCard card = card(CreditCardStatus.ACTIVE, "100.00");
         Category category = category(CategoryType.EXPENSE, CategoryStatus.ACTIVE);
-        InvoiceCycle cycle = cycle();
-        Invoice invoice = invoice(InvoiceStatus.OPEN, "20.00");
+        InvoiceCycle cycle = cycle(10, 2026);
+        Invoice invoice = invoice(UUID.randomUUID(), cycle, InvoiceStatus.OPEN, "20.00");
         TransactionResponse response = mock(TransactionResponse.class);
+        List<Transaction> persisted = new ArrayList<>();
 
         stubOwnedResources(card, category, cycle);
         when(creditCardRepository.saveAndFlush(card)).thenReturn(card);
+        when(invoiceCycleService.shift(cycle, 0, 10, 17)).thenReturn(cycle);
         when(invoiceCycleService.findOrCreate(card, cycle)).thenReturn(invoice);
         when(invoiceRepository.saveAndFlush(invoice)).thenReturn(invoice);
-        when(transactionRepository.saveAndFlush(any(Transaction.class)))
-                .thenAnswer(invocation -> {
-                    Transaction transaction = invocation.getArgument(0);
-                    transaction.setId(TRANSACTION_ID);
-                    return transaction;
-                });
+        stubTransactionPersistence(persisted);
         when(transactionMapper.toResponse(any(Transaction.class))).thenReturn(response);
 
-        TransactionResponse result = service.create(CARD_ID, request);
+        List<TransactionResponse> result = service.create(CARD_ID, request);
 
-        assertThat(result).isSameAs(response);
+        assertThat(result).containsExactly(response);
         assertThat(card.getAvailableLimit()).isEqualByComparingTo("0.00");
         assertThat(invoice.getTotalAmount()).isEqualByComparingTo("120.00");
+        assertThat(persisted).hasSize(1);
 
-        ArgumentCaptor<Transaction> captor = ArgumentCaptor.forClass(Transaction.class);
-        verify(transactionRepository).saveAndFlush(captor.capture());
-        Transaction transaction = captor.getValue();
-
-        assertThat(transaction.getId()).isEqualTo(TRANSACTION_ID);
+        Transaction transaction = persisted.getFirst();
         assertThat(transaction.getUserId()).isEqualTo(USER_ID);
         assertThat(transaction.getDescription()).isEqualTo("Supermercado");
         assertThat(transaction.getAmount()).isEqualByComparingTo("100.00");
         assertThat(transaction.getCompetenceDate()).isEqualTo(PURCHASE_DATE);
         assertThat(transaction.getEffectiveDate()).isNull();
-        assertThat(transaction.getDueDate()).isEqualTo(DUE_DATE);
+        assertThat(transaction.getDueDate()).isEqualTo(cycle.dueDate());
         assertThat(transaction.getType()).isEqualTo(TransactionType.CREDIT_CARD_PURCHASE);
         assertThat(transaction.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
         assertThat(transaction.getPaymentMethod()).isEqualTo(PaymentMethod.CREDIT_CARD);
@@ -139,8 +133,8 @@ class CreditCardPurchaseServiceTest {
         assertThat(transaction.getDestinationAccountId()).isNull();
         assertThat(transaction.getCategoryId()).isEqualTo(CATEGORY_ID);
         assertThat(transaction.getCreditCardId()).isEqualTo(CARD_ID);
-        assertThat(transaction.getInvoiceId()).isEqualTo(INVOICE_ID);
-        assertThat(transaction.getInstallmentGroupId()).isNull();
+        assertThat(transaction.getInvoiceId()).isEqualTo(invoice.getId());
+        assertThat(transaction.getInstallmentGroupId()).isNotNull();
         assertThat(transaction.getInstallmentNumber()).isEqualTo(1);
         assertThat(transaction.getInstallmentCount()).isEqualTo(1);
 
@@ -152,9 +146,76 @@ class CreditCardPurchaseServiceTest {
         );
         persistenceOrder.verify(invoiceCycleService).calculate(PURCHASE_DATE, 10, 17);
         persistenceOrder.verify(creditCardRepository).saveAndFlush(card);
+        persistenceOrder.verify(invoiceCycleService).shift(cycle, 0, 10, 17);
         persistenceOrder.verify(invoiceCycleService).findOrCreate(card, cycle);
         persistenceOrder.verify(invoiceRepository).saveAndFlush(invoice);
-        persistenceOrder.verify(transactionRepository).saveAndFlush(transaction);
+        persistenceOrder.verify(transactionRepository).saveAllAndFlush(anyList());
+    }
+
+    @Test
+    void shouldCreateThreeInstallmentsInConsecutiveInvoicesAndConsumeTheTotalLimitOnce() {
+        CreateCreditCardPurchaseRequest request = request("100.00", 3);
+        CreditCard card = card(CreditCardStatus.ACTIVE, "500.00");
+        Category category = category(CategoryType.EXPENSE, CategoryStatus.ACTIVE);
+        InvoiceCycle firstCycle = cycle(10, 2026);
+        InvoiceCycle secondCycle = cycle(11, 2026);
+        InvoiceCycle thirdCycle = cycle(12, 2026);
+        Invoice firstInvoice = invoice(UUID.randomUUID(), firstCycle, InvoiceStatus.OPEN, "0.00");
+        Invoice secondInvoice = invoice(UUID.randomUUID(), secondCycle, InvoiceStatus.OPEN, "0.00");
+        Invoice thirdInvoice = invoice(UUID.randomUUID(), thirdCycle, InvoiceStatus.OPEN, "0.00");
+        List<Transaction> persisted = new ArrayList<>();
+
+        stubOwnedResources(card, category, firstCycle);
+        when(creditCardRepository.saveAndFlush(card)).thenReturn(card);
+        when(invoiceCycleService.shift(firstCycle, 0, 10, 17)).thenReturn(firstCycle);
+        when(invoiceCycleService.shift(firstCycle, 1, 10, 17)).thenReturn(secondCycle);
+        when(invoiceCycleService.shift(firstCycle, 2, 10, 17)).thenReturn(thirdCycle);
+        when(invoiceCycleService.findOrCreate(card, firstCycle)).thenReturn(firstInvoice);
+        when(invoiceCycleService.findOrCreate(card, secondCycle)).thenReturn(secondInvoice);
+        when(invoiceCycleService.findOrCreate(card, thirdCycle)).thenReturn(thirdInvoice);
+        when(invoiceRepository.saveAndFlush(any(Invoice.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        stubTransactionPersistence(persisted);
+        when(transactionMapper.toResponse(any(Transaction.class)))
+                .thenAnswer(invocation -> mock(TransactionResponse.class));
+
+        List<TransactionResponse> result = service.create(CARD_ID, request);
+
+        assertThat(result).hasSize(3);
+        assertThat(card.getAvailableLimit()).isEqualByComparingTo("400.00");
+        assertThat(firstInvoice.getTotalAmount()).isEqualByComparingTo("33.33");
+        assertThat(secondInvoice.getTotalAmount()).isEqualByComparingTo("33.33");
+        assertThat(thirdInvoice.getTotalAmount()).isEqualByComparingTo("33.34");
+
+        assertThat(persisted).extracting(Transaction::getAmount).containsExactly(
+                new BigDecimal("33.33"),
+                new BigDecimal("33.33"),
+                new BigDecimal("33.34")
+        );
+        assertThat(persisted).extracting(Transaction::getInstallmentNumber)
+                .containsExactly(1, 2, 3);
+        assertThat(persisted).extracting(Transaction::getInstallmentCount)
+                .containsOnly(3);
+        assertThat(persisted).extracting(Transaction::getCompetenceDate).containsExactly(
+                LocalDate.of(2026, 9, 11),
+                LocalDate.of(2026, 10, 11),
+                LocalDate.of(2026, 11, 11)
+        );
+        assertThat(persisted).extracting(Transaction::getInvoiceId).containsExactly(
+                firstInvoice.getId(),
+                secondInvoice.getId(),
+                thirdInvoice.getId()
+        );
+
+        UUID installmentGroupId = persisted.getFirst().getInstallmentGroupId();
+        assertThat(installmentGroupId).isNotNull();
+        assertThat(persisted).allSatisfy(transaction ->
+                assertThat(transaction.getInstallmentGroupId()).isEqualTo(installmentGroupId));
+
+        verify(creditCardRepository).saveAndFlush(card);
+        verify(invoiceCycleService).shift(firstCycle, 0, 10, 17);
+        verify(invoiceCycleService).shift(firstCycle, 1, 10, 17);
+        verify(invoiceCycleService).shift(firstCycle, 2, 10, 17);
     }
 
     @Test
@@ -163,7 +224,7 @@ class CreditCardPurchaseServiceTest {
         when(creditCardRepository.findByIdAndUserId(CARD_ID, USER_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00", 1)))
                 .isInstanceOf(CreditCardNotFoundException.class);
 
         verifyNoInteractions(
@@ -183,7 +244,7 @@ class CreditCardPurchaseServiceTest {
         when(creditCardRepository.findByIdAndUserId(CARD_ID, USER_ID))
                 .thenReturn(Optional.of(card));
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00", 1)))
                 .isInstanceOf(InvalidCreditCardStatusException.class);
 
         verifyNoInteractions(
@@ -205,7 +266,7 @@ class CreditCardPurchaseServiceTest {
         when(categoryRepository.findByIdAndUserId(CATEGORY_ID, USER_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00", 1)))
                 .isInstanceOf(CategoryNotFoundException.class);
 
         assertThat(card.getAvailableLimit()).isEqualByComparingTo("500.00");
@@ -228,11 +289,16 @@ class CreditCardPurchaseServiceTest {
         when(categoryRepository.findByIdAndUserId(CATEGORY_ID, USER_ID))
                 .thenReturn(Optional.of(category));
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00", 1)))
                 .isInstanceOf(IncompatibleCategoryTypeException.class);
 
         verify(creditCardRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(invoiceRepository, invoiceCycleService, transactionRepository, transactionMapper);
+        verifyNoInteractions(
+                invoiceRepository,
+                invoiceCycleService,
+                transactionRepository,
+                transactionMapper
+        );
     }
 
     @Test
@@ -245,22 +311,27 @@ class CreditCardPurchaseServiceTest {
         when(categoryRepository.findByIdAndUserId(CATEGORY_ID, USER_ID))
                 .thenReturn(Optional.of(category));
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("10.00", 1)))
                 .isInstanceOf(InvalidTransactionException.class)
                 .hasMessage("Categoria inativa não pode receber novas compras");
 
         verify(creditCardRepository, never()).saveAndFlush(any());
-        verifyNoInteractions(invoiceRepository, invoiceCycleService, transactionRepository, transactionMapper);
+        verifyNoInteractions(
+                invoiceRepository,
+                invoiceCycleService,
+                transactionRepository,
+                transactionMapper
+        );
     }
 
     @Test
-    void shouldRejectInsufficientLimitBeforeCreatingAnInvoiceOrTransaction() {
+    void shouldRejectInsufficientTotalLimitBeforeCreatingInvoicesOrTransactions() {
         CreditCard card = card(CreditCardStatus.ACTIVE, "99.99");
         Category category = category(CategoryType.EXPENSE, CategoryStatus.ACTIVE);
-        InvoiceCycle cycle = cycle();
+        InvoiceCycle cycle = cycle(10, 2026);
         stubOwnedResources(card, category, cycle);
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("100.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("100.00", 12)))
                 .isInstanceOf(CreditLimitConflictException.class)
                 .hasMessage("Limite disponível insuficiente para realizar a compra");
 
@@ -278,24 +349,21 @@ class CreditCardPurchaseServiceTest {
     void shouldRejectAnInvoiceThatIsNotOpen(InvoiceStatus status) {
         CreditCard card = card(CreditCardStatus.ACTIVE, "500.00");
         Category category = category(CategoryType.EXPENSE, CategoryStatus.ACTIVE);
-        InvoiceCycle cycle = cycle();
-        Invoice invoice = invoice(status, "20.00");
+        InvoiceCycle cycle = cycle(10, 2026);
+        Invoice invoice = invoice(UUID.randomUUID(), cycle, status, "20.00");
         stubOwnedResources(card, category, cycle);
         when(creditCardRepository.saveAndFlush(card)).thenReturn(card);
+        when(invoiceCycleService.shift(cycle, 0, 10, 17)).thenReturn(cycle);
         when(invoiceCycleService.findOrCreate(card, cycle)).thenReturn(invoice);
 
-        assertThatThrownBy(() -> service.create(CARD_ID, request("100.00")))
+        assertThatThrownBy(() -> service.create(CARD_ID, request("100.00", 1)))
                 .isInstanceOf(InvalidInvoiceStatusException.class);
 
         verify(invoiceRepository, never()).saveAndFlush(any());
         verifyNoInteractions(transactionRepository, transactionMapper);
     }
 
-    private void stubOwnedResources(
-            CreditCard card,
-            Category category,
-            InvoiceCycle cycle
-    ) {
+    private void stubOwnedResources(CreditCard card, Category category, InvoiceCycle cycle) {
         when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
         when(creditCardRepository.findByIdAndUserId(CARD_ID, USER_ID))
                 .thenReturn(Optional.of(card));
@@ -304,12 +372,22 @@ class CreditCardPurchaseServiceTest {
         when(invoiceCycleService.calculate(PURCHASE_DATE, 10, 17)).thenReturn(cycle);
     }
 
-    private CreateCreditCardPurchaseRequest request(String amount) {
+    private void stubTransactionPersistence(List<Transaction> persisted) {
+        when(transactionRepository.saveAllAndFlush(anyList()))
+                .thenAnswer(invocation -> {
+                    List<Transaction> transactions = invocation.getArgument(0);
+                    persisted.addAll(transactions);
+                    return transactions;
+                });
+    }
+
+    private CreateCreditCardPurchaseRequest request(String amount, int installmentCount) {
         return new CreateCreditCardPurchaseRequest(
                 "Supermercado",
                 new BigDecimal(amount),
                 PURCHASE_DATE,
-                CATEGORY_ID
+                CATEGORY_ID,
+                installmentCount
         );
     }
 
@@ -335,21 +413,29 @@ class CreditCardPurchaseServiceTest {
         return category;
     }
 
-    private InvoiceCycle cycle() {
+    private InvoiceCycle cycle(int referenceMonth, int referenceYear) {
         return new InvoiceCycle(
-                10,
-                2026,
-                LocalDate.of(2026, 10, 10),
-                DUE_DATE
+                referenceMonth,
+                referenceYear,
+                LocalDate.of(referenceYear, referenceMonth, 10),
+                LocalDate.of(referenceYear, referenceMonth, 17)
         );
     }
 
-    private Invoice invoice(InvoiceStatus status, String totalAmount) {
+    private Invoice invoice(
+            UUID invoiceId,
+            InvoiceCycle cycle,
+            InvoiceStatus status,
+            String totalAmount
+    ) {
         Invoice invoice = new Invoice();
-        invoice.setId(INVOICE_ID);
+        invoice.setId(invoiceId);
         invoice.setCreditCardId(CARD_ID);
+        invoice.setReferenceMonth(cycle.referenceMonth());
+        invoice.setReferenceYear(cycle.referenceYear());
+        invoice.setClosingDate(cycle.closingDate());
+        invoice.setDueDate(cycle.dueDate());
         invoice.setTotalAmount(new BigDecimal(totalAmount));
-        invoice.setDueDate(DUE_DATE);
         invoice.setStatus(status);
         invoice.setVersion(0L);
         return invoice;

@@ -24,6 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,9 +42,10 @@ public class CreditCardPurchaseService {
     private final TransactionRepository transactionRepository;
     private final TransactionMapper transactionMapper;
     private final CurrentUserService currentUserService;
+    private final InstallmentCalculator installmentCalculator;
 
     @Transactional
-    public TransactionResponse create(
+    public List<TransactionResponse> create(
             UUID creditCardId,
             CreateCreditCardPurchaseRequest request
     ) {
@@ -57,48 +62,88 @@ public class CreditCardPurchaseService {
 
         validateCategory(category);
 
-        InvoiceCycle cycle = invoiceCycleService.calculate(
+        List<BigDecimal> installmentAmounts = installmentCalculator.split(
+                request.amount(),
+                request.installmentCount()
+        );
+
+        InvoiceCycle initialCycle = invoiceCycleService.calculate(
                 request.purchaseDate(),
                 card.getClosingDay(),
                 card.getDueDay()
         );
 
         consumeLimit(card, request);
-
         creditCardRepository.saveAndFlush(card);
 
-        Invoice invoice = invoiceCycleService.findOrCreate(card, cycle);
+        UUID installmentGroupId = UUID.randomUUID();
 
-        if (invoice.getStatus() != InvoiceStatus.OPEN) {
-            throw new InvalidInvoiceStatusException();
+        List<Transaction> transactions =
+                new ArrayList<>(request.installmentCount());
+
+        for (int index = 0; index < installmentAmounts.size(); index++) {
+            int installmentNumber = index + 1;
+
+            BigDecimal installmentAmount =
+                    installmentAmounts.get(index);
+
+            InvoiceCycle installmentCycle =
+                    invoiceCycleService.shift(
+                            initialCycle,
+                            index,
+                            card.getClosingDay(),
+                            card.getDueDay()
+                    );
+
+            Invoice invoice = invoiceCycleService.findOrCreate(
+                    card,
+                    installmentCycle
+            );
+
+            if (invoice.getStatus() != InvoiceStatus.OPEN) {
+                throw new InvalidInvoiceStatusException();
+            }
+
+            invoice.setTotalAmount(
+                    invoice.getTotalAmount().add(installmentAmount)
+            );
+
+            invoiceRepository.saveAndFlush(invoice);
+
+            Transaction transaction = buildTransaction(
+                    userId,
+                    card,
+                    invoice,
+                    request,
+                    installmentGroupId,
+                    installmentNumber,
+                    request.installmentCount(),
+                    installmentAmount,
+                    request.purchaseDate().plusMonths(index)
+            );
+
+            transactions.add(transaction);
         }
 
-        invoice.setTotalAmount(
-                invoice.getTotalAmount().add(request.amount())
-        );
-        invoiceRepository.saveAndFlush(invoice);
-
-        Transaction transaction = buildTransaction(
-                userId,
-                card,
-                invoice,
-                request
-        );
-
-        Transaction saved = transactionRepository.saveAndFlush(transaction);
+        List<Transaction> savedTransactions =
+                transactionRepository.saveAllAndFlush(transactions);
 
         log.info(
                 """
-                event=credit_card.purchase_created \
-                transactionId={} creditCardId={} invoiceId={} userId={}
+                event=credit_card.installment_purchase_created \
+                installmentGroupId={} creditCardId={} \
+                installmentCount={} userId={}
                 """,
-                saved.getId(),
+                installmentGroupId,
                 card.getId(),
-                invoice.getId(),
+                request.installmentCount(),
                 userId
         );
 
-        return transactionMapper.toResponse(saved);
+        return savedTransactions
+                .stream()
+                .map(transactionMapper::toResponse)
+                .toList();
     }
 
     private void validateCard(CreditCard card) {
@@ -138,15 +183,20 @@ public class CreditCardPurchaseService {
             UUID userId,
             CreditCard card,
             Invoice invoice,
-            CreateCreditCardPurchaseRequest request
+            CreateCreditCardPurchaseRequest request,
+            UUID installmentGroupId,
+            int installmentNumber,
+            int installmentCount,
+            BigDecimal installmentAmount,
+            LocalDate competenceDate
     ) {
         Transaction transaction = new Transaction();
 
         transaction.setUserId(userId);
         transaction.setDescription(request.description());
-        transaction.setAmount(request.amount());
+        transaction.setAmount(installmentAmount);
 
-        transaction.setCompetenceDate(request.purchaseDate());
+        transaction.setCompetenceDate(competenceDate);
         transaction.setEffectiveDate(null);
         transaction.setDueDate(invoice.getDueDate());
 
@@ -161,9 +211,9 @@ public class CreditCardPurchaseService {
         transaction.setCreditCardId(card.getId());
         transaction.setInvoiceId(invoice.getId());
 
-        transaction.setInstallmentGroupId(null);
-        transaction.setInstallmentNumber(1);
-        transaction.setInstallmentCount(1);
+        transaction.setInstallmentGroupId(installmentGroupId);
+        transaction.setInstallmentNumber(installmentNumber);
+        transaction.setInstallmentCount(installmentCount);
 
         return transaction;
     }

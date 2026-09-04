@@ -1155,34 +1155,79 @@ public final class OpenApiExamples {
     public static final String CREATE_CREDIT_CARD_PURCHASE_REQUEST = """
     {
       "description": "Compra no supermercado",
-      "amount": 250.00,
+      "amount": 100.00,
       "purchaseDate": "2026-09-11",
-      "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709"
+      "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+      "installmentCount": 3
     }
     """;
 
-    public static final String CREDIT_CARD_PURCHASE_RESPONSE = """
-    {
-      "id": "2cb0ba91-bfc4-43be-89ec-336ca64a6231",
-      "description": "Compra no supermercado",
-      "amount": 250.00,
-      "competenceDate": "2026-09-11",
-      "effectiveDate": null,
-      "dueDate": "2026-10-17",
-      "type": "CREDIT_CARD_PURCHASE",
-      "status": "COMPLETED",
-      "paymentMethod": "CREDIT_CARD",
-      "sourceAccountId": null,
-      "destinationAccountId": null,
-      "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
-      "creditCardId": "d89835ee-3463-4a35-a2e9-38d96ab17418",
-      "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
-      "installmentGroupId": null,
-      "installmentNumber": 1,
-      "installmentCount": 1,
-      "createdAt": "2026-09-11T12:00:00Z",
-      "updatedAt": "2026-09-11T12:00:00Z"
-    }
+    public static final String CREDIT_CARD_PURCHASES_RESPONSE = """
+    [
+      {
+        "id": "2cb0ba91-bfc4-43be-89ec-336ca64a6231",
+        "description": "Compra no supermercado",
+        "amount": 33.33,
+        "competenceDate": "2026-09-11",
+        "effectiveDate": null,
+        "dueDate": "2026-10-17",
+        "type": "CREDIT_CARD_PURCHASE",
+        "status": "COMPLETED",
+        "paymentMethod": "CREDIT_CARD",
+        "sourceAccountId": null,
+        "destinationAccountId": null,
+        "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+        "creditCardId": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+        "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+        "installmentGroupId": "3fdf8938-d2d2-4c20-8dce-1566b9c5194b",
+        "installmentNumber": 1,
+        "installmentCount": 3,
+        "createdAt": "2026-09-11T12:00:00Z",
+        "updatedAt": "2026-09-11T12:00:00Z"
+      },
+      {
+        "id": "8e51f153-e149-4b37-873b-d851f10781be",
+        "description": "Compra no supermercado",
+        "amount": 33.33,
+        "competenceDate": "2026-10-11",
+        "effectiveDate": null,
+        "dueDate": "2026-11-17",
+        "type": "CREDIT_CARD_PURCHASE",
+        "status": "COMPLETED",
+        "paymentMethod": "CREDIT_CARD",
+        "sourceAccountId": null,
+        "destinationAccountId": null,
+        "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+        "creditCardId": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+        "invoiceId": "923c54f5-07cb-48a5-8945-02d8d0bcb40c",
+        "installmentGroupId": "3fdf8938-d2d2-4c20-8dce-1566b9c5194b",
+        "installmentNumber": 2,
+        "installmentCount": 3,
+        "createdAt": "2026-09-11T12:00:00Z",
+        "updatedAt": "2026-09-11T12:00:00Z"
+      },
+      {
+        "id": "f5b05404-22f1-4d0d-bf0a-3ef260267c94",
+        "description": "Compra no supermercado",
+        "amount": 33.34,
+        "competenceDate": "2026-11-11",
+        "effectiveDate": null,
+        "dueDate": "2026-12-17",
+        "type": "CREDIT_CARD_PURCHASE",
+        "status": "COMPLETED",
+        "paymentMethod": "CREDIT_CARD",
+        "sourceAccountId": null,
+        "destinationAccountId": null,
+        "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+        "creditCardId": "d89835ee-3463-4a35-a2e9-38d96ab17418",
+        "invoiceId": "b425d89e-2cb7-4a3a-a956-33bb69d54a39",
+        "installmentGroupId": "3fdf8938-d2d2-4c20-8dce-1566b9c5194b",
+        "installmentNumber": 3,
+        "installmentCount": 3,
+        "createdAt": "2026-09-11T12:00:00Z",
+        "updatedAt": "2026-09-11T12:00:00Z"
+      }
+    ]
     """;
 
     public static final String CREDIT_CARD_PURCHASE_LIMIT_CONFLICT = """
