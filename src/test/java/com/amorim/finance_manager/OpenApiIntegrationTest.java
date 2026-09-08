@@ -68,7 +68,10 @@ class OpenApiIntegrationTest {
             "get /api/v1/reports/cash/daily",
             "get /api/v1/reports/cash/weekly",
             "get /api/v1/reports/cash/monthly",
-            "get /api/v1/reports/cash/annual"
+            "get /api/v1/reports/cash/annual",
+            "post /api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund",
+            "post /api/v1/invoices/{id}/close",
+            "post /api/v1/invoices/{id}/pay"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(
@@ -85,7 +88,10 @@ class OpenApiIntegrationTest {
             "patch /api/v1/categories/{id}",
             "post /api/v1/transactions",
             "patch /api/v1/transactions/{id}",
-            "post /api/v1/transfers"
+            "post /api/v1/transfers",
+            "post /api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund",
+            "post /api/v1/invoices/{id}/close",
+            "post /api/v1/invoices/{id}/pay"
     );
 
     private static final Set<String> PUBLIC_OPERATIONS = Set.of(

@@ -12,12 +12,14 @@ import com.amorim.finance_manager.transaction.repository.TransactionRepository;
 import com.amorim.finance_manager.user.entity.User;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import com.amorim.finance_manager.user.service.CustomUserDetailsService;
+import org.aopalliance.intercept.MethodInterceptor;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.aop.framework.Advised;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
@@ -25,10 +27,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -40,13 +40,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/** No test transaction: requests must commit or roll back their own service transactions. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -67,12 +68,13 @@ class CreditCardRefundSettlementIntegrationTest {
     @Autowired CreditCardRefundItemRepository refundItems;
     @Autowired JwtService jwt;
     @Autowired CustomUserDetailsService userDetails;
-    @MockitoSpyBean InvoiceRepository invoices;
-    @MockitoSpyBean TransactionRepository transactions;
-    @MockitoSpyBean CreditCardCreditRepository credits;
+    @Autowired InvoiceRepository invoices;
+    @Autowired TransactionRepository transactions;
+    @Autowired CreditCardCreditRepository credits;
     @MockitoBean(name = "financeClock") Clock clock;
 
     private final List<UUID> fixtureUsers = new ArrayList<>();
+    private final List<Runnable> interceptorCleanup = new ArrayList<>();
     private Actor owner;
     private Actor other;
 
@@ -86,7 +88,8 @@ class CreditCardRefundSettlementIntegrationTest {
 
     @AfterEach
     void cleanOnlyFixtureData() {
-        reset(invoices, transactions, credits);
+        interceptorCleanup.forEach(Runnable::run);
+        interceptorCleanup.clear();
         // Delete only these tests' users, in FK order. Audit history has no entity FK.
         for (UUID userId : fixtureUsers) {
             jdbc.update("DELETE FROM credit_card_credit_applications WHERE credit_id IN "
@@ -249,11 +252,27 @@ class CreditCardRefundSettlementIntegrationTest {
         paid.setPaidAt(ORIGINAL_PAYMENT);
         invoices.saveAndFlush(paid);
         Snapshot before = snapshot();
-        doAnswer(call -> {
-            call.callRealMethod();
-            throw new IllegalStateException("Simulated failure after invoice flush");
-        }).when(invoices).saveAllAndFlush(any());
-        refund(owner, purchase.get(0), 500);
+        AtomicBoolean flushed = new AtomicBoolean();
+        IllegalStateException failure = new IllegalStateException("Simulated failure after invoice flush");
+        intercept(invoices, "saveAllAndFlush", call -> {
+            call.proceed();
+            // Observe the flushed changes on this request's transaction-bound connection.
+            assertThat(jdbc.queryForObject("SELECT total_amount FROM invoices WHERE id = ?",
+                    BigDecimal.class, purchase.get(1).getInvoiceId())).isZero();
+            assertThat(jdbc.queryForObject("SELECT total_amount FROM invoices WHERE id = ?",
+                    BigDecimal.class, purchase.get(2).getInvoiceId())).isZero();
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM credit_card_refunds WHERE user_id = ?",
+                    Long.class, owner.id())).isEqualTo(1L);
+            assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM credit_card_credits WHERE user_id = ?",
+                    Long.class, owner.id())).isEqualTo(1L);
+            flushed.set(true);
+            throw failure;
+        });
+        MvcResult result = postAs(owner, refundPath(owner.cardId(), purchase.getFirst().getId()),
+                Map.of("reason", REASON));
+        read(result, 500);
+        assertThat(flushed).isTrue();
+        assertThat(result.getResolvedException()).isSameAs(failure);
         assertThat(snapshot()).isEqualTo(before);
     }
 
@@ -377,14 +396,29 @@ class CreditCardRefundSettlementIntegrationTest {
         Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "150");
         available(money("850"));
         Snapshot before = snapshot();
-        doAnswer(call -> {
-            Object saved = call.callRealMethod();
+        AtomicBoolean flushed = new AtomicBoolean();
+        IllegalStateException failure = new IllegalStateException("Simulated failure after payment flush");
+        intercept(transactions, "saveAndFlush", call -> {
+            Object saved = call.proceed();
             if (((Transaction) saved).getType() == TransactionType.CREDIT_CARD_PAYMENT) {
-                throw new IllegalStateException("Simulated failure after payment flush");
+                assertThat(jdbc.queryForObject("SELECT amount FROM transactions WHERE id = ?",
+                        BigDecimal.class, ((Transaction) saved).getId())).isEqualByComparingTo("100");
+                assertThat(jdbc.queryForObject("SELECT current_balance FROM accounts WHERE id = ?",
+                        BigDecimal.class, owner.accountId())).isEqualByComparingTo("900");
+                assertThat(jdbc.queryForObject("SELECT remaining_amount FROM credit_card_credits WHERE user_id = ?",
+                        BigDecimal.class, owner.id())).isZero();
+                assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM credit_card_credit_applications WHERE invoice_id = ?",
+                        Long.class, target.getId())).isEqualTo(1L);
+                flushed.set(true);
+                throw failure;
             }
             return saved;
-        }).when(transactions).saveAndFlush(any(Transaction.class));
-        pay(owner, target, owner.accountId(), 500);
+        });
+        MvcResult result = postAs(owner, payPath(target),
+                Map.of("sourceAccountId", owner.accountId(), "expectedVersion", target.getVersion()));
+        read(result, 500);
+        assertThat(flushed).isTrue();
+        assertThat(result.getResolvedException()).isSameAs(failure);
         assertThat(snapshot()).isEqualTo(before);
     }
 
@@ -429,12 +463,11 @@ class CreditCardRefundSettlementIntegrationTest {
         Invoice secondInvoice = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "100");
         available(money("800"));
         CyclicBarrier barrier = new CyclicBarrier(2);
-        doAnswer(call -> {
-            Object loaded = call.callRealMethod();
+        intercept(credits, "findEligibleCredits", call -> {
+            Object loaded = call.proceed();
             barrier.await(15, TimeUnit.SECONDS);
             return loaded;
-        }).when(credits).findEligibleCredits(eq(owner.id()), eq(owner.cardId()), eq(2026),
-                anyInt(), any(Pageable.class));
+        });
         ExecutorService pool = Executors.newFixedThreadPool(2);
         try {
             Future<MvcResult> first = pool.submit(() -> postAs(owner, payPath(firstInvoice),
@@ -517,7 +550,7 @@ class CreditCardRefundSettlementIntegrationTest {
         Transaction purchase = purchase(owner, "900", "100").getFirst();
         Invoice target = invoiceOf(purchase);
         target.setStatus(InvoiceStatus.CLOSED);
-        invoices.saveAndFlush(target);
+        target = invoices.saveAndFlush(target);
         JsonNode settled = pay(owner, target, owner.accountId(), 200);
         UUID paymentId = UUID.fromString(settled.path("paymentTransactionId").asString());
         Snapshot before = snapshot();
@@ -626,11 +659,22 @@ class CreditCardRefundSettlementIntegrationTest {
 
     private void synchronizeInvoiceReads(UUID invoiceId) {
         CyclicBarrier barrier = new CyclicBarrier(2);
-        doAnswer(call -> {
-            Object loaded = call.callRealMethod();
-            barrier.await(15, TimeUnit.SECONDS);
+        intercept(invoices, "findOwnedById", call -> {
+            Object loaded = call.proceed();
+            if (Arrays.equals(call.getArguments(), new Object[]{invoiceId, owner.id()})) {
+                barrier.await(15, TimeUnit.SECONDS);
+            }
             return loaded;
-        }).when(invoices).findOwnedById(invoiceId, owner.id());
+        });
+    }
+
+    private void intercept(Object repository, String methodName, MethodInterceptor interceptor) {
+        // Proceed through Spring Data's actual query/persistence interceptors, not an abstract Mockito method.
+        Advised proxy = (Advised) repository;
+        MethodInterceptor advice = call -> methodName.equals(call.getMethod().getName())
+                ? interceptor.invoke(call) : call.proceed();
+        proxy.addAdvice(0, advice);
+        interceptorCleanup.add(() -> proxy.removeAdvice(advice));
     }
 
     private List<Integer> concurrent(Callable<MvcResult> request) throws Exception {

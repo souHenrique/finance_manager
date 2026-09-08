@@ -562,6 +562,42 @@ public interface CreditCardApiDocs {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = CreditCardRefundResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Estorno de compra com parcelas paga e não paga",
+                                    value = """
+                                        {
+                                          "id": "0df69930-7e21-4707-a366-fbd969ae77e4",
+                                          "creditCardId": "0c736743-8885-43d1-813b-c096a4899201",
+                                          "selectedTransactionId": "75d4b4e7-8621-41fe-b71f-34c47e1b581b",
+                                          "installmentGroupId": "601e2ac2-2a25-4243-b695-f9bb53b7a9ea",
+                                          "reason": "Compra devolvida ao estabelecimento",
+                                          "totalAmount": 200.00,
+                                          "limitRestoredAmount": 100.00,
+                                          "paidCompensationAmount": 100.00,
+                                          "createdAt": "2026-09-08T12:00:00Z",
+                                          "items": [
+                                            {
+                                              "id": "1a9cf428-6079-46f2-88cc-427d22ebd00c",
+                                              "originalTransactionId": "75d4b4e7-8621-41fe-b71f-34c47e1b581b",
+                                              "originalInvoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+                                              "originalInvoiceStatus": "PAID",
+                                              "amount": 100.00,
+                                              "treatment": "FUTURE_INVOICE_CREDIT",
+                                              "creditId": "c9da3100-801f-4d36-8782-463b2a1e5926"
+                                            },
+                                            {
+                                              "id": "f10b9a81-3640-4394-b03f-e4181687f543",
+                                              "originalTransactionId": "88b51d4a-17be-4e50-9209-b7ecaf12fd85",
+                                              "originalInvoiceId": "650a428c-e60a-453d-89e0-8ff680d90781",
+                                              "originalInvoiceStatus": "CLOSED",
+                                              "amount": 100.00,
+                                              "treatment": "UNPAID_CANCELLATION",
+                                              "creditId": null
+                                            }
+                                          ]
+                                        }
+                                        """
                             )
                     )
             ),

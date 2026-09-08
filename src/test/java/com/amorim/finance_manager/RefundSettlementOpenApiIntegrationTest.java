@@ -1,5 +1,8 @@
 package com.amorim.finance_manager;
 
+import com.amorim.finance_manager.creditcard.dto.CreditCardRefundResponse;
+import com.amorim.finance_manager.creditcard.entity.CreditCardRefundTreatment;
+import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,6 +14,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -78,6 +82,47 @@ class RefundSettlementOpenApiIntegrationTest {
                         .path("$ref").asString()).isEqualTo("#/components/schemas/"
                         + (code.equals("200") ? contract.get(1) : "ApiError"));
             }
+        }
+    }
+
+    @Test
+    void shouldPublishCoherentMixedRefundSuccessExample() throws Exception {
+        JsonNode examples = document().path("paths")
+                .path("/api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund")
+                .path("post").path("responses").path("200")
+                .path("content").path("application/json").path("examples");
+        assertThat(examples.size()).isPositive();
+        for (JsonNode example : examples) {
+            JsonNode value = example.path("value");
+            if (value.isString()) value = json.readTree(value.asString());
+            CreditCardRefundResponse response = json.treeToValue(value, CreditCardRefundResponse.class);
+            assertThat(response.id()).isNotNull();
+            assertThat(response.creditCardId()).isNotNull();
+            assertThat(response.createdAt()).isNotNull();
+            assertThat(response.reason()).isNotBlank();
+            assertThat(response.items()).hasSize(2);
+            assertThat(response.items()).extracting(CreditCardRefundResponse.Item::originalTransactionId)
+                    .doesNotHaveDuplicates().contains(response.selectedTransactionId());
+            BigDecimal unpaid = BigDecimal.ZERO;
+            BigDecimal paid = BigDecimal.ZERO;
+            for (CreditCardRefundResponse.Item item : response.items()) {
+                assertThat(item.id()).isNotNull();
+                assertThat(item.originalInvoiceId()).isNotNull();
+                assertThat(item.amount()).isPositive();
+                if (item.treatment() == CreditCardRefundTreatment.FUTURE_INVOICE_CREDIT) {
+                    assertThat(item.originalInvoiceStatus()).isEqualTo(InvoiceStatus.PAID);
+                    assertThat(item.creditId()).isNotNull();
+                    paid = paid.add(item.amount());
+                } else {
+                    assertThat(item.treatment()).isEqualTo(CreditCardRefundTreatment.UNPAID_CANCELLATION);
+                    assertThat(item.originalInvoiceStatus()).isIn(InvoiceStatus.OPEN, InvoiceStatus.CLOSED);
+                    assertThat(item.creditId()).isNull();
+                    unpaid = unpaid.add(item.amount());
+                }
+            }
+            assertThat(paid).isPositive().isEqualByComparingTo(response.paidCompensationAmount());
+            assertThat(unpaid).isPositive().isEqualByComparingTo(response.limitRestoredAmount());
+            assertThat(response.totalAmount()).isEqualByComparingTo(paid.add(unpaid));
         }
     }
 

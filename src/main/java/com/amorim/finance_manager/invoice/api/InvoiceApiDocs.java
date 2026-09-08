@@ -503,7 +503,7 @@ public interface InvoiceApiDocs {
                     )
             )
             UUID id,
-            CloseInvoiceRequest request
+            @Valid CloseInvoiceRequest request
     );
 
     @Operation(
@@ -741,6 +741,6 @@ public interface InvoiceApiDocs {
                     )
             )
             UUID id,
-            PayInvoiceRequest request
+            @Valid PayInvoiceRequest request
     );
 }
