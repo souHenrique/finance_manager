@@ -2,6 +2,7 @@ package com.amorim.finance_manager;
 
 import com.amorim.finance_manager.account.entity.*;
 import com.amorim.finance_manager.account.repository.AccountRepository;
+import com.amorim.finance_manager.account.service.AccountBalanceService;
 import com.amorim.finance_manager.creditcard.entity.*;
 import com.amorim.finance_manager.creditcard.repository.*;
 import com.amorim.finance_manager.invoice.entity.*;
@@ -63,6 +64,7 @@ class CreditCardRefundSettlementIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired UserRepository users;
     @Autowired AccountRepository accounts;
+    @Autowired AccountBalanceService accountBalanceService;
     @Autowired CreditCardRepository cards;
     @Autowired CreditCardRefundRepository refunds;
     @Autowired CreditCardRefundItemRepository refundItems;
@@ -351,6 +353,50 @@ class CreditCardRefundSettlementIntegrationTest {
     }
 
     @Test
+    void shouldPayFullInvoiceWithoutCreditsAndRejectDuplicateWithCurrentVersion() throws Exception {
+        Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "150");
+        available(money("850"));
+        Long accountVersion = account().getVersion();
+        Long cardVersion = card().getVersion();
+
+        JsonNode result = pay(owner, target, owner.accountId(), 200);
+
+        assertMoney(result, "totalAmount", "150");
+        assertMoney(result, "creditAppliedAmount", "0");
+        assertMoney(result, "cashPaidAmount", "150");
+        assertThat(Instant.parse(result.path("paidAt").asString())).isEqualTo(NOW);
+        assertThat(result.path("invoiceId").asString()).isEqualTo(target.getId().toString());
+        Invoice settled = invoices.findById(target.getId()).orElseThrow();
+        assertThat(settled.getStatus()).isEqualTo(InvoiceStatus.PAID);
+        assertThat(settled.getPaidAt()).isEqualTo(NOW);
+        assertThat(settled.getVersion()).isEqualTo(target.getVersion() + 1);
+        assertThat(settled.getTotalAmount()).isEqualByComparingTo("150");
+        assertThat(account().getCurrentBalance()).isEqualByComparingTo("850");
+        assertThat(account().getVersion()).isEqualTo(accountVersion + 1);
+        assertThat(card().getAvailableLimit()).isEqualByComparingTo("1000");
+        assertThat(card().getVersion()).isEqualTo(cardVersion + 1);
+        Transaction payment = transactions.findById(UUID.fromString(result.path("paymentTransactionId").asString()))
+                .orElseThrow();
+        assertThat(payment.getType()).isEqualTo(TransactionType.CREDIT_CARD_PAYMENT);
+        assertThat(payment.getStatus()).isEqualTo(TransactionStatus.COMPLETED);
+        assertThat(payment.getAmount()).isEqualByComparingTo("150");
+        assertThat(payment.getUserId()).isEqualTo(owner.id());
+        assertThat(payment.getSourceAccountId()).isEqualTo(owner.accountId());
+        assertThat(payment.getCreditCardId()).isEqualTo(owner.cardId());
+        assertThat(payment.getInvoiceId()).isEqualTo(target.getId());
+        assertThat(payment.getEffectiveDate()).isEqualTo(LocalDate.of(2026, 9, 21));
+        assertThat(payment.getCompetenceDate()).isEqualTo(payment.getEffectiveDate());
+        assertThat(payment.getDueDate()).isEqualTo(target.getDueDate());
+        assertThat(paymentRows()).hasSize(1);
+        Snapshot afterPayment = snapshot();
+
+        JsonNode error = pay(owner, settled, owner.accountId(), 409);
+
+        assertThat(error.path("code").asString()).isEqualTo("INVALID_INVOICE_PAYMENT");
+        assertThat(snapshot()).isEqualTo(afterPayment);
+    }
+
+    @Test
     void shouldPayWithoutCreditsAndAllowNegativeAccountBalance() throws Exception {
         Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "150");
         available(money("850"));
@@ -391,7 +437,7 @@ class CreditCardRefundSettlementIntegrationTest {
     }
 
     @Test
-    void shouldRollbackConsumedCreditAndAccountAfterPaymentTransactionFlushFails() throws Exception {
+    void shouldRollbackCreditAndPaymentBeforeAccountDebitWhenPaymentFlushFails() throws Exception {
         refund(owner, paidPurchase(owner, "50"), 200);
         Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "150");
         available(money("850"));
@@ -404,7 +450,7 @@ class CreditCardRefundSettlementIntegrationTest {
                 assertThat(jdbc.queryForObject("SELECT amount FROM transactions WHERE id = ?",
                         BigDecimal.class, ((Transaction) saved).getId())).isEqualByComparingTo("100");
                 assertThat(jdbc.queryForObject("SELECT current_balance FROM accounts WHERE id = ?",
-                        BigDecimal.class, owner.accountId())).isEqualByComparingTo("900");
+                        BigDecimal.class, owner.accountId())).isEqualByComparingTo("1000");
                 assertThat(jdbc.queryForObject("SELECT remaining_amount FROM credit_card_credits WHERE user_id = ?",
                         BigDecimal.class, owner.id())).isZero();
                 assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM credit_card_credit_applications WHERE invoice_id = ?",
@@ -419,6 +465,82 @@ class CreditCardRefundSettlementIntegrationTest {
         read(result, 500);
         assertThat(flushed).isTrue();
         assertThat(result.getResolvedException()).isSameAs(failure);
+        assertThat(snapshot()).isEqualTo(before);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "DEBIT,0", "DEBIT,50",
+            "INVOICE,0", "INVOICE,50", "INVOICE,150",
+            "LIMIT,0", "LIMIT,50", "LIMIT,150"
+    })
+    void shouldRollbackFullSettlementAfterEachFinancialStage(String stage, String issued) throws Exception {
+        BigDecimal creditAmount = money(issued);
+        if (creditAmount.signum() > 0) {
+            refund(owner, paidPurchase(owner, issued), 200);
+        }
+        Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.CLOSED, "150");
+        available(money("850"));
+        BigDecimal cashAmount = money("150").subtract(creditAmount);
+        Snapshot before = snapshot();
+        AtomicBoolean stageReached = new AtomicBoolean();
+        IllegalStateException failure = new IllegalStateException("Simulated failure after " + stage);
+        Object component = switch (stage) {
+            case "DEBIT" -> accountBalanceService;
+            case "INVOICE" -> invoices;
+            case "LIMIT" -> cards;
+            default -> throw new AssertionError(stage);
+        };
+
+        intercept(component, stage.equals("DEBIT") ? "debit" : "saveAndFlush", call -> {
+            call.proceed();
+            // Read the flushed rows inside the request transaction, before throwing the intended failure.
+            assertThat(jdbc.queryForObject("SELECT current_balance FROM accounts WHERE id = ?",
+                    BigDecimal.class, owner.accountId()))
+                    .isEqualByComparingTo(money("1000").subtract(cashAmount));
+            assertThat(jdbc.queryForObject("SELECT available_limit FROM credit_cards WHERE id = ?",
+                    BigDecimal.class, owner.cardId()))
+                    .isEqualByComparingTo(stage.equals("LIMIT") ? "1000" : "850");
+            Map<String, Object> invoiceRow = invoiceRow(target.getId());
+            assertThat(invoiceRow.get("status")).isEqualTo(stage.equals("DEBIT") ? "CLOSED" : "PAID");
+            assertThat(((Number) invoiceRow.get("version")).longValue())
+                    .isEqualTo(target.getVersion() + (stage.equals("DEBIT") ? 0 : 1));
+            if (stage.equals("DEBIT")) {
+                assertThat(invoiceRow.get("paid_at")).isNull();
+            } else {
+                assertThat(jdbc.queryForObject("SELECT paid_at FROM invoices WHERE id = ?",
+                        OffsetDateTime.class, target.getId()).toInstant()).isEqualTo(NOW);
+            }
+            assertThat((BigDecimal) invoiceRow.get("total_amount")).isEqualByComparingTo("150");
+            List<Map<String, Object>> payments = paymentRows();
+            if (cashAmount.signum() > 0) {
+                assertThat(payments).hasSize(1);
+                assertThat((BigDecimal) payments.getFirst().get("amount")).isEqualByComparingTo(cashAmount);
+                assertThat(payments.getFirst().get("invoice_id")).isEqualTo(target.getId());
+                assertThat(payments.getFirst().get("status")).isEqualTo("COMPLETED");
+            } else {
+                assertThat(payments).isEmpty();
+            }
+            assertThat(jdbc.queryForObject(
+                    "SELECT COALESCE(SUM(amount), 0) FROM credit_card_credit_applications WHERE invoice_id = ?",
+                    BigDecimal.class, target.getId())).isEqualByComparingTo(creditAmount);
+            if (creditAmount.signum() > 0) {
+                assertThat(jdbc.queryForObject("SELECT remaining_amount FROM credit_card_credits WHERE user_id = ?",
+                        BigDecimal.class, owner.id())).isZero();
+            }
+            stageReached.set(true);
+            throw failure;
+        });
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("expectedVersion", target.getVersion());
+        if (cashAmount.signum() > 0) body.put("sourceAccountId", owner.accountId());
+        MvcResult result = postAs(owner, payPath(target), body);
+
+        read(result, 500);
+        assertThat(stageReached).as("Failure must occur after %s", stage).isTrue();
+        assertThat(result.getResolvedException()).isSameAs(failure);
+        // Includes balances, invoice paidAt/status, history, credits, payments and optimistic-lock versions.
         assertThat(snapshot()).isEqualTo(before);
     }
 

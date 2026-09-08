@@ -77,14 +77,9 @@ public class InvoicePaymentService {
 
         BigDecimal totalAmount = invoice.getTotalAmount();
 
-        BigDecimal newAvailableLimit =
-                calculateAvailableLimit(card, totalAmount);
+        BigDecimal newAvailableLimit = calculateAvailableLimit(card, totalAmount);
 
-        BigDecimal creditAppliedAmount = creditApplicationService.apply(
-                userId,
-                invoice,
-                totalAmount
-        );
+        BigDecimal creditAppliedAmount = creditApplicationService.apply(userId, invoice, totalAmount);
 
         if (creditAppliedAmount == null
                 || creditAppliedAmount.signum() < 0
@@ -94,21 +89,10 @@ public class InvoicePaymentService {
             );
         }
 
-        BigDecimal cashPaidAmount =
-                totalAmount.subtract(creditAppliedAmount);
+        BigDecimal cashPaidAmount = totalAmount.subtract(creditAppliedAmount);
 
-        if (cashPaidAmount.signum() > 0) {
-            if (request.sourceAccountId() == null) {
-                throw new InvalidInvoicePaymentException(
-                        "Informe uma conta para pagar o valor restante"
-                );
-            }
-
-            accountBalanceService.debit(
-                    userId,
-                    request.sourceAccountId(),
-                    cashPaidAmount
-            );
+        if (cashPaidAmount.signum() > 0 && request.sourceAccountId() == null) {
+                throw new InvalidInvoicePaymentException("Informe uma conta para pagar o valor restante");
         }
 
         Instant paymentInstant = financeClock.instant();
@@ -129,17 +113,19 @@ public class InvoicePaymentService {
             );
 
             paymentTransactionId = payment.getId();
-        }
 
-        if (totalAmount.signum() > 0) {
-            card.setAvailableLimit(newAvailableLimit);
-            creditCardRepository.saveAndFlush(card);
+            accountBalanceService.debit(userId, request.sourceAccountId(), cashPaidAmount);
         }
 
         invoice.setStatus(InvoiceStatus.PAID);
         invoice.setPaidAt(paymentInstant);
 
         invoiceRepository.saveAndFlush(invoice);
+
+        if (totalAmount.signum() > 0) {
+            card.setAvailableLimit(newAvailableLimit);
+            creditCardRepository.saveAndFlush(card);
+        }
 
         return new InvoicePaymentResponse(
                 invoice.getId(),
@@ -155,9 +141,7 @@ public class InvoicePaymentService {
         if (request == null
                 || request.expectedVersion() == null
                 || request.expectedVersion() < 0) {
-            throw new InvalidInvoicePaymentException(
-                    "Informe uma versão válida da fatura"
-            );
+            throw new InvalidInvoicePaymentException("Informe uma versão válida da fatura");
         }
     }
 
