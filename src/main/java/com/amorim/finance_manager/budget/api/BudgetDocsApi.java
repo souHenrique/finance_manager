@@ -6,7 +6,9 @@ import com.amorim.finance_manager.budget.dto.UpdateBudgetRequest;
 import com.amorim.finance_manager.shared.exception.ApiError;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,7 +16,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import java.util.List;
 import java.util.UUID;
+
+import static com.amorim.finance_manager.config.openapi.OpenApiExamples.*;
 
 public interface BudgetDocsApi {
 
@@ -34,6 +39,10 @@ public interface BudgetDocsApi {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = CreateBudgetRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Criação de orçamento",
+                                    value = CREATE_BUDGET_REQUEST
                             )
                     )
             )
@@ -46,6 +55,10 @@ public interface BudgetDocsApi {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = BudgetResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Orçamento criado",
+                                    value = BUDGET_RESPONSE
                             )
                     )
             ),
@@ -113,6 +126,10 @@ public interface BudgetDocsApi {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = BudgetResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Orçamento encontrado",
+                                    value = BUDGET_RESPONSE
                             )
                     )
             ),
@@ -171,6 +188,10 @@ public interface BudgetDocsApi {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = UpdateBudgetRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Atualização do limite",
+                                    value = UPDATE_BUDGET_REQUEST
                             )
                     )
             )
@@ -183,6 +204,10 @@ public interface BudgetDocsApi {
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(
                                     implementation = BudgetResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Orçamento atualizado",
+                                    value = BUDGET_RESPONSE
                             )
                     )
             ),
@@ -238,7 +263,7 @@ public interface BudgetDocsApi {
                     name = "id",
                     description = "Identificador do orçamento",
                     required = true,
-                    example = "c487c4cf-d948-4ennials-b85f-e36bb798c928",
+                    example = "c487c4cf-d948-4ba8-a85f-e36bb798c928",
                     schema = @Schema(
                             type = "string",
                             format = "uuid"
@@ -298,4 +323,47 @@ public interface BudgetDocsApi {
             )
             UUID id
     );
+
+    @Operation(
+            summary = "Listar orçamentos",
+            description = """
+                Lista os orçamentos mensais pertencentes ao usuário autenticado,
+                ordenados do período mais recente para o mais antigo.
+                """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Orçamentos encontrados",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(
+                                    schema = @Schema(
+                                            implementation = BudgetResponse.class
+                                    )
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Lista de orçamentos",
+                                    value = BUDGET_LIST_RESPONSE
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            )
+    })
+    ResponseEntity<List<BudgetResponse>> findAll();
 }

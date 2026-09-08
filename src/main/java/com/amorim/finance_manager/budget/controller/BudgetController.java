@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.budget.controller;
 
+import com.amorim.finance_manager.budget.api.BudgetDocsApi;
 import com.amorim.finance_manager.budget.dto.BudgetResponse;
 import com.amorim.finance_manager.budget.dto.CreateBudgetRequest;
 import com.amorim.finance_manager.budget.dto.UpdateBudgetRequest;

@@ -1262,4 +1262,54 @@ public final class OpenApiExamples {
       "fieldErrors": []
     }
     """;
+
+    public static final String CREATE_BUDGET_REQUEST = """
+        {
+          "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+          "month": 9,
+          "year": 2026,
+          "amountLimit": 1500.00
+        }
+        """;
+
+    public static final String UPDATE_BUDGET_REQUEST = """
+        {
+          "amountLimit": 1800.00
+        }
+        """;
+
+    public static final String BUDGET_RESPONSE = """
+        {
+          "id": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
+          "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+          "month": 9,
+          "year": 2026,
+          "amountLimit": 1500.00,
+          "createdAt": "2026-09-08T14:00:00Z",
+          "updatedAt": "2026-09-08T14:00:00Z"
+        }
+        """;
+
+    public static final String BUDGET_LIST_RESPONSE = """
+        [
+          {
+            "id": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
+            "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+            "month": 9,
+            "year": 2026,
+            "amountLimit": 1500.00,
+            "createdAt": "2026-09-08T14:00:00Z",
+            "updatedAt": "2026-09-08T14:00:00Z"
+          },
+          {
+            "id": "853430b9-48c9-4ee6-9b83-b41188405eeb",
+            "categoryId": "95d2e27e-7533-42cb-85ab-4ad45ee568fc",
+            "month": 8,
+            "year": 2026,
+            "amountLimit": 900.00,
+            "createdAt": "2026-08-01T12:00:00Z",
+            "updatedAt": "2026-08-01T12:00:00Z"
+          }
+        ]
+        """;
 }

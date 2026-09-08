@@ -71,7 +71,12 @@ class OpenApiIntegrationTest {
             "get /api/v1/reports/cash/annual",
             "post /api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund",
             "post /api/v1/invoices/{id}/close",
-            "post /api/v1/invoices/{id}/pay"
+            "post /api/v1/invoices/{id}/pay",
+            "post /api/v1/budgets",
+            "get /api/v1/budgets",
+            "get /api/v1/budgets/{id}",
+            "patch /api/v1/budgets/{id}",
+            "delete /api/v1/budgets/{id}"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(
@@ -91,7 +96,9 @@ class OpenApiIntegrationTest {
             "post /api/v1/transfers",
             "post /api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund",
             "post /api/v1/invoices/{id}/close",
-            "post /api/v1/invoices/{id}/pay"
+            "post /api/v1/invoices/{id}/pay",
+            "post /api/v1/budgets",
+            "patch /api/v1/budgets/{id}"
     );
 
     private static final Set<String> PUBLIC_OPERATIONS = Set.of(
@@ -131,7 +138,10 @@ class OpenApiIntegrationTest {
             "WeeklyCashFlowResponse",
             "CreateTransferRequest",
             "ApiError",
-            "FieldErrorResponse"
+            "FieldErrorResponse",
+            "CreateBudgetRequest",
+            "UpdateBudgetRequest",
+            "BudgetResponse"
     );
 
     @Autowired
@@ -238,7 +248,8 @@ class OpenApiIntegrationTest {
                 "Transaction",
                 "User",
                 "CreditCard",
-                "Invoice"
+                "Invoice",
+                "Budget"
         )) {
             assertThat(schemas.path(entityName).isMissingNode())
                     .as("Entity %s não pode ser contrato público", entityName)
@@ -689,10 +700,12 @@ class OpenApiIntegrationTest {
     }
 
     private void assertSuccessResponseHasExample(JsonNode operation, String operationKey) {
+        String successCode = null;
         JsonNode successResponse = null;
 
         for (var response : operation.path("responses").properties()) {
             if (response.getKey().startsWith("2")) {
+                successCode = response.getKey();
                 successResponse = response.getValue();
                 break;
             }
@@ -701,6 +714,17 @@ class OpenApiIntegrationTest {
         assertThat(successResponse)
                 .as("%s deve documentar resposta de sucesso", operationKey)
                 .isNotNull();
+
+        if ("204".equals(successCode)) {
+            JsonNode content = successResponse.path("content");
+
+            assertThat(content.isMissingNode() || content.size() == 0)
+                    .as("resposta 204 de %s não deve possuir corpo", operationKey)
+                    .isTrue();
+
+            return;
+        }
+
         assertThat(contentHasExample(successResponse.path("content")))
                 .as("resposta de sucesso de %s deve possuir exemplo", operationKey)
                 .isTrue();
