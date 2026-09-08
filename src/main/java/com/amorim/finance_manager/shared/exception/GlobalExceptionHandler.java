@@ -516,6 +516,45 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(BudgetNotFoundException.class)
+    public ResponseEntity<ApiError> handleBudgetNotFound(
+            BudgetNotFoundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.NOT_FOUND,
+                ApiErrorCode.BUDGET_NOT_FOUND,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(BudgetAlreadyExistsException.class)
+    public ResponseEntity<ApiError> handleBudgetAlreadyExists(
+            BudgetAlreadyExistsException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.BUDGET_ALREADY_EXISTS,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidBudgetUpdateException.class)
+    public ResponseEntity<ApiError> handleInvalidBudgetUpdate(
+            InvalidBudgetUpdateException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_BUDGET_UPDATE,
+                exception.getMessage(),
+                request
+        );
+    }
+
     private ResponseEntity<ApiError> response(
             HttpStatus status,
             ApiErrorCode code,
