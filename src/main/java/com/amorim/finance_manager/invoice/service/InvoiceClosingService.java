@@ -39,48 +39,31 @@ public class InvoiceClosingService {
                 .orElseThrow(InvoiceNotFoundException::new);
 
         if (expectedVersion == null || expectedVersion < 0) {
-            throw new InvalidInvoiceStatusException(
-                    "Informe uma versão válida da fatura"
-            );
+            throw new InvalidInvoiceStatusException("Informe uma versão válida da fatura");
         }
 
         if (!Objects.equals(invoice.getVersion(), expectedVersion)) {
-            throw new OptimisticLockingFailureException(
-                    "A fatura foi alterada. Consulte os dados novamente."
-            );
+            throw new OptimisticLockingFailureException("A fatura foi alterada. Consulte os dados novamente.");
         }
 
-        if (invoice.getStatus() != InvoiceStatus.OPEN
-                && invoice.getStatus() != InvoiceStatus.CLOSED) {
-            throw new InvalidInvoiceStatusException(
-                    "Somente faturas abertas podem ser fechadas"
-            );
+        if (invoice.getStatus() != InvoiceStatus.OPEN) {
+            throw new InvalidInvoiceStatusException("Somente faturas abertas podem ser fechadas");
         }
 
         if (invoice.getPaidAt() != null) {
-            throw new InvalidInvoiceStatusException(
-                    "A fatura possui dados de pagamento incompatíveis"
-            );
+            throw new InvalidInvoiceStatusException("A fatura possui dados de pagamento incompatíveis");
         }
 
         LocalDate today = LocalDate.now(financeClock);
 
         if (invoice.getClosingDate() == null
                 || !invoice.getClosingDate().isBefore(today)) {
-            throw new InvalidInvoiceStatusException(
-                    "O dia de fechamento da fatura ainda não terminou"
-            );
+            throw new InvalidInvoiceStatusException("O dia de fechamento da fatura ainda não terminou");
         }
 
         if (invoice.getTotalAmount() == null
                 || invoice.getTotalAmount().signum() < 0) {
-            throw new InvalidInvoiceStatusException(
-                    "A fatura possui total inválido"
-            );
-        }
-
-        if (invoice.getStatus() == InvoiceStatus.CLOSED) {
-            return invoiceMapper.toSummary(invoice);
+            throw new InvalidInvoiceStatusException("A fatura possui total inválido");
         }
 
         invoice.setStatus(InvoiceStatus.CLOSED);

@@ -521,8 +521,22 @@ class CreditCardRefundSettlementIntegrationTest {
         assertThat(card().getAvailableLimit()).isEqualByComparingTo("900");
         assertThat(account().getCurrentBalance()).isEqualByComparingTo("1000");
         Invoice refreshed = invoices.findById(target.getId()).orElseThrow();
-        read(postAs(owner, closePath(target), Map.of("expectedVersion", refreshed.getVersion())), 200);
-        assertThat(invoices.findById(target.getId()).orElseThrow().getVersion()).isEqualTo(refreshed.getVersion());
+        Snapshot afterClosing = snapshot();
+
+        JsonNode error = read(
+                postAs(
+                        owner,
+                        closePath(target),
+                        Map.of("expectedVersion", refreshed.getVersion())
+                ),
+                409
+        );
+
+        assertThat(error.path("code").asString())
+                .isEqualTo("INVALID_INVOICE_STATUS");
+
+        assertThat(snapshot()).isEqualTo(afterClosing);
+
         pay(owner, refreshed, owner.accountId(), 200);
     }
 
@@ -573,6 +587,50 @@ class CreditCardRefundSettlementIntegrationTest {
         read(postAs(owner, refundPath(owner.cardId(), transaction.getId()), Map.of("reason", " ")), 400);
         read(postAs(owner, refundPath(owner.cardId(), transaction.getId()), Map.of("reason", "a".repeat(501))), 400);
         read(postAs(owner, closePath(target), Map.of("expectedVersion", -1)), 400);
+    }
+
+    @Test
+    void shouldCloseInvoiceOnlyOnceUnderConcurrency() throws Exception {
+        Invoice target = invoice(owner, owner.cardId(), 8, InvoiceStatus.OPEN, "150");
+
+        available(money("850"));
+
+        Long initialVersion = target.getVersion();
+        Snapshot before = snapshot();
+
+        synchronizeInvoiceReads(target.getId());
+
+        Map<String, Object> body = Map.of("expectedVersion", initialVersion);
+
+        List<Integer> statuses = concurrent(
+                () -> postAs(owner, closePath(target), body)
+        );
+
+        assertThat(statuses).containsExactlyInAnyOrder(200, 409);
+
+        Invoice persisted = invoices.findById(target.getId()).orElseThrow();
+
+        assertThat(persisted.getStatus()).isEqualTo(InvoiceStatus.CLOSED);
+
+        assertThat(persisted.getVersion()).isEqualTo(initialVersion + 1);
+
+        assertThat(persisted.getTotalAmount()).isEqualByComparingTo("150");
+
+        assertThat(persisted.getPaidAt()).isNull();
+
+        assertThat(persisted.getClosingDate()).isEqualTo(target.getClosingDate());
+
+        assertThat(persisted.getDueDate()).isEqualTo(target.getDueDate());
+
+        Snapshot after = snapshot();
+
+        assertThat(after.accounts()).isEqualTo(before.accounts());
+        assertThat(after.cards()).isEqualTo(before.cards());
+        assertThat(after.transactions()).isEqualTo(before.transactions());
+        assertThat(after.refunds()).isEqualTo(before.refunds());
+        assertThat(after.items()).isEqualTo(before.items());
+        assertThat(after.credits()).isEqualTo(before.credits());
+        assertThat(after.applications()).isEqualTo(before.applications());
     }
 
     private Actor actor() {

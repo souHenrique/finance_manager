@@ -351,11 +351,13 @@ public interface InvoiceApiDocs {
                 expectedVersion deve corresponder à versão atual
                 da fatura, obtida no endpoint de consulta.
 
-                Uma fatura já CLOSED pode ser retornada sem alteração,
-                desde que a versão e as demais validações sejam atendidas.
-
-                Faturas PAID ou CANCELLED não podem ser fechadas
-                por esta operação.
+                Somente faturas OPEN podem ser fechadas.
+                
+                Faturas CLOSED, PAID ou CANCELLED retornam 409 Conflict.
+                Uma nova tentativa de fechamento não altera a fatura.
+                
+                Após o fechamento, a fatura não aceita novas compras.
+                O fechamento não realiza pagamento.
                 """,
             requestBody = @RequestBody(
                     required = true,
@@ -380,8 +382,8 @@ public interface InvoiceApiDocs {
             @ApiResponse(
                     responseCode = "200",
                     description = """
-                        Fatura fechada ou já fechada.
-                        Retorna o resumo e a versão atual da fatura.
+                        Fatura alterada de OPEN para CLOSED.
+                        Retorna o resumo e a nova versão da fatura.
                         """,
                     content = @Content(
                             mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -440,10 +442,10 @@ public interface InvoiceApiDocs {
             @ApiResponse(
                     responseCode = "409",
                     description = """
-                        Estado incompatível, dia de fechamento ainda
-                        não encerrado, dados inconsistentes ou conflito
-                        de versão.
-
+                        Fatura já fechada, paga ou cancelada;
+                        dia de fechamento ainda não encerrado;
+                        dados inconsistentes ou conflito de versão.
+                        
                         Códigos:
                         INVALID_INVOICE_STATUS;
                         OPTIMISTIC_LOCK_CONFLICT.
@@ -473,6 +475,19 @@ public interface InvoiceApiDocs {
                                                   "status": 409,
                                                   "code": "OPTIMISTIC_LOCK_CONFLICT",
                                                   "message": "O recurso foi alterado por outra operação. Atualize os dados e tente novamente.",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/close",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Fatura já fechada",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "INVALID_INVOICE_STATUS",
+                                                  "message": "Somente faturas abertas podem ser fechadas",
                                                   "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/close",
                                                   "fieldErrors": []
                                                 }
