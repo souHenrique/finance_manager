@@ -69,6 +69,9 @@ public record InvoiceDetailResponse(
         @Schema(
                 description = "Transações vinculadas à fatura, ordenadas pela data de competência"
         )
-        List<TransactionResponse> transactions
+        List<TransactionResponse> transactions,
+
+        @Schema(description = "Valor de créditos efetivamente aplicado à fatura")
+        BigDecimal creditAppliedAmount
 ) {
 }

@@ -4,4 +4,8 @@ public class InvalidInvoiceStatusException extends RuntimeException {
     public InvalidInvoiceStatusException() {
         super("Apenas faturas abertas podem receber novas compras");
     }
+
+    public InvalidInvoiceStatusException(String message) {
+        super(message);
+    }
 }

@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.envers.AuditTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -114,6 +115,11 @@ public class Transaction {
         createdAt = now;
         updatedAt = now;
     }
+
+    @NotAudited
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     @PreUpdate
     public void preUpdate() {

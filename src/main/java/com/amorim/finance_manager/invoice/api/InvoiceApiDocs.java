@@ -1,15 +1,15 @@
 package com.amorim.finance_manager.invoice.api;
 
-import com.amorim.finance_manager.invoice.dto.InvoiceDetailResponse;
-import com.amorim.finance_manager.invoice.dto.InvoiceFilterRequest;
-import com.amorim.finance_manager.invoice.dto.InvoicePageResponse;
+import com.amorim.finance_manager.invoice.dto.*;
 import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
 import com.amorim.finance_manager.shared.exception.ApiError;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
@@ -333,5 +333,414 @@ public interface InvoiceApiDocs {
 
             @ParameterObject
             Pageable pageable
+    );
+
+    @Operation(
+            summary = "Fechar fatura",
+            description = """
+                Fecha uma fatura pertencente ao usuário autenticado.
+
+                O fechamento somente é permitido depois do término
+                do dia indicado em closingDate, considerando o fuso
+                configurado na aplicação.
+
+                A operação altera o status de OPEN para CLOSED,
+                sem modificar o total da fatura, as transações,
+                o limite do cartão ou o saldo bancário.
+
+                expectedVersion deve corresponder à versão atual
+                da fatura, obtida no endpoint de consulta.
+
+                Uma fatura já CLOSED pode ser retornada sem alteração,
+                desde que a versão e as demais validações sejam atendidas.
+
+                Faturas PAID ou CANCELLED não podem ser fechadas
+                por esta operação.
+                """,
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Versão da fatura consultada pelo usuário",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = CloseInvoiceRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Fechar fatura",
+                                    value = """
+                                        {
+                                          "expectedVersion": 4
+                                        }
+                                        """
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = """
+                        Fatura fechada ou já fechada.
+                        Retorna o resumo e a versão atual da fatura.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = InvoiceSummaryResponse.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Fatura fechada",
+                                    value = """
+                                        {
+                                          "id": "72486234-ef50-4c7e-99a7-9193a28533a8",
+                                          "creditCardId": "0c736743-8885-43d1-813b-c096a4899201",
+                                          "referenceMonth": 8,
+                                          "referenceYear": 2026,
+                                          "closingDate": "2026-08-20",
+                                          "dueDate": "2026-08-28",
+                                          "totalAmount": 150.00,
+                                          "status": "CLOSED",
+                                          "paidAt": null,
+                                          "version": 5
+                                        }
+                                        """
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = """
+                        UUID inválido, corpo ausente ou malformado,
+                        expectedVersion ausente ou negativo.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token JWT ausente, inválido ou expirado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = """
+                        Fatura inexistente ou pertencente a outro usuário.
+                        Código: INVOICE_NOT_FOUND.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = """
+                        Estado incompatível, dia de fechamento ainda
+                        não encerrado, dados inconsistentes ou conflito
+                        de versão.
+
+                        Códigos:
+                        INVALID_INVOICE_STATUS;
+                        OPTIMISTIC_LOCK_CONFLICT.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Fechamento ainda não permitido",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "INVALID_INVOICE_STATUS",
+                                                  "message": "O dia de fechamento da fatura ainda não terminou",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/close",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Versão desatualizada",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "OPTIMISTIC_LOCK_CONFLICT",
+                                                  "message": "O recurso foi alterado por outra operação. Atualize os dados e tente novamente.",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/close",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            )
+    })
+    ResponseEntity<InvoiceSummaryResponse> close(
+            @Parameter(
+                    name = "id",
+                    in = ParameterIn.PATH,
+                    description = "Identificador da fatura que será fechada",
+                    required = true,
+                    example = "72486234-ef50-4c7e-99a7-9193a28533a8",
+                    schema = @Schema(
+                            type = "string",
+                            format = "uuid"
+                    )
+            )
+            UUID id,
+            CloseInvoiceRequest request
+    );
+
+    @Operation(
+            summary = "Quitar fatura",
+            description = """
+                Quita integralmente uma fatura CLOSED pertencente
+                ao usuário autenticado.
+
+                O dia de fechamento deve estar encerrado.
+                expectedVersion deve corresponder à versão atual
+                da fatura, obtida no endpoint de consulta.
+
+                Créditos disponíveis e elegíveis do mesmo usuário
+                e cartão são aplicados primeiro, dos mais antigos
+                para os mais recentes.
+
+                São elegíveis créditos cuja fatura de origem possua
+                referência anterior à fatura que será quitada.
+
+                Somente a diferença não coberta por créditos é debitada
+                da conta e registrada como CREDIT_CARD_PAYMENT.
+
+                sourceAccountId pode ser omitido quando não houver
+                valor restante a debitar. Se informado, deve identificar
+                uma conta ativa do usuário autenticado.
+
+                A fatura passa para PAID e paidAt registra o momento
+                da quitação, inclusive quando ela ocorre só com créditos.
+
+                O total da fatura é preservado.
+                O limite é liberado pelo valor integral liquidado.
+                Eventual crédito excedente permanece disponível.
+
+                Não são criadas transações bancárias de valor zero.
+                A operação não aceita pagamento parcial ou retroativo.
+
+                Aplicação dos créditos, débito bancário, registro do
+                pagamento, liberação do limite e quitação acontecem
+                na mesma transação.
+                """,
+            requestBody = @RequestBody(
+                    required = true,
+                    description = """
+                        Versão atual da fatura e conta de origem.
+
+                        A conta é necessária quando os créditos
+                        não cobrem integralmente o valor devido.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = PayInvoiceRequest.class
+                            ),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Pagamento com conta",
+                                            value = """
+                                                {
+                                                  "sourceAccountId": "0f6d7313-77f8-4b48-a63d-5338dd95461e",
+                                                  "expectedVersion": 5
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Quitação integral por créditos",
+                                            value = """
+                                                {
+                                                  "expectedVersion": 5
+                                                }
+                                                """
+                                    )
+                            }
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = """
+                        Fatura quitada.
+                        Retorna o total, o crédito utilizado,
+                        o valor debitado e a data da quitação.
+
+                        paymentTransactionId é nulo quando não há
+                        débito bancário.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = InvoicePaymentResponse.class
+                            ),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Crédito e débito bancário",
+                                            value = """
+                                                {
+                                                  "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+                                                  "totalAmount": 150.00,
+                                                  "creditAppliedAmount": 100.00,
+                                                  "cashPaidAmount": 50.00,
+                                                  "paymentTransactionId": "75d4b4e7-8621-41fe-b71f-34c47e1b581b",
+                                                  "paidAt": "2026-09-08T12:00:00Z"
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Somente créditos",
+                                            value = """
+                                                {
+                                                  "invoiceId": "72486234-ef50-4c7e-99a7-9193a28533a8",
+                                                  "totalAmount": 150.00,
+                                                  "creditAppliedAmount": 150.00,
+                                                  "cashPaidAmount": 0.00,
+                                                  "paymentTransactionId": null,
+                                                  "paidAt": "2026-09-08T12:00:00Z"
+                                                }
+                                                """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = """
+                        UUID inválido, corpo ausente ou malformado,
+                        ou expectedVersion ausente.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token JWT ausente, inválido ou expirado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = """
+                        Fatura, cartão ou conta não encontrados.
+                        Recursos de outro usuário também retornam 404.
+
+                        Códigos:
+                        INVOICE_NOT_FOUND;
+                        CREDIT_CARD_NOT_FOUND;
+                        ACCOUNT_NOT_FOUND.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = """
+                        Fatura já quitada, não fechada ou com dados
+                        inconsistentes; versão negativa; conta ausente
+                        quando existe diferença a debitar; conta inativa;
+                        inconsistência de limite ou conflito concorrente.
+
+                        Códigos:
+                        INVALID_INVOICE_PAYMENT;
+                        INACTIVE_ACCOUNT;
+                        OPTIMISTIC_LOCK_CONFLICT.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Fatura já quitada",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "INVALID_INVOICE_PAYMENT",
+                                                  "message": "A fatura já está quitada",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/pay",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Conta necessária",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "INVALID_INVOICE_PAYMENT",
+                                                  "message": "Informe uma conta para pagar o valor restante",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/pay",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    ),
+                                    @ExampleObject(
+                                            name = "Conflito de concorrência",
+                                            value = """
+                                                {
+                                                  "timestamp": "2026-09-08T12:00:00Z",
+                                                  "status": 409,
+                                                  "code": "OPTIMISTIC_LOCK_CONFLICT",
+                                                  "message": "O recurso foi alterado por outra operação. Atualize os dados e tente novamente.",
+                                                  "path": "/api/v1/invoices/72486234-ef50-4c7e-99a7-9193a28533a8/pay",
+                                                  "fieldErrors": []
+                                                }
+                                                """
+                                    )
+                            }
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            )
+    })
+    ResponseEntity<InvoicePaymentResponse> pay(
+            @Parameter(
+                    name = "id",
+                    in = ParameterIn.PATH,
+                    description = "Identificador da fatura que será quitada",
+                    required = true,
+                    example = "72486234-ef50-4c7e-99a7-9193a28533a8",
+                    schema = @Schema(
+                            type = "string",
+                            format = "uuid"
+                    )
+            )
+            UUID id,
+            PayInvoiceRequest request
     );
 }

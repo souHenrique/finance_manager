@@ -2,13 +2,14 @@ package com.amorim.finance_manager.invoice.controller;
 
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.invoice.api.InvoiceApiDocs;
-import com.amorim.finance_manager.invoice.dto.InvoiceDetailResponse;
-import com.amorim.finance_manager.invoice.dto.InvoiceFilterRequest;
-import com.amorim.finance_manager.invoice.dto.InvoicePageResponse;
+import com.amorim.finance_manager.invoice.dto.*;
 import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
+import com.amorim.finance_manager.invoice.service.InvoiceClosingService;
+import com.amorim.finance_manager.invoice.service.InvoicePaymentService;
 import com.amorim.finance_manager.invoice.service.InvoiceQueryService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,6 +32,8 @@ import java.util.UUID;
 public class InvoiceController implements InvoiceApiDocs {
 
     private final InvoiceQueryService invoiceQueryService;
+    private final InvoiceClosingService invoiceClosingService;
+    private final InvoicePaymentService invoicePaymentService;
 
     @Override
     @GetMapping("/invoices")
@@ -92,6 +95,31 @@ public class InvoiceController implements InvoiceApiDocs {
                                 pageable
                         )
                 )
+        );
+    }
+
+    @Override
+    @PostMapping("/invoices/{id}/close")
+    public ResponseEntity<InvoiceSummaryResponse> close(
+            @PathVariable UUID id,
+            @Valid @RequestBody CloseInvoiceRequest request
+    ) {
+        return ResponseEntity.ok(
+                invoiceClosingService.close(
+                        id,
+                        request.expectedVersion()
+                )
+        );
+    }
+
+    @Override
+    @PostMapping("/invoices/{id}/pay")
+    public ResponseEntity<InvoicePaymentResponse> pay(
+            @PathVariable UUID id,
+            @Valid @RequestBody PayInvoiceRequest request
+    ) {
+        return ResponseEntity.ok(
+                invoicePaymentService.pay(id, request)
         );
     }
 }

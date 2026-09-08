@@ -1,9 +1,6 @@
 package com.amorim.finance_manager.creditcard.api;
 
-import com.amorim.finance_manager.creditcard.dto.CreateCreditCardPurchaseRequest;
-import com.amorim.finance_manager.creditcard.dto.CreateCreditCardRequest;
-import com.amorim.finance_manager.creditcard.dto.CreditCardResponse;
-import com.amorim.finance_manager.creditcard.dto.UpdateCreditCardRequest;
+import com.amorim.finance_manager.creditcard.dto.*;
 import com.amorim.finance_manager.shared.exception.ApiError;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -504,5 +501,160 @@ public interface CreditCardApiDocs {
             )
             UUID id,
             CreateCreditCardPurchaseRequest request
+    );
+
+    @Operation(
+            summary = "Estornar compra no cartão",
+            description = """
+                Estorna integralmente uma compra no cartão do usuário
+                autenticado.
+
+                O transactionId pode identificar qualquer parcela da compra.
+                Quando houver parcelamento, todas as parcelas do grupo
+                são consideradas.
+
+                Parcelas em faturas OPEN ou CLOSED são canceladas.
+                Os totais dessas faturas são reduzidos e o limite
+                correspondente é restaurado.
+                Faturas CLOSED permanecem fechadas.
+
+                Parcelas em faturas PAID geram crédito para utilização
+                futura no mesmo cartão.
+                A fatura paga e a transação original são preservadas.
+
+                A geração desse crédito não movimenta conta bancária
+                e não restaura novamente o limite da parcela paga.
+
+                O registro do crédito não significa que ele já foi
+                aplicado a outra fatura.
+
+                Compras com parcelas pagas e não pagas recebem os
+                tratamentos correspondentes na mesma transação.
+                """,
+            requestBody = @RequestBody(
+                    required = true,
+                    description = "Motivo do estorno integral da compra",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = CreditCardRefundRequest.class
+                            ),
+                            examples = @ExampleObject(
+                                    name = "Devolução de compra",
+                                    value = """
+                                        {
+                                          "reason": "Compra devolvida ao estabelecimento"
+                                        }
+                                        """
+                            )
+                    )
+            )
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = """
+                        Estorno registrado.
+                        Retorna o histórico, os valores e o tratamento
+                        aplicado a cada parcela.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = CreditCardRefundResponse.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = """
+                        UUID inválido, corpo ausente ou malformado,
+                        motivo vazio ou com mais de 500 caracteres.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ApiError.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Token JWT ausente, inválido ou expirado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ApiError.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = """
+                        Cartão, transação ou fatura não encontrados.
+                        Recursos de outro usuário também retornam 404.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ApiError.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = """
+                        Compra não elegível, parcela já cancelada,
+                        compra já estornada, fatura em estado incompatível,
+                        inconsistência financeira ou conflito de concorrência.
+                        """,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ApiError.class
+                            )
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno inesperado",
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(
+                                    implementation = ApiError.class
+                            )
+                    )
+            )
+    })
+    ResponseEntity<CreditCardRefundResponse> refundPurchase(
+            @Parameter(
+                    name = "creditCardId",
+                    description = "Identificador do cartão da compra",
+                    required = true,
+                    example = "0c736743-8885-43d1-813b-c096a4899201",
+                    schema = @Schema(
+                            type = "string",
+                            format = "uuid"
+                    )
+            )
+            UUID creditCardId,
+
+            @Parameter(
+                    name = "transactionId",
+                    description = """
+                        Identificador de uma transação da compra.
+                        Em compras parceladas, pode identificar qualquer
+                        parcela do grupo que será estornado integralmente.
+                        """,
+                    required = true,
+                    example = "75d4b4e7-8621-41fe-b71f-34c47e1b581b",
+                    schema = @Schema(
+                            type = "string",
+                            format = "uuid"
+                    )
+            )
+            UUID transactionId,
+
+            CreditCardRefundRequest request
     );
 }

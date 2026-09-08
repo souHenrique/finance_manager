@@ -2,10 +2,8 @@ package com.amorim.finance_manager.creditcard.controller;
 
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.creditcard.api.CreditCardApiDocs;
-import com.amorim.finance_manager.creditcard.dto.CreateCreditCardPurchaseRequest;
-import com.amorim.finance_manager.creditcard.dto.CreateCreditCardRequest;
-import com.amorim.finance_manager.creditcard.dto.CreditCardResponse;
-import com.amorim.finance_manager.creditcard.dto.UpdateCreditCardRequest;
+import com.amorim.finance_manager.creditcard.dto.*;
+import com.amorim.finance_manager.creditcard.service.CreditCardPurchaseRefundService;
 import com.amorim.finance_manager.creditcard.service.CreditCardPurchaseService;
 import com.amorim.finance_manager.creditcard.service.CreditCardService;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
@@ -32,6 +30,7 @@ public class CreditCardController implements CreditCardApiDocs {
 
     private final CreditCardService creditCardService;
     private final CreditCardPurchaseService creditCardPurchaseService;
+    private final CreditCardPurchaseRefundService creditCardPurchaseRefundService;
 
     @Override
     @PostMapping
@@ -75,5 +74,21 @@ public class CreditCardController implements CreditCardApiDocs {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(creditCardPurchaseService.create(id, request));
+    }
+
+    @Override
+    @PostMapping("/{creditCardId}/purchase/{transactionId}/refund")
+    public ResponseEntity<CreditCardRefundResponse> refundPurchase(
+            @PathVariable("creditCardId") UUID creditCardId,
+            @PathVariable("transactionId") UUID transactionId,
+            @Valid @RequestBody CreditCardRefundRequest request
+    ) {
+        return ResponseEntity.ok(
+                creditCardPurchaseRefundService.refundPurchase(
+                        creditCardId,
+                        transactionId,
+                        request
+                )
+        );
     }
 }

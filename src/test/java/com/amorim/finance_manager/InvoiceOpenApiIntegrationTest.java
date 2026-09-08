@@ -150,7 +150,8 @@ class InvoiceOpenApiIntegrationTest {
                 "status",
                 "paidAt",
                 "version",
-                "transactions"
+                "transactions",
+                "creditAppliedAmount"
         );
         assertSchemaFields(
                 schemas,

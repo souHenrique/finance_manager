@@ -4,6 +4,7 @@ import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -440,6 +441,76 @@ public class GlobalExceptionHandler {
         return response(
                 HttpStatus.CONFLICT,
                 ApiErrorCode.INVALID_INVOICE_STATUS,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(InvalidCreditCardRefundException.class)
+    public ResponseEntity<ApiError> handleInvalidCreditCardRefund(
+            InvalidCreditCardRefundException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_CREDIT_CARD_REFUND,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(CreditCardPurchaseAlreadyRefundedException.class)
+    public ResponseEntity<ApiError> handlePurchaseAlreadyRefunded(
+            CreditCardPurchaseAlreadyRefundedException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.CREDIT_CARD_PURCHASE_ALREADY_REFUNDED,
+                exception.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiError> handleDataIntegrityViolation(
+            DataIntegrityViolationException exception,
+            HttpServletRequest request
+    ) {
+        Throwable cause = exception;
+
+        while (cause != null) {
+            if (cause instanceof
+                    org.hibernate.exception.ConstraintViolationException violation) {
+
+                String constraint = violation.getConstraintName();
+
+                if ("uk_refund_items_original_transaction".equals(constraint)
+                        || "uk_card_credits_refund_item".equals(constraint)) {
+
+                    return response(
+                            HttpStatus.CONFLICT,
+                            ApiErrorCode.CREDIT_CARD_PURCHASE_ALREADY_REFUNDED,
+                            "A compra já possui estorno registrado.",
+                            request
+                    );
+                }
+            }
+
+            cause = cause.getCause();
+        }
+
+        return handleUnexpectedException(exception, request);
+    }
+
+    @ExceptionHandler(InvalidInvoicePaymentException.class)
+    public ResponseEntity<ApiError> handleInvalidInvoicePayment(
+            InvalidInvoicePaymentException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.CONFLICT,
+                ApiErrorCode.INVALID_INVOICE_PAYMENT,
                 exception.getMessage(),
                 request
         );

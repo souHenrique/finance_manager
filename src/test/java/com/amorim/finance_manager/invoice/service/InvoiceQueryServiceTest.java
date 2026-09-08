@@ -2,6 +2,7 @@ package com.amorim.finance_manager.invoice.service;
 
 import com.amorim.finance_manager.creditcard.entity.CreditCard;
 import com.amorim.finance_manager.creditcard.repository.CreditCardRepository;
+import com.amorim.finance_manager.creditcard.repository.CreditCardCreditApplicationRepository;
 import com.amorim.finance_manager.invoice.dto.InvoiceDetailResponse;
 import com.amorim.finance_manager.invoice.dto.InvoiceFilterRequest;
 import com.amorim.finance_manager.invoice.dto.InvoiceSummaryResponse;
@@ -58,6 +59,8 @@ class InvoiceQueryServiceTest {
     private TransactionMapper transactionMapper;
     @Mock
     private CurrentUserService currentUserService;
+    @Mock
+    private CreditCardCreditApplicationRepository applicationRepository;
     @InjectMocks
     private InvoiceQueryService invoiceQueryService;
 
@@ -116,7 +119,9 @@ class InvoiceQueryServiceTest {
         )).thenReturn(transactions);
         when(transactionMapper.toResponse(first)).thenReturn(firstResponse);
         when(transactionMapper.toResponse(second)).thenReturn(secondResponse);
-        when(invoiceMapper.toDetail(invoice, transactionResponses)).thenReturn(expected);
+        BigDecimal appliedAmount = new BigDecimal("50.00");
+        when(applicationRepository.sumAppliedAmount(INVOICE_ID)).thenReturn(appliedAmount);
+        when(invoiceMapper.toDetail(invoice, transactionResponses, appliedAmount)).thenReturn(expected);
 
         InvoiceDetailResponse result = invoiceQueryService.findById(INVOICE_ID);
 
@@ -128,7 +133,8 @@ class InvoiceQueryServiceTest {
         );
         verify(transactionMapper).toResponse(first);
         verify(transactionMapper).toResponse(second);
-        verify(invoiceMapper).toDetail(invoice, transactionResponses);
+        verify(applicationRepository).sumAppliedAmount(INVOICE_ID);
+        verify(invoiceMapper).toDetail(invoice, transactionResponses, appliedAmount);
         verifyNoInteractions(creditCardRepository);
     }
 
@@ -142,7 +148,8 @@ class InvoiceQueryServiceTest {
                 .hasMessage("Fatura não encontrada");
 
         verify(invoiceRepository).findOwnedById(INVOICE_ID, USER_ID);
-        verifyNoInteractions(transactionRepository, transactionMapper, invoiceMapper, creditCardRepository);
+        verifyNoInteractions(transactionRepository, transactionMapper, invoiceMapper, creditCardRepository,
+                applicationRepository);
     }
 
     @Test

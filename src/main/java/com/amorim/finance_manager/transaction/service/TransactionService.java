@@ -99,6 +99,8 @@ public class TransactionService {
                 .findByIdAndUserId(transactionId, userId)
                 .orElseThrow(TransactionNotFoundException::new);
 
+        validateGenericMutation(transaction);
+
         TransactionStatus previousStatus = transaction.getStatus();
 
         if (transaction.getStatus() == TransactionStatus.CANCELLED) {
@@ -141,6 +143,8 @@ public class TransactionService {
         Transaction transaction = transactionRepository
                 .findByIdAndUserId(transactionId, userId)
                 .orElseThrow(TransactionNotFoundException::new);
+
+        validateGenericMutation(transaction);
 
         if (transaction.getStatus() == TransactionStatus.CANCELLED) {
             throw new TransactionAlreadyCancelledException();
@@ -458,6 +462,21 @@ public class TransactionService {
                 Math.min(pageable.getPageSize(), 100),
                 sort
         );
+    }
+
+    private void validateGenericMutation(Transaction transaction) {
+        if (transaction.getType() == TransactionType.CREDIT_CARD_PURCHASE) {
+            throw new InvalidTransactionException(
+                    "Utilize o endpoint de estorno de compra no cartão"
+            );
+        }
+
+        if (transaction.getType() == TransactionType.CREDIT_CARD_PAYMENT) {
+            throw new InvalidTransactionException(
+                    "Pagamentos de fatura não podem ser alterados "
+                            + "pelo fluxo genérico de transações"
+            );
+        }
     }
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(

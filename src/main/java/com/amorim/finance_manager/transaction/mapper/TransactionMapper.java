@@ -13,6 +13,7 @@ public interface TransactionMapper {
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Transaction toEntity(CreateTransactionRequest request);
 
     TransactionResponse toResponse(Transaction transaction);
@@ -29,6 +30,7 @@ public interface TransactionMapper {
     @Mapping(target = "installmentCount", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "version", ignore = true)
     void updateEntity(
             UpdateTransactionRequest request,
             @MappingTarget Transaction transaction

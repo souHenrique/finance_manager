@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.invoice.service;
 
+import com.amorim.finance_manager.creditcard.repository.CreditCardCreditApplicationRepository;
 import com.amorim.finance_manager.creditcard.repository.CreditCardRepository;
 import com.amorim.finance_manager.invoice.dto.InvoiceDetailResponse;
 import com.amorim.finance_manager.invoice.dto.InvoiceFilterRequest;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,6 +36,7 @@ public class InvoiceQueryService {
     private final InvoiceMapper invoiceMapper;
     private final TransactionMapper transactionMapper;
     private final CurrentUserService currentUserService;
+    private final CreditCardCreditApplicationRepository applicationRepository;
 
     @Transactional(readOnly = true)
     public Page<InvoiceSummaryResponse> list(
@@ -62,7 +65,13 @@ public class InvoiceQueryService {
                 .map(transactionMapper::toResponse)
                 .toList();
 
-        return invoiceMapper.toDetail(invoice, transactions);
+        BigDecimal creditAppliedAmount = applicationRepository.sumAppliedAmount(invoiceId);
+
+        return invoiceMapper.toDetail(
+                invoice,
+                transactions,
+                creditAppliedAmount
+        );
     }
 
     @Transactional(readOnly = true)
