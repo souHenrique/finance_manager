@@ -1321,4 +1321,71 @@ public final class OpenApiExamples {
           }
         ]
         """;
+
+    public static final String COMPETENCE_REPORT_RESPONSE = """
+        {
+          "startDate": "2026-09-01",
+          "endDate": "2026-09-30",
+          "totalIncome": 0.00,
+          "totalExpenses": 1000.00,
+          "result": -1000.00,
+          "incomeCategories": [],
+          "expenseCategories": [
+            {
+              "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+              "name": "Compras",
+              "amount": 1000.00
+            }
+          ]
+        }
+        """;
+
+    public static final String COMPETENCE_REPORT_VALIDATION_ERROR = """
+        {
+          "timestamp": "2026-09-09T14:00:00Z",
+          "status": 400,
+          "code": "VALIDATION_ERROR",
+          "message": "Erro de validação",
+          "path": "/api/v1/reports/competence",
+          "fieldErrors": [
+            {
+              "field": "startDate",
+              "message": "A data inicial é obrigatória"
+            }
+          ]
+        }
+        """;
+
+    public static final String COMPETENCE_REPORT_INVALID_PERIOD_ERROR = """
+        {
+          "timestamp": "2026-09-09T14:00:00Z",
+          "status": 400,
+          "code": "INVALID_REPORT_PERIOD",
+          "message": "A data inicial não pode ser posterior à data final",
+          "path": "/api/v1/reports/competence",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String COMPETENCE_REPORT_UNAUTHORIZED_ERROR = """
+        {
+          "timestamp": "2026-09-09T14:00:00Z",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "message": "Autenticação necessária",
+          "path": "/api/v1/reports/competence",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String COMPETENCE_REPORT_INTERNAL_ERROR = """
+        {
+          "timestamp": "2026-09-09T14:00:00Z",
+          "status": 500,
+          "code": "INTERNAL_SERVER_ERROR",
+          "message": "Erro interno inesperado",
+          "path": "/api/v1/reports/competence",
+          "fieldErrors": []
+        }
+        """;
 }

@@ -69,6 +69,7 @@ class OpenApiIntegrationTest {
             "get /api/v1/reports/cash/weekly",
             "get /api/v1/reports/cash/monthly",
             "get /api/v1/reports/cash/annual",
+            "get /api/v1/reports/competence",
             "post /api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund",
             "post /api/v1/invoices/{id}/close",
             "post /api/v1/invoices/{id}/pay",
@@ -136,6 +137,7 @@ class OpenApiIntegrationTest {
             "CashFlowPeriodResponse",
             "CashFlowComparisonResponse",
             "WeeklyCashFlowResponse",
+            "CompetenceReportResponse",
             "CreateTransferRequest",
             "ApiError",
             "FieldErrorResponse",
@@ -516,6 +518,79 @@ class OpenApiIntegrationTest {
         String expectedSchema = period.equals("daily") ? "DailyCashFlowResponse" : "WeeklyCashFlowResponse";
         assertThat(contentReferencesSchema(operation.path("responses").path("200").path("content"), expectedSchema))
                 .isTrue();
+    }
+
+    @Test
+    void shouldDocumentCompetenceReportPeriodSecurityAndCriticalAccountingRule() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation = findOperation(document, "get /api/v1/reports/competence");
+        JsonNode parameters = operation.path("parameters");
+
+        assertThat(parameters.isArray()).isTrue();
+        assertThat(parameters).hasSize(2);
+        assertThat(parameters.valueStream().map(parameter -> parameter.path("name").asString()).toList())
+                .containsExactlyInAnyOrder("startDate", "endDate");
+
+        for (JsonNode parameter : parameters) {
+            assertThat(parameter.path("in").asString()).isEqualTo("query");
+            assertThat(parameter.path("required").asBoolean()).isTrue();
+            assertThat(parameter.path("description").asString()).isNotBlank();
+            JsonNode schema = resolveSchema(document, parameter.path("schema"));
+            assertThat(schema.path("type").asString()).isEqualTo("string");
+            assertThat(schema.path("format").asString()).isEqualTo("date");
+        }
+
+        assertThat(operation.path("requestBody").isMissingNode()).isTrue();
+        assertThat(usesBearerAuth(operation)).isTrue();
+        assertThat(contentReferencesSchema(
+                operation.path("responses").path("200").path("content"),
+                "CompetenceReportResponse"
+        )).isTrue();
+        assertThat(operation.path("description").asString())
+                .contains("competenceDate", "CREDIT_CARD_PURCHASE", "CREDIT_CARD_PAYMENT");
+    }
+
+    @Test
+    void shouldPublishConsistentCompetenceReportSchemaAndExample() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode schema = document.path("components").path("schemas").path("CompetenceReportResponse");
+        JsonNode properties = schema.path("properties");
+
+        assertThat(properties.properties().stream().map(Map.Entry::getKey).toList())
+                .containsExactlyInAnyOrder(
+                        "startDate",
+                        "endDate",
+                        "totalIncome",
+                        "totalExpenses",
+                        "result",
+                        "incomeCategories",
+                        "expenseCategories"
+                );
+        for (String field : List.of("totalIncome", "totalExpenses", "result")) {
+            assertThat(properties.path(field).path("type").asString()).isEqualTo("number");
+        }
+        for (String field : List.of("incomeCategories", "expenseCategories")) {
+            assertThat(properties.path(field).path("type").asString()).isEqualTo("array");
+            assertThat(properties.path(field).path("items").path("$ref").asString())
+                    .isEqualTo("#/components/schemas/CategoryCashFlowResponse");
+        }
+
+        JsonNode example = findOperation(document, "get /api/v1/reports/competence")
+                .path("responses")
+                .path("200")
+                .path("content")
+                .path("application/json")
+                .path("examples")
+                .path("Relatório por competência")
+                .path("value");
+
+        assertThat(example.path("totalExpenses").decimalValue()).isEqualByComparingTo("1000.00");
+        assertThat(example.path("result").decimalValue()).isEqualByComparingTo(
+                example.path("totalIncome").decimalValue()
+                        .subtract(example.path("totalExpenses").decimalValue())
+        );
+        assertThat(cashCategoryTotal(example.path("expenseCategories")))
+                .isEqualByComparingTo(example.path("totalExpenses").decimalValue());
     }
 
     @Test
