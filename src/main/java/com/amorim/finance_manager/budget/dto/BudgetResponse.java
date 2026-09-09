@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.budget.dto;
 
+import com.amorim.finance_manager.budget.model.BudgetAlertStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
@@ -32,11 +33,16 @@ public record BudgetResponse(
         @Schema(description = "Limite financeiro do orçamento", example = "1500.00")
         BigDecimal amountLimit,
 
-        @Schema(
-                description = "Data e hora de criação",
-                example = "2026-09-08T14:00:00Z",
-                format = "date-time"
-        )
+        @Schema(description = "Total de despesas consideradas no período", example = "1200.00")
+        BigDecimal spentAmount,
+
+        @Schema(description = "Percentual consumido do orçamento", example = "80.00")
+        BigDecimal usagePercentage,
+
+        @Schema(description = "Situação atual do consumo do orçamento", example = "ALERT")
+        BudgetAlertStatus alertStatus,
+
+        @Schema(description = "Data e hora de criação", example = "2026-09-08T14:00:00Z", format = "date-time")
         Instant createdAt,
 
         @Schema(

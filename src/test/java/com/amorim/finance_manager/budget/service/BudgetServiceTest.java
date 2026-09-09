@@ -5,6 +5,8 @@ import com.amorim.finance_manager.budget.dto.CreateBudgetRequest;
 import com.amorim.finance_manager.budget.dto.UpdateBudgetRequest;
 import com.amorim.finance_manager.budget.entity.Budget;
 import com.amorim.finance_manager.budget.mapper.BudgetMapper;
+import com.amorim.finance_manager.budget.model.BudgetAlertSnapshot;
+import com.amorim.finance_manager.budget.model.BudgetAlertStatus;
 import com.amorim.finance_manager.budget.repository.BudgetRepository;
 import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.entity.CategoryStatus;
@@ -41,6 +43,11 @@ class BudgetServiceTest {
     private static final UUID EXPENSE_CATEGORY_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
     private static final UUID OTHER_EXPENSE_CATEGORY_ID = UUID.fromString("44444444-4444-4444-4444-444444444444");
     private static final Instant CREATED_AT = Instant.parse("2026-09-08T12:00:00Z");
+    private static final BudgetAlertSnapshot ALERT_SNAPSHOT = new BudgetAlertSnapshot(
+            new BigDecimal("1200.00"),
+            new BigDecimal("80.00"),
+            BudgetAlertStatus.ALERT
+    );
 
     @Mock
     private BudgetRepository budgetRepository;
@@ -53,6 +60,9 @@ class BudgetServiceTest {
 
     @Mock
     private CurrentUserService currentUserService;
+
+    @Mock
+    private BudgetAlertEngine budgetAlertEngine;
 
     @InjectMocks
     private BudgetService budgetService;
@@ -81,7 +91,7 @@ class BudgetServiceTest {
         )).thenReturn(false);
         when(budgetMapper.toEntity(request)).thenReturn(budget);
         when(budgetRepository.saveAndFlush(budget)).thenReturn(budget);
-        when(budgetMapper.toResponse(budget)).thenReturn(response);
+        mockResponse(budget, response);
 
         BudgetResponse result = budgetService.create(request);
 
@@ -196,8 +206,8 @@ class BudgetServiceTest {
         when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
         when(budgetRepository.findAllByUserIdOrderByYearDescMonthDescCreatedAtDesc(USER_ID))
                 .thenReturn(List.of(september, august));
-        when(budgetMapper.toResponse(september)).thenReturn(septemberResponse);
-        when(budgetMapper.toResponse(august)).thenReturn(augustResponse);
+        mockResponse(september, septemberResponse);
+        mockResponse(august, augustResponse);
 
         assertThat(budgetService.findAll())
                 .containsExactly(septemberResponse, augustResponse);
@@ -211,7 +221,7 @@ class BudgetServiceTest {
         when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
         when(budgetRepository.findByIdAndUserId(BUDGET_ID, USER_ID))
                 .thenReturn(Optional.of(budget));
-        when(budgetMapper.toResponse(budget)).thenReturn(response);
+        mockResponse(budget, response);
 
         assertThat(budgetService.findById(BUDGET_ID)).isEqualTo(response);
     }
@@ -244,6 +254,9 @@ class BudgetServiceTest {
                 9,
                 2026,
                 new BigDecimal("1800.00"),
+                ALERT_SNAPSHOT.spentAmount(),
+                ALERT_SNAPSHOT.usagePercentage(),
+                ALERT_SNAPSHOT.alertStatus(),
                 CREATED_AT,
                 CREATED_AT
         );
@@ -265,7 +278,7 @@ class BudgetServiceTest {
             return null;
         }).when(budgetMapper).updateEntity(request, budget);
         when(budgetRepository.saveAndFlush(budget)).thenReturn(budget);
-        when(budgetMapper.toResponse(budget)).thenReturn(response);
+        mockResponse(budget, response);
 
         BudgetResponse result = budgetService.update(BUDGET_ID, request);
 
@@ -408,8 +421,16 @@ class BudgetServiceTest {
                 budget.getMonth(),
                 budget.getYear(),
                 budget.getAmountLimit(),
+                ALERT_SNAPSHOT.spentAmount(),
+                ALERT_SNAPSHOT.usagePercentage(),
+                ALERT_SNAPSHOT.alertStatus(),
                 budget.getCreatedAt(),
                 budget.getUpdatedAt()
         );
+    }
+
+    private void mockResponse(Budget budget, BudgetResponse response) {
+        when(budgetAlertEngine.evaluate(budget)).thenReturn(ALERT_SNAPSHOT);
+        when(budgetMapper.toResponse(budget, ALERT_SNAPSHOT)).thenReturn(response);
     }
 }

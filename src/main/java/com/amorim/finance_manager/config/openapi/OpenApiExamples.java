@@ -1285,6 +1285,9 @@ public final class OpenApiExamples {
           "month": 9,
           "year": 2026,
           "amountLimit": 1500.00,
+          "spentAmount": 1200.00,
+          "usagePercentage": 80.00,
+          "alertStatus": "ALERT",
           "createdAt": "2026-09-08T14:00:00Z",
           "updatedAt": "2026-09-08T14:00:00Z"
         }
@@ -1298,6 +1301,9 @@ public final class OpenApiExamples {
             "month": 9,
             "year": 2026,
             "amountLimit": 1500.00,
+            "spentAmount": 1200.00,
+            "usagePercentage": 80.00,
+            "alertStatus": "ALERT",
             "createdAt": "2026-09-08T14:00:00Z",
             "updatedAt": "2026-09-08T14:00:00Z"
           },
@@ -1306,7 +1312,10 @@ public final class OpenApiExamples {
             "categoryId": "95d2e27e-7533-42cb-85ab-4ad45ee568fc",
             "month": 8,
             "year": 2026,
-            "amountLimit": 900.00,
+            "amountLimit": 1500.00,
+            "spentAmount": 1200.00,
+            "usagePercentage": 80.00,
+            "alertStatus": "ALERT",
             "createdAt": "2026-08-01T12:00:00Z",
             "updatedAt": "2026-08-01T12:00:00Z"
           }

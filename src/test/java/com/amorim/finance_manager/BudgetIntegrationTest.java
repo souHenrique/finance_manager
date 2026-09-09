@@ -1,5 +1,8 @@
 package com.amorim.finance_manager;
 
+import com.amorim.finance_manager.account.entity.Account;
+import com.amorim.finance_manager.account.entity.AccountStatus;
+import com.amorim.finance_manager.account.entity.AccountType;
 import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.budget.entity.Budget;
 import com.amorim.finance_manager.budget.repository.BudgetRepository;
@@ -7,6 +10,11 @@ import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.entity.CategoryStatus;
 import com.amorim.finance_manager.category.entity.CategoryType;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
+import com.amorim.finance_manager.transaction.entity.PaymentMethod;
+import com.amorim.finance_manager.transaction.entity.Transaction;
+import com.amorim.finance_manager.transaction.entity.TransactionStatus;
+import com.amorim.finance_manager.transaction.entity.TransactionType;
+import com.amorim.finance_manager.transaction.repository.TransactionRepository;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +35,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,6 +70,9 @@ class BudgetIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     @BeforeEach
     void setUp() {
         cleanDatabase();
@@ -89,6 +101,9 @@ class BudgetIntegrationTest {
                 .andExpect(jsonPath("$.month").value(9))
                 .andExpect(jsonPath("$.year").value(2026))
                 .andExpect(jsonPath("$.amountLimit").value(1500.0))
+                .andExpect(jsonPath("$.spentAmount").value(0.0))
+                .andExpect(jsonPath("$.usagePercentage").value(0.0))
+                .andExpect(jsonPath("$.alertStatus").value("NORMAL"))
                 .andExpect(jsonPath("$.createdAt").exists())
                 .andExpect(jsonPath("$.updatedAt").exists())
                 .andExpect(jsonPath("$.userId").doesNotExist())
@@ -276,6 +291,88 @@ class BudgetIntegrationTest {
                 )
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("BUDGET_NOT_FOUND"));
+    }
+
+    @Test
+    void shouldCalculateConsumptionByCompetenceDateAndSupportedExpenseTypes() throws Exception {
+        TestUser user = registerUser("User A");
+        String token = login(user);
+        UUID categoryId = createCategory(user.id(), CategoryType.EXPENSE, CategoryStatus.ACTIVE);
+        UUID otherCategoryId = createCategory(user.id(), CategoryType.EXPENSE, CategoryStatus.ACTIVE);
+        UUID budgetId = createBudget(token, categoryId, 9, 2026, "100.00");
+
+        saveTransaction(
+                user.id(), categoryId, "20.00", LocalDate.of(2026, 9, 1),
+                TransactionType.EXPENSE, TransactionStatus.COMPLETED, PaymentMethod.DEBIT
+        );
+        saveTransaction(
+                user.id(), categoryId, "25.00", LocalDate.of(2026, 9, 15),
+                TransactionType.EXPENSE, TransactionStatus.PENDING, PaymentMethod.PIX
+        );
+        saveTransaction(
+                user.id(), categoryId, "35.00", LocalDate.of(2026, 9, 30),
+                TransactionType.CREDIT_CARD_PURCHASE, TransactionStatus.COMPLETED, PaymentMethod.CREDIT_CARD
+        );
+
+        saveTransaction(
+                user.id(), categoryId, "100.00", LocalDate.of(2026, 9, 10),
+                TransactionType.CREDIT_CARD_PAYMENT, TransactionStatus.COMPLETED, PaymentMethod.OTHER
+        );
+        saveTransaction(
+                user.id(), categoryId, "100.00", LocalDate.of(2026, 9, 10),
+                TransactionType.EXPENSE, TransactionStatus.CANCELLED, PaymentMethod.DEBIT
+        );
+        saveTransaction(
+                user.id(), categoryId, "100.00", LocalDate.of(2026, 8, 31),
+                TransactionType.EXPENSE, TransactionStatus.COMPLETED, PaymentMethod.DEBIT
+        );
+        saveTransaction(
+                user.id(), otherCategoryId, "100.00", LocalDate.of(2026, 9, 10),
+                TransactionType.EXPENSE, TransactionStatus.COMPLETED, PaymentMethod.DEBIT
+        );
+
+        assertBudgetAlert(token, budgetId, 80.0, 80.0, "ALERT");
+    }
+
+    @Test
+    void shouldRecalculateAfterTransactionCreationEditAndCancellation() throws Exception {
+        TestUser user = registerUser("User A");
+        String token = login(user);
+        UUID categoryId = createCategory(user.id(), CategoryType.EXPENSE, CategoryStatus.ACTIVE);
+        UUID accountId = createAccount(user.id());
+        UUID budgetId = createBudget(token, categoryId, 9, 2026, "100.00");
+
+        MvcResult creationResult = mockMvc.perform(
+                        post("/api/v1/transactions")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(pendingExpenseBody(accountId, categoryId, "79.99"))
+                )
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        UUID transactionId = responseId(creationResult);
+
+        assertBudgetAlert(token, budgetId, 79.99, 79.99, "NORMAL");
+
+        mockMvc.perform(
+                        patch("/api/v1/transactions/{id}", transactionId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"amount\":80.00}")
+                )
+                .andExpect(status().isOk());
+
+        assertBudgetAlert(token, budgetId, 80.0, 80.0, "ALERT");
+
+        mockMvc.perform(
+                        post("/api/v1/transactions/{id}/cancel", transactionId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        assertBudgetAlert(token, budgetId, 0.0, 0.0, "NORMAL");
     }
 
     @Test
@@ -575,6 +672,18 @@ class BudgetIntegrationTest {
         return responseId(result);
     }
 
+    private UUID createAccount(UUID userId) {
+        Account account = new Account();
+        account.setUserId(userId);
+        account.setName("Conta de teste");
+        account.setType(AccountType.CHECKING);
+        account.setInitialBalance(new BigDecimal("1000.00"));
+        account.setCurrentBalance(new BigDecimal("1000.00"));
+        account.setStatus(AccountStatus.ACTIVE);
+
+        return accountRepository.saveAndFlush(account).getId();
+    }
+
     private Budget budget(
             UUID userId,
             UUID categoryId,
@@ -616,7 +725,24 @@ class BudgetIntegrationTest {
                 """.formatted(categoryId, month, year, amountLimit);
     }
 
+    private String pendingExpenseBody(UUID accountId, UUID categoryId, String amount) {
+        return """
+                {
+                  "description": "Despesa para testar o orçamento",
+                  "amount": %s,
+                  "competenceDate": "2026-09-10",
+                  "type": "EXPENSE",
+                  "status": "PENDING",
+                  "paymentMethod": "PIX",
+                  "sourceAccountId": "%s",
+                  "categoryId": "%s"
+                }
+                """.formatted(amount, accountId, categoryId);
+    }
+
     private void cleanDatabase() {
+        transactionRepository.deleteAll();
+
         budgetRepository.deleteAll();
 
         categoryRepository.findAll()
@@ -636,4 +762,50 @@ class BudgetIntegrationTest {
             String password
     ) {
     }
+
+    private Transaction saveTransaction(
+            UUID userId,
+            UUID categoryId,
+            String amount,
+            LocalDate competenceDate,
+            TransactionType type,
+            TransactionStatus status,
+            PaymentMethod paymentMethod
+    ) {
+        Transaction transaction = new Transaction();
+
+        transaction.setUserId(userId);
+        transaction.setCategoryId(categoryId);
+        transaction.setDescription("Teste de orçamento");
+        transaction.setAmount(new BigDecimal(amount));
+        transaction.setCompetenceDate(competenceDate);
+        transaction.setType(type);
+        transaction.setStatus(status);
+        transaction.setPaymentMethod(paymentMethod);
+
+        if (status == TransactionStatus.COMPLETED
+                && type != TransactionType.CREDIT_CARD_PURCHASE) {
+            transaction.setEffectiveDate(competenceDate);
+        }
+
+        return transactionRepository.saveAndFlush(transaction);
+    }
+
+    private void assertBudgetAlert(
+            String token,
+            UUID budgetId,
+            double spentAmount,
+            double usagePercentage,
+            String alertStatus
+    ) throws Exception {
+        mockMvc.perform(
+                        get("/api/v1/budgets/{id}", budgetId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.spentAmount").value(spentAmount))
+                .andExpect(jsonPath("$.usagePercentage").value(usagePercentage))
+                .andExpect(jsonPath("$.alertStatus").value(alertStatus));
+    }
+
 }

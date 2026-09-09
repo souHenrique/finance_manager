@@ -116,6 +116,9 @@ public interface BudgetDocsApi {
             description = """
                     Retorna um orçamento pertencente ao usuário autenticado.
                     Orçamentos inexistentes ou de outro usuário retornam 404.
+                    O consumo é calculado pelas despesas do mês de competência.
+                    Inclui despesas comuns, PIX e compras no cartão.
+                    Transações canceladas e pagamentos de fatura não são contabilizados.
                     """
     )
     @ApiResponses({
@@ -329,6 +332,9 @@ public interface BudgetDocsApi {
             description = """
                 Lista os orçamentos mensais pertencentes ao usuário autenticado,
                 ordenados do período mais recente para o mais antigo.
+                O consumo é calculado pelas despesas do mês de competência.
+                Inclui despesas comuns, PIX e compras no cartão.
+                Transações canceladas e pagamentos de fatura não são contabilizados.
                 """
     )
     @ApiResponses({

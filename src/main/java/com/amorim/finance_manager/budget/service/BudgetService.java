@@ -5,6 +5,7 @@ import com.amorim.finance_manager.budget.dto.CreateBudgetRequest;
 import com.amorim.finance_manager.budget.dto.UpdateBudgetRequest;
 import com.amorim.finance_manager.budget.entity.Budget;
 import com.amorim.finance_manager.budget.mapper.BudgetMapper;
+import com.amorim.finance_manager.budget.model.BudgetAlertSnapshot;
 import com.amorim.finance_manager.budget.repository.BudgetRepository;
 import com.amorim.finance_manager.category.entity.Category;
 import com.amorim.finance_manager.category.entity.CategoryType;
@@ -27,6 +28,7 @@ public class BudgetService {
     private final CategoryRepository categoryRepository;
     private final BudgetMapper budgetMapper;
     private final CurrentUserService currentUserService;
+    private final BudgetAlertEngine budgetAlertEngine;
 
     @Transactional
     public BudgetResponse create(CreateBudgetRequest request) {
@@ -49,7 +51,7 @@ public class BudgetService {
         return budgetRepository
                 .findAllByUserIdOrderByYearDescMonthDescCreatedAtDesc(userId)
                 .stream()
-                .map(budgetMapper::toResponse)
+                .map(this::toResponse)
                 .toList();
     }
 
@@ -57,7 +59,7 @@ public class BudgetService {
     public BudgetResponse findById(UUID budgetId) {
         UUID userId = currentUserService.getCurrentUserId();
 
-        return budgetMapper.toResponse(findOwnedBudget(budgetId, userId));
+        return toResponse(findOwnedBudget(budgetId, userId));
     }
 
     @Transactional
@@ -96,7 +98,7 @@ public class BudgetService {
     private BudgetResponse save(Budget budget) {
         try {
             Budget saved = budgetRepository.saveAndFlush(budget);
-            return budgetMapper.toResponse(saved);
+            return toResponse(saved);
         } catch (DataIntegrityViolationException exception) {
             throw new BudgetAlreadyExistsException();
         }
@@ -149,5 +151,11 @@ public class BudgetService {
             && request.amountLimit() == null) {
             throw new InvalidBudgetUpdateException("Informe ao menos um campo para atualização");
         }
+    }
+
+    private BudgetResponse toResponse(Budget budget) {
+        BudgetAlertSnapshot snapshot = budgetAlertEngine.evaluate(budget);
+
+        return budgetMapper.toResponse(budget, snapshot);
     }
 }
