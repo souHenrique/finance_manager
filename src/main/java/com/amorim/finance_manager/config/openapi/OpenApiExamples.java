@@ -1460,4 +1460,9 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String TRANSACTION_EXPORT_CSV = """
+        id,description,type,status,amount,competenceDate,effectiveDate,category,account
+        2cb0ba91-bfc4-43be-89ec-336ca64a6231,Compra no supermercado,EXPENSE,COMPLETED,180.50,2026-09-02,2026-09-02,Supermercado,Conta principal
+        """;
 }

@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,4 +23,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
         where account.userId = :userId
         """)
     BigDecimal sumCurrentBalanceByUserId(@Param("userId") UUID userId);
+
+    List<Account> findAllByUserIdAndIdIn(UUID userId, Collection<UUID> ids);
 }

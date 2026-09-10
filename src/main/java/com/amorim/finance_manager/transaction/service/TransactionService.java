@@ -25,10 +25,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -44,6 +46,10 @@ public class TransactionService {
     private final AccountBalanceService accountBalanceService;
     private final CurrentUserService currentUserService;
     private final TransactionImpactService transactionImpactService;
+
+    private static final Sort EXPORT_SORT =
+            Sort.by(Sort.Direction.DESC, "competenceDate")
+                    .and(Sort.by(Sort.Direction.ASC, "id"));
 
     @Transactional
     public TransactionResponse create(CreateTransactionRequest request) {
@@ -167,22 +173,24 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> list(
-            TransactionFilterRequest filters,
-            Pageable pageable
-    ) {
-        UUID userId = currentUserService.getCurrentUserId();
-
-        validateFilters(filters);
+    public Page<TransactionResponse> list(TransactionFilterRequest filters, Pageable pageable) {
+        Specification<Transaction> specification = ownedSpecification(filters);
 
         Pageable safePageable = normalizePageable(pageable);
 
-        return transactionRepository.findAll(
-                TransactionSpecifications.withFilters(userId, filters),
-                safePageable
-        ).map(transactionMapper::toResponse);
+        return transactionRepository
+                .findAll(specification, safePageable)
+                .map(transactionMapper::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public List<TransactionResponse> listForExport(TransactionFilterRequest filters) {
+        return transactionRepository
+                .findAll(ownedSpecification(filters), EXPORT_SORT)
+                .stream()
+                .map(transactionMapper::toResponse)
+                .toList();
+    }
 
     private void applyBalance(CreateTransactionRequest request, UUID userId, UUID accountId) {
         if (request.type() == TransactionType.INCOME) {
@@ -477,6 +485,14 @@ public class TransactionService {
                             + "pelo fluxo genérico de transações"
             );
         }
+    }
+
+    private Specification<Transaction> ownedSpecification(TransactionFilterRequest filters) {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        validateFilters(filters);
+
+        return TransactionSpecifications.withFilters(userId, filters);
     }
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
