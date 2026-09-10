@@ -1388,4 +1388,76 @@ public final class OpenApiExamples {
           "fieldErrors": []
         }
         """;
+
+    public static final String DASHBOARD_RESPONSE = """
+        {
+          "referenceDate": "2026-09-10",
+          "year": 2026,
+          "month": 9,
+          "periodStart": "2026-09-01",
+          "periodEnd": "2026-09-30",
+          "consolidatedBalance": {
+            "basis": "CASH",
+            "amount": 5000.00
+          },
+          "monthlyInflows": {
+            "basis": "CASH",
+            "amount": 3000.00
+          },
+          "cashOutflows": {
+            "basis": "CASH",
+            "amount": 1200.00
+          },
+          "competenceExpenses": {
+            "basis": "COMPETENCE",
+            "amount": 1800.00
+          },
+          "openInvoices": {
+            "basis": "COMPETENCE",
+            "amount": 400.00
+          },
+          "budget": {
+            "basis": "COMPETENCE",
+            "totalLimit": 1500.00,
+            "totalSpent": 1200.00,
+            "usagePercentage": 80.00,
+            "items": [
+              {
+                "budgetId": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
+                "categoryId": "57b1879c-a98e-4718-b66d-47f970ab6709",
+                "amountLimit": 1500.00,
+                "spentAmount": 1200.00,
+                "usagePercentage": 80.00,
+                "alertStatus": "ALERT"
+              }
+            ]
+          },
+          "netWorth": {
+            "basis": "COMPETENCE",
+            "amount": 4400.00
+          }
+        }
+        """;
+
+    public static final String DASHBOARD_UNAUTHORIZED_ERROR = """
+        {
+          "timestamp": "2026-09-10T12:00:00Z",
+          "status": 401,
+          "code": "UNAUTHORIZED",
+          "message": "Autenticação necessária",
+          "path": "/api/v1/dashboard",
+          "fieldErrors": []
+        }
+        """;
+
+    public static final String DASHBOARD_INTERNAL_ERROR = """
+        {
+          "timestamp": "2026-09-10T12:00:00Z",
+          "status": 500,
+          "code": "INTERNAL_SERVER_ERROR",
+          "message": "Erro interno inesperado",
+          "path": "/api/v1/dashboard",
+          "fieldErrors": []
+        }
+        """;
 }

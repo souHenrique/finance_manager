@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.transaction.repository;
 
+import com.amorim.finance_manager.budget.projection.BudgetSpendAggregate;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
@@ -49,6 +50,29 @@ public interface TransactionRepository
     BigDecimal sumForBudget(
             @Param("userId") UUID userId,
             @Param("categoryId") UUID categoryId,
+            @Param("periodStart") LocalDate periodStart,
+            @Param("periodEndExclusive") LocalDate periodEndExclusive,
+            @Param("includedTypes") Collection<TransactionType> includedTypes,
+            @Param("excludedStatus") TransactionStatus excludedStatus
+    );
+
+    @Query("""
+        select new com.amorim.finance_manager.budget.projection.BudgetSpendAggregate(
+            transaction.categoryId,
+            sum(transaction.amount)
+        )
+        from Transaction transaction
+        where transaction.userId = :userId
+          and transaction.categoryId in :categoryIds
+          and transaction.competenceDate >= :periodStart
+          and transaction.competenceDate < :periodEndExclusive
+          and transaction.type in :includedTypes
+          and transaction.status <> :excludedStatus
+        group by transaction.categoryId
+        """)
+    List<BudgetSpendAggregate> sumByCategoryForBudgets(
+            @Param("userId") UUID userId,
+            @Param("categoryIds") Collection<UUID> categoryIds,
             @Param("periodStart") LocalDate periodStart,
             @Param("periodEndExclusive") LocalDate periodEndExclusive,
             @Param("includedTypes") Collection<TransactionType> includedTypes,

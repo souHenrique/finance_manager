@@ -77,7 +77,8 @@ class OpenApiIntegrationTest {
             "get /api/v1/budgets",
             "get /api/v1/budgets/{id}",
             "patch /api/v1/budgets/{id}",
-            "delete /api/v1/budgets/{id}"
+            "delete /api/v1/budgets/{id}",
+            "get /api/v1/dashboard"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(
@@ -143,7 +144,11 @@ class OpenApiIntegrationTest {
             "FieldErrorResponse",
             "CreateBudgetRequest",
             "UpdateBudgetRequest",
-            "BudgetResponse"
+            "BudgetResponse",
+            "DashboardIndicatorResponse",
+            "DashboardBudgetItemResponse",
+            "DashboardBudgetResponse",
+            "DashboardResponse"
     );
 
     @Autowired
@@ -699,6 +704,63 @@ class OpenApiIntegrationTest {
             }
         }
         assertThat(badRequestCodes).contains("VALIDATION_ERROR", "INVALID_REPORT_PERIOD");
+    }
+
+    @Test
+    void shouldDocumentDashboardContractAndAccountingBasis() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation =
+                findOperation(document, "get /api/v1/dashboard");
+
+        assertThat(operation.isMissingNode()).isFalse();
+        assertThat(operation.path("parameters").size()).isZero();
+        assertThat(operation.path("requestBody").isMissingNode()).isTrue();
+        assertThat(usesBearerAuth(operation)).isTrue();
+
+        assertThat(contentReferencesSchema(
+                operation.path("responses")
+                        .path("200")
+                        .path("content"),
+                "DashboardResponse"
+        )).isTrue();
+
+        assertThat(operation.path("description").asString())
+                .contains(
+                        "effectiveDate",
+                        "competenceDate",
+                        "Compras no cartão",
+                        "pagamentos de fatura",
+                        "OPEN",
+                        "CLOSED",
+                        "PAID",
+                        "basis"
+                );
+
+        JsonNode properties = document
+                .path("components")
+                .path("schemas")
+                .path("DashboardResponse")
+                .path("properties");
+
+        assertThat(
+                properties.properties()
+                        .stream()
+                        .map(Map.Entry::getKey)
+                        .toList()
+        ).containsExactlyInAnyOrder(
+                "referenceDate",
+                "year",
+                "month",
+                "periodStart",
+                "periodEnd",
+                "consolidatedBalance",
+                "monthlyInflows",
+                "cashOutflows",
+                "competenceExpenses",
+                "openInvoices",
+                "budget",
+                "netWorth"
+        );
     }
 
     private void assertCashSummaryExample(JsonNode summary) {

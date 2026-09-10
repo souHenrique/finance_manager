@@ -3,6 +3,7 @@ package com.amorim.finance_manager.networth.service;
 import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
 import com.amorim.finance_manager.invoice.repository.InvoiceRepository;
+import com.amorim.finance_manager.networth.model.NetWorthSnapshot;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,10 @@ public class NetWorthService {
     private final CurrentUserService currentUserService;
 
     public BigDecimal calculate() {
+        return calculateSnapshot().netWorth();
+    }
+
+    public NetWorthSnapshot calculateSnapshot() {
         UUID userId = currentUserService.getCurrentUserId();
 
         BigDecimal accountBalances = accountRepository.sumCurrentBalanceByUserId(userId);
@@ -37,6 +42,10 @@ public class NetWorthService {
                 UNPAID_INVOICE_STATUSES
         );
 
-        return accountBalances.subtract(unpaidInvoices);
+        return new NetWorthSnapshot(
+                accountBalances,
+                unpaidInvoices,
+                accountBalances.subtract(unpaidInvoices)
+        );
     }
 }

@@ -22,4 +22,6 @@ public interface BudgetRepository extends JpaRepository<Budget, UUID> {
             Integer year,
             UUID id
     );
+
+    List<Budget> findAllByUserIdAndYearAndMonthOrderByCreatedAtAsc(UUID userId, Integer year, Integer month);
 }

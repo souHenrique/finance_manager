@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -95,6 +96,20 @@ public class BudgetService {
         budgetRepository.flush();
     }
 
+    @Transactional(readOnly = true)
+    public List<BudgetResponse> findByPeriod(Integer year, Integer month) {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        List<Budget> budgets =
+                budgetRepository.findAllByUserIdAndYearAndMonthOrderByCreatedAtAsc(userId, year, month);
+
+        Map<UUID, BudgetAlertSnapshot> snapshots = budgetAlertEngine.evaluateAll(budgets);
+
+        return budgets.stream()
+                .map(budget -> budgetMapper.toResponse(budget, snapshots.get(budget.getId())))
+                .toList();
+    }
+
     private BudgetResponse save(Budget budget) {
         try {
             Budget saved = budgetRepository.saveAndFlush(budget);
@@ -146,9 +161,9 @@ public class BudgetService {
 
     private void validateUpdate(UpdateBudgetRequest request) {
         if (request.categoryId() == null
-            && request.month() == null
-            && request.year() == null
-            && request.amountLimit() == null) {
+                && request.month() == null
+                && request.year() == null
+                && request.amountLimit() == null) {
             throw new InvalidBudgetUpdateException("Informe ao menos um campo para atualização");
         }
     }
