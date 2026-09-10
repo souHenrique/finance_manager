@@ -78,7 +78,8 @@ class OpenApiIntegrationTest {
             "get /api/v1/budgets/{id}",
             "patch /api/v1/budgets/{id}",
             "delete /api/v1/budgets/{id}",
-            "get /api/v1/dashboard"
+            "get /api/v1/dashboard",
+            "get /api/v1/exports/transactions.csv"
     );
 
     private static final Set<String> OPERATIONS_WITH_REQUEST_BODY = Set.of(
@@ -495,6 +496,65 @@ class OpenApiIntegrationTest {
             assertThat(errorResponse.path("description").asString()).as(code).isNotBlank();
             assertThat(contentReferencesSchema(errorResponse.path("content"), "ApiError")).as(code).isTrue();
         }
+    }
+
+    @Test
+    void shouldDocumentCsvExportWithSharedFiltersAndUtf8Contract() throws Exception {
+        JsonNode document = loadOpenApiDocument();
+        JsonNode operation = findOperation(
+                document,
+                "get /api/v1/exports/transactions.csv"
+        );
+        Map<String, JsonNode> parameters = new LinkedHashMap<>();
+
+        for (JsonNode parameter : operation.path("parameters")) {
+            String name = parameter.path("name").asString();
+            assertThat(parameters.put(name, parameter))
+                    .as("parâmetro %s não deve se repetir", name)
+                    .isNull();
+            assertThat(parameter.path("in").asString())
+                    .as(name)
+                    .isEqualTo("query");
+        }
+
+        assertThat(parameters).containsOnlyKeys(
+                "startDate",
+                "endDate",
+                "categoryId",
+                "accountId",
+                "creditCardId",
+                "type",
+                "status",
+                "minAmount",
+                "maxAmount",
+                "description"
+        );
+        assertThat(parameters).doesNotContainKeys(
+                "userId",
+                "page",
+                "size",
+                "sort"
+        );
+        assertThat(operation.path("requestBody").isMissingNode()).isTrue();
+        assertThat(usesBearerAuth(operation)).isTrue();
+
+        JsonNode csvContent = operation.path("responses")
+                .path("200")
+                .path("content")
+                .path("text/csv");
+
+        assertThat(csvContent.isMissingNode()).isFalse();
+        assertThat(csvContent.path("schema").path("type").asString())
+                .isEqualTo("string");
+        assertThat(csvContent.path("examples")
+                .path("Exportação CSV")
+                .path("value")
+                .asString())
+                .startsWith("id,description,type,status,amount,competenceDate,effectiveDate,category,account")
+                .contains("180.50", "2026-09-02");
+
+        assertThat(operation.path("description").asString())
+                .contains("UTF-8", "ISO-8601", "mesmos filtros");
     }
 
     @ParameterizedTest
