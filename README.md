@@ -8,6 +8,17 @@ O projeto aplica isolamento dos dados por usuário, autenticação JWT, validaç
 de negócio, controle transacional, concorrência otimista, auditoria de entidades
 financeiras e migrações versionadas do banco de dados.
 
+
+## Estrutura do repositório
+
+```text
+finance-manager/
+├── backend/       API Spring Boot
+├── frontend/      Aplicação web Angular
+├── compose.yaml   Infraestrutura local
+└── README.md
+```
+
 ## Funcionalidades implementadas
 
 - cadastro, autenticação e atualização do perfil do usuário;
@@ -56,8 +67,8 @@ Use `.env.example` como referência:
 ```properties
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=change-me-locally
-DB_USERNAME=change-me-locally
+DB_NAME=finance_manager
+DB_USERNAME=finance_manager
 DB_PASSWORD=change-me-locally
 JWT_SECRET=replace-with-a-base64-secret-of-at-least-32-bytes
 JWT_EXPIRATION=3600000
@@ -66,22 +77,15 @@ JWT_EXPIRATION=3600000
 `JWT_EXPIRATION` é informado em milissegundos. Não utilize o segredo de exemplo
 fora do ambiente local.
 
-O Docker Compose lê o arquivo `.env`, mas a aplicação também precisa receber
-essas variáveis no ambiente do processo. Configure-as na IDE ou carregue-as no
-terminal antes de iniciar a aplicação.
+O Docker Compose e o perfil `dev` da aplicação leem o arquivo `.env` localizado
+na raiz do repositório. Em produção, configure as variáveis diretamente no
+ambiente do processo.
 
 ### PowerShell
 
 ```powershell
 Copy-Item .env.example .env
-
-Get-Content .env |
-    Where-Object { $_ -match '^[^#].+=' } |
-    ForEach-Object {
-        $name, $value = $_ -split '=', 2
-        Set-Item -Path "Env:$name" -Value $value
-    }
-
+Set-Location backend
 .\mvnw.cmd spring-boot:run
 ```
 
@@ -89,14 +93,13 @@ Get-Content .env |
 
 ```bash
 cp .env.example .env
-set -a
-. ./.env
-set +a
+cd backend
 ./mvnw spring-boot:run
 ```
 
+
 No perfil padrão `dev`, a integração do Spring Boot com Docker Compose inicia o
-PostgreSQL definido em `docker-compose.yml`. A API fica disponível em
+PostgreSQL definido em `compose.yaml`. A API fica disponível em
 `http://localhost:8080`.
 
 Para produção, use o perfil `prod` e configure `DB_URL`, `DB_USERNAME`,
@@ -255,7 +258,7 @@ respostas de erro padronizadas.
 ## Banco de dados e migrações
 
 O PostgreSQL é versionado pelo Flyway. As migrações estão em
-`src/main/resources/db/migration` e são aplicadas automaticamente na
+`backend/src/main/resources/db/migration` e são aplicadas automaticamente na
 inicialização.
 
 O Hibernate utiliza `ddl-auto: validate`: a aplicação valida o schema, mas não o
@@ -271,12 +274,14 @@ Mantenha o Docker em execução.
 ### PowerShell
 
 ```powershell
+Set-Location backend
 .\mvnw.cmd test
 ```
 
 ### Linux ou macOS
 
 ```bash
+cd backend
 ./mvnw test
 ```
 
