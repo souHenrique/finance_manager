@@ -1,0 +1,32 @@
+@use 'sass:map';
+
+$breakpoints: (
+  sm: 36rem,
+  md: 48rem,
+  lg: 64rem,
+  xl: 80rem,
+);
+
+@mixin up($breakpoint) {
+  $value: map.get($breakpoints, $breakpoint);
+
+  @if $value == null {
+    @error 'Breakpoint desconhecido: #{$breakpoint}';
+  }
+
+  @media (min-width: $value) {
+    @content;
+  }
+}
+
+@mixin focus-ring {
+  outline: 2px solid var(--color-focus-inner);
+  outline-offset: 1px;
+  box-shadow: 0 0 0 4px var(--color-focus-outer);
+}
+
+@mixin semantic-tone($tone) {
+  color: var(--color-#{$tone}-text);
+  background: var(--color-#{$tone}-surface);
+  border-color: var(--color-#{$tone}-border);
+}

@@ -1,0 +1,14 @@
+<button
+  class="button"
+  [class]="'button button--' + variant() + ' button--' + size()"
+  [type]="type()"
+  [disabled]="disabled() || loading()"
+  [attr.aria-busy]="loading()"
+  (click)="press()"
+>
+  @if (loading()) {
+    <app-spinner size="sm" [decorative]="true" />
+  }
+
+  <span><ng-content /></span>
+</button>

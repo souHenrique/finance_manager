@@ -1,0 +1,29 @@
+<section class="toast-container" aria-label="Notificações">
+  @for (toast of toastService.messages(); track toast.id) {
+    <article
+      class="toast"
+      [class]="'toast toast--' + toast.tone"
+      [attr.role]="toast.tone === 'danger' ? 'alert' : 'status'"
+    >
+      <span class="toast__symbol" aria-hidden="true">
+        {{ toast.tone === 'success' ? '✓' : toast.tone === 'danger' ? '×' : '!' }}
+      </span>
+
+      <div class="toast__content">
+        @if (toast.title) {
+          <strong>{{ toast.title }}</strong>
+        }
+
+        <span>{{ toast.message }}</span>
+      </div>
+
+      <button
+        type="button"
+        aria-label="Fechar notificação"
+        (click)="toastService.remove(toast.id)"
+      >
+        ×
+      </button>
+    </article>
+  }
+</section>

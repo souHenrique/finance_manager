@@ -1,0 +1,12 @@
+<section class="error-state" role="alert">
+  <span class="error-state__symbol" aria-hidden="true">!</span>
+
+  <h2>{{ title() }}</h2>
+  <p>{{ message() }}</p>
+
+  @if (retryable()) {
+    <app-button variant="secondary" (pressed)="retry.emit()">
+      Tentar novamente
+    </app-button>
+  }
+</section>

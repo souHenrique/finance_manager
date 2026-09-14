@@ -1,0 +1,7 @@
+<span
+  class="spinner"
+  [class]="'spinner spinner--' + size()"
+  [attr.role]="decorative() ? null : 'status'"
+  [attr.aria-label]="decorative() ? null : label()"
+  [attr.aria-hidden]="decorative() ? 'true' : null"
+></span>

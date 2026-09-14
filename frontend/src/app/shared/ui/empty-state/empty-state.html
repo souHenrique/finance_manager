@@ -1,0 +1,15 @@
+<section class="empty-state">
+  <div class="empty-state__icon" aria-hidden="true">
+    <ng-content select="[empty-state-icon]" />
+  </div>
+
+  <h2>{{ title() }}</h2>
+
+  @if (description()) {
+    <p>{{ description() }}</p>
+  }
+
+  <div class="empty-state__actions">
+    <ng-content select="[empty-state-actions]" />
+  </div>
+</section>

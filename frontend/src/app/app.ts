@@ -1,12 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ToastContainer } from './core/feedback/toast/toast-container';
 
 @Component({
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ToastContainer],
   selector: 'app-root',
   styleUrl: './app.scss',
   templateUrl: './app.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {
-  protected readonly title = signal('finance-manager-web');
-}
+export class App {}

@@ -1,1 +1,8 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/cdk' as cdk;
+@use './styles/tokens';
+@use './styles/reset';
+@use './styles/form-controls';
+@use './styles/utilities';
+@use './styles/overlays';
+
+@include cdk.overlay();

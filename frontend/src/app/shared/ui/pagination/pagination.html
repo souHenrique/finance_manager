@@ -1,0 +1,21 @@
+<nav class="pagination" aria-label="Paginação">
+  <button
+    type="button"
+    [disabled]="disabled() || currentPage() === 1"
+    (click)="previous()"
+  >
+    Anterior
+  </button>
+
+  <span>
+    Página {{ currentPage() }} de {{ totalPages() }}
+  </span>
+
+  <button
+    type="button"
+    [disabled]="disabled() || currentPage() === totalPages()"
+    (click)="next()"
+  >
+    Próxima
+  </button>
+</nav>

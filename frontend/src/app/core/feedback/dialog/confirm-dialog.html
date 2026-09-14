@@ -1,0 +1,25 @@
+<section class="confirm-dialog">
+  <h2 [id]="data.id + '-title'">
+    {{ data.title }}
+  </h2>
+
+  <p [id]="data.id + '-description'">
+    {{ data.message }}
+  </p>
+
+  <footer class="confirm-dialog__actions">
+    <app-button
+      variant="secondary"
+      (pressed)="close(false)"
+    >
+      {{ data.cancelLabel }}
+    </app-button>
+
+    <app-button
+      [variant]="data.danger ? 'danger' : 'primary'"
+      (pressed)="close(true)"
+    >
+      {{ data.confirmLabel }}
+    </app-button>
+  </footer>
+</section>

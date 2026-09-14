@@ -1,0 +1,46 @@
+@use '../../../../styles/mixins' as mixins;
+
+:host {
+  display: block;
+}
+
+.error-state {
+  display: grid;
+  justify-items: center;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  color: var(--color-danger-text);
+  background: var(--color-danger-surface);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-lg);
+}
+
+.error-state__symbol {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  border: 2px solid currentColor;
+  border-radius: var(--radius-pill);
+}
+
+.error-state h2 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-tight);
+}
+
+.error-state p {
+  max-width: 32rem;
+  margin: var(--space-2) 0 var(--space-5);
+  color: var(--color-danger-text);
+}
+
+@include mixins.up(md) {
+  .error-state {
+    padding: var(--space-12);
+  }
+}

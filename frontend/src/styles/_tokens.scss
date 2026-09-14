@@ -1,0 +1,83 @@
+:root {
+  color-scheme: light;
+
+  --font-family-sans:
+    system-ui, -apple-system, blinkmacsystemfont, 'Segoe UI', sans-serif;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
+  --shadow-md: 0 8px 24px rgb(15 23 42 / 12%);
+  --shadow-lg: 0 16px 40px rgb(15 23 42 / 18%);
+
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f1f5f9;
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-border: #cbd5e1;
+  --color-border-strong: #94a3b8;
+
+  --color-primary: #1d4ed8;
+  --color-primary-hover: #1e40af;
+  --color-on-primary: #ffffff;
+
+  --color-success-text: #166534;
+  --color-success-surface: #f0fdf4;
+  --color-success-border: #86efac;
+
+  --color-warning-text: #92400e;
+  --color-warning-surface: #fffbeb;
+  --color-warning-border: #fcd34d;
+
+  --color-danger-text: #991b1b;
+  --color-danger-surface: #fef2f2;
+  --color-danger-border: #fca5a5;
+
+  --color-info-text: #1e40af;
+  --color-info-surface: #eff6ff;
+  --color-info-border: #93c5fd;
+
+  --color-focus-inner: #ffffff;
+  --color-focus-outer: #2563eb;
+
+  --control-height-sm: 2rem;
+  --control-height-md: 2.5rem;
+  --control-height-lg: 3rem;
+  --content-max-width: 80rem;
+
+  --z-dialog: 1000;
+  --z-toast: 1100;
+
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+}
