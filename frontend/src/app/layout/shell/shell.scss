@@ -1,0 +1,85 @@
+@use '../../../styles/mixins' as mixins;
+
+:host {
+  display: block;
+  min-height: 100dvh;
+}
+
+.shell {
+  min-height: 100dvh;
+  background: var(--color-canvas);
+}
+
+.shell__header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 30;
+  height: var(--header-height);
+}
+
+.shell__sidebar {
+  position: fixed;
+  inset-block: var(--header-height) 0;
+  inset-inline-start: 0;
+  z-index: 30;
+  width: min(var(--sidebar-width), calc(100vw - var(--space-12)));
+  visibility: hidden;
+  transform: translateX(-100%);
+  transition:
+    transform var(--duration-normal),
+    visibility var(--duration-normal);
+}
+
+.shell--sidebar-open .shell__sidebar {
+  visibility: visible;
+  transform: translateX(0);
+}
+
+.shell__backdrop {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  z-index: 20;
+  padding: 0;
+  cursor: pointer;
+  background: rgb(15 23 42 / 60%);
+  border: 0;
+}
+
+.shell__content {
+  min-width: 0;
+  padding: var(--space-4);
+}
+
+@include mixins.up(md) {
+  .shell {
+    display: grid;
+    grid-template:
+      'header header' var(--header-height)
+      'sidebar content' minmax(0, 1fr) /
+      var(--sidebar-width) minmax(0, 1fr);
+  }
+
+  .shell__header {
+    grid-area: header;
+  }
+
+  .shell__sidebar {
+    position: sticky;
+    inset: auto;
+    inset-block-start: var(--header-height);
+    grid-area: sidebar;
+    width: auto;
+    height: calc(100dvh - var(--header-height));
+    visibility: visible;
+    transform: none;
+  }
+
+  .shell__content {
+    grid-area: content;
+    padding: var(--space-8);
+  }
+
+  .shell__backdrop {
+    display: none;
+  }
+}

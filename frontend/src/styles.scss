@@ -4,5 +4,6 @@
 @use './styles/form-controls';
 @use './styles/utilities';
 @use './styles/overlays';
+@use './styles/pages';
 
 @include cdk.overlay();

@@ -1,0 +1,13 @@
+import { Routes } from '@angular/router';
+
+export const CATEGORY_ROUTES: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    title: 'Categorias | Finance Manager',
+    loadComponent: () =>
+      import('./category-list-page/category-list-page').then(
+        ({ CategoryListPage }) => CategoryListPage,
+      ),
+  },
+];

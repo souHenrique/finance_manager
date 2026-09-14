@@ -1,7 +1,20 @@
-<header>
-  <h1>Finance Manager</h1>
-</header>
+<div class="shell" [class.shell--sidebar-open]="sidebarOpen()">
+  <app-header class="shell__header" [menuOpen]="sidebarOpen()" (menuToggle)="toggleSidebar()" />
 
-<main>
-  <router-outlet />
-</main>
+  <aside id="app-sidebar" class="shell__sidebar" aria-label="Menu da aplicação">
+    <app-sidebar (navigated)="closeSidebar()" />
+  </aside>
+
+  @if (sidebarOpen()) {
+    <button
+      class="shell__backdrop"
+      type="button"
+      aria-label="Fechar menu"
+      (click)="closeSidebar()"
+    ></button>
+  }
+
+  <main id="main-content" class="shell__content" tabindex="-1">
+    <router-outlet />
+  </main>
+</div>
