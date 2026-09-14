@@ -12,8 +12,7 @@ export class ToastService {
   show(options: ShowToastOptions): number {
     const id = ++this.nextId;
     const tone = options.tone ?? 'info';
-    const durationMs =
-      options.durationMs ?? (tone === 'danger' ? 0 : 6000);
+    const durationMs = options.durationMs ?? (tone === 'danger' ? 0 : 6000);
 
     const toast: ToastMessage = {
       id,
@@ -41,9 +40,7 @@ export class ToastService {
       this.timers.delete(id);
     }
 
-    this.messagesState.update((messages) =>
-      messages.filter((message) => message.id !== id),
-    );
+    this.messagesState.update((messages) => messages.filter((message) => message.id !== id));
   }
 
   clear(): void {

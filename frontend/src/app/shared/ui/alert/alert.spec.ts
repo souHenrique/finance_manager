@@ -12,32 +12,23 @@ describe('Alert', () => {
 
     fixture = TestBed.createComponent(Alert);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput(
-      'message',
-      'Não foi possível salvar',
-    );
+    fixture.componentRef.setInput('message', 'Não foi possível salvar');
     fixture.detectChanges();
   });
 
   it('should render the required message', () => {
-    expect(fixture.nativeElement.textContent).toContain(
-      'Não foi possível salvar',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível salvar');
   });
 
   it('should render the optional title', () => {
     fixture.componentRef.setInput('title', 'Erro');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('strong')?.textContent).toContain(
-      'Erro',
-    );
+    expect(fixture.nativeElement.querySelector('strong')?.textContent).toContain('Erro');
   });
 
   it('should use status role for informational alerts', () => {
-    const alert = fixture.nativeElement.querySelector(
-      '.alert',
-    ) as HTMLElement;
+    const alert = fixture.nativeElement.querySelector('.alert') as HTMLElement;
 
     expect(alert.getAttribute('role')).toBe('status');
   });
@@ -46,20 +37,14 @@ describe('Alert', () => {
     fixture.componentRef.setInput('tone', 'danger');
     fixture.detectChanges();
 
-    const alert = fixture.nativeElement.querySelector(
-      '.alert',
-    ) as HTMLElement;
+    const alert = fixture.nativeElement.querySelector('.alert') as HTMLElement;
 
     expect(alert.getAttribute('role')).toBe('alert');
     expect(alert.classList).toContain('alert--danger');
   });
 
   it('should hide the close button by default', () => {
-    expect(
-      fixture.nativeElement.querySelector(
-        'button[aria-label="Fechar aviso"]',
-      ),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('button[aria-label="Fechar aviso"]')).toBeNull();
   });
 
   it('should emit dismissed when close is clicked', () => {

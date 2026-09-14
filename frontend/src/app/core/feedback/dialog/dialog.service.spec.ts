@@ -1,10 +1,7 @@
 import { Dialog } from '@angular/cdk/dialog';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from './confirm-dialog';
+import { ConfirmDialog, ConfirmDialogData } from './confirm-dialog';
 import { AppDialogService } from './dialog.service';
 
 describe('AppDialogService', () => {

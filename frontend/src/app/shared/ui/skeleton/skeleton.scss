@@ -6,13 +6,12 @@
 .skeleton {
   display: block;
   max-width: 100%;
-  background:
-    linear-gradient(
-      90deg,
-      var(--color-surface-muted) 25%,
-      var(--color-border) 50%,
-      var(--color-surface-muted) 75%
-    );
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-muted) 25%,
+    var(--color-border) 50%,
+    var(--color-surface-muted) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-loading 1.4s ease-in-out infinite;
 }

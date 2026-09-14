@@ -11,9 +11,7 @@ import { EmptyState } from './empty-state';
     >
       <span empty-state-icon>○</span>
 
-      <button empty-state-actions type="button">
-        Criar transação
-      </button>
+      <button empty-state-actions type="button">Criar transação</button>
     </app-empty-state>
   `,
 })
@@ -34,26 +32,18 @@ describe('EmptyState', () => {
   it('should render title and description', () => {
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.querySelector('h2')?.textContent).toContain(
-      'Nenhuma transação encontrada',
-    );
+    expect(element.querySelector('h2')?.textContent).toContain('Nenhuma transação encontrada');
 
-    expect(element.querySelector('p')?.textContent).toContain(
-      'Crie uma transação para começar.',
-    );
+    expect(element.querySelector('p')?.textContent).toContain('Crie uma transação para começar.');
   });
 
   it('should project the decorative icon', () => {
-    const icon = fixture.nativeElement.querySelector(
-      '[empty-state-icon]',
-    ) as HTMLElement;
+    const icon = fixture.nativeElement.querySelector('[empty-state-icon]') as HTMLElement;
 
     expect(icon).not.toBeNull();
     expect(icon.textContent).toContain('○');
 
-    const iconContainer = fixture.nativeElement.querySelector(
-      '.empty-state__icon',
-    ) as HTMLElement;
+    const iconContainer = fixture.nativeElement.querySelector('.empty-state__icon') as HTMLElement;
 
     expect(iconContainer.getAttribute('aria-hidden')).toBe('true');
   });

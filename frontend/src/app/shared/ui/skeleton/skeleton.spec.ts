@@ -14,17 +14,13 @@ describe('Skeleton', () => {
   });
 
   it('should be hidden from assistive technology', () => {
-    const skeleton = fixture.nativeElement.querySelector(
-      '.skeleton',
-    ) as HTMLElement;
+    const skeleton = fixture.nativeElement.querySelector('.skeleton') as HTMLElement;
 
     expect(skeleton.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('should use the default dimensions', () => {
-    const skeleton = fixture.nativeElement.querySelector(
-      '.skeleton',
-    ) as HTMLElement;
+    const skeleton = fixture.nativeElement.querySelector('.skeleton') as HTMLElement;
 
     expect(skeleton.style.width).toBe('100%');
     expect(skeleton.style.height).toBe('1rem');
@@ -36,9 +32,7 @@ describe('Skeleton', () => {
     fixture.componentRef.setInput('radius', '0.5rem');
     fixture.detectChanges();
 
-    const skeleton = fixture.nativeElement.querySelector(
-      '.skeleton',
-    ) as HTMLElement;
+    const skeleton = fixture.nativeElement.querySelector('.skeleton') as HTMLElement;
 
     expect(skeleton.style.width).toBe('12rem');
     expect(skeleton.style.height).toBe('2rem');

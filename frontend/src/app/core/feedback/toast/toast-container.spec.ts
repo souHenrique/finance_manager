@@ -55,9 +55,7 @@ describe('ToastContainer', () => {
 
     fixture.detectChanges();
 
-    const toast = fixture.nativeElement.querySelector(
-      '.toast',
-    ) as HTMLElement;
+    const toast = fixture.nativeElement.querySelector('.toast') as HTMLElement;
 
     expect(toast.getAttribute('role')).toBe('status');
   });
@@ -71,9 +69,7 @@ describe('ToastContainer', () => {
 
     fixture.detectChanges();
 
-    const toast = fixture.nativeElement.querySelector(
-      '.toast',
-    ) as HTMLElement;
+    const toast = fixture.nativeElement.querySelector('.toast') as HTMLElement;
 
     expect(toast.getAttribute('role')).toBe('alert');
   });
@@ -87,9 +83,7 @@ describe('ToastContainer', () => {
 
     fixture.detectChanges();
 
-    const symbol = fixture.nativeElement.querySelector(
-      '.toast__symbol',
-    ) as HTMLElement;
+    const symbol = fixture.nativeElement.querySelector('.toast__symbol') as HTMLElement;
 
     expect(symbol.textContent?.trim()).toBe('✓');
     expect(symbol.getAttribute('aria-hidden')).toBe('true');

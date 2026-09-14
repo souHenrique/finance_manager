@@ -8,17 +8,11 @@
   </p>
 
   <footer class="confirm-dialog__actions">
-    <app-button
-      variant="secondary"
-      (pressed)="close(false)"
-    >
+    <app-button variant="secondary" (pressed)="close(false)">
       {{ data.cancelLabel }}
     </app-button>
 
-    <app-button
-      [variant]="data.danger ? 'danger' : 'primary'"
-      (pressed)="close(true)"
-    >
+    <app-button [variant]="data.danger ? 'danger' : 'primary'" (pressed)="close(true)">
       {{ data.confirmLabel }}
     </app-button>
   </footer>

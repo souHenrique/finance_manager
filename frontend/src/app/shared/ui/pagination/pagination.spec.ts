@@ -22,9 +22,7 @@ describe('Pagination', () => {
   }
 
   it('should render the current page summary', () => {
-    expect(fixture.nativeElement.textContent).toContain(
-      'Página 1 de 3',
-    );
+    expect(fixture.nativeElement.textContent).toContain('Página 1 de 3');
   });
 
   it('should disable previous on the first page', () => {
@@ -79,9 +77,7 @@ describe('Pagination', () => {
   });
 
   it('should expose an accessible navigation label', () => {
-    const navigation = fixture.nativeElement.querySelector(
-      'nav',
-    ) as HTMLElement;
+    const navigation = fixture.nativeElement.querySelector('nav') as HTMLElement;
 
     expect(navigation.getAttribute('aria-label')).toBe('Paginação');
   });

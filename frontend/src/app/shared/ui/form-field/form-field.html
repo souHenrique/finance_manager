@@ -11,18 +11,12 @@
   <ng-content />
 
   @if (error()) {
-    <p
-      class="form-field__error"
-      [id]="controlId() + '-error'"
-    >
+    <p class="form-field__error" [id]="controlId() + '-error'">
       <span aria-hidden="true">!</span>
       {{ error() }}
     </p>
   } @else if (hint()) {
-    <p
-      class="form-field__hint"
-      [id]="controlId() + '-hint'"
-    >
+    <p class="form-field__hint" [id]="controlId() + '-hint'">
       {{ hint() }}
     </p>
   }

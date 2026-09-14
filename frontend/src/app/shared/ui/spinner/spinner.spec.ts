@@ -14,9 +14,7 @@ describe('Spinner', () => {
   });
 
   it('should be announced as loading by default', () => {
-    const spinner = fixture.nativeElement.querySelector(
-      '.spinner',
-    ) as HTMLElement;
+    const spinner = fixture.nativeElement.querySelector('.spinner') as HTMLElement;
 
     expect(spinner.getAttribute('role')).toBe('status');
     expect(spinner.getAttribute('aria-label')).toBe('Carregando');
@@ -27,9 +25,7 @@ describe('Spinner', () => {
     fixture.componentRef.setInput('decorative', true);
     fixture.detectChanges();
 
-    const spinner = fixture.nativeElement.querySelector(
-      '.spinner',
-    ) as HTMLElement;
+    const spinner = fixture.nativeElement.querySelector('.spinner') as HTMLElement;
 
     expect(spinner.getAttribute('role')).toBeNull();
     expect(spinner.getAttribute('aria-label')).toBeNull();
@@ -40,26 +36,17 @@ describe('Spinner', () => {
     fixture.componentRef.setInput('size', 'lg');
     fixture.detectChanges();
 
-    const spinner = fixture.nativeElement.querySelector(
-      '.spinner',
-    ) as HTMLElement;
+    const spinner = fixture.nativeElement.querySelector('.spinner') as HTMLElement;
 
     expect(spinner.classList).toContain('spinner--lg');
   });
 
   it('should use the configured accessible label', () => {
-    fixture.componentRef.setInput(
-      'label',
-      'Carregando transações',
-    );
+    fixture.componentRef.setInput('label', 'Carregando transações');
     fixture.detectChanges();
 
-    const spinner = fixture.nativeElement.querySelector(
-      '.spinner',
-    ) as HTMLElement;
+    const spinner = fixture.nativeElement.querySelector('.spinner') as HTMLElement;
 
-    expect(spinner.getAttribute('aria-label')).toBe(
-      'Carregando transações',
-    );
+    expect(spinner.getAttribute('aria-label')).toBe('Carregando transações');
   });
 });

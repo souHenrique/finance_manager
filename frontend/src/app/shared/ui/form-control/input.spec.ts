@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { InputDirective } from './input';
@@ -13,7 +13,7 @@ import { InputDirective } from './input';
       id="description"
       type="text"
       [formControl]="control"
-      [attr.aria-invalid]="invalid"
+      [attr.aria-invalid]="invalid()"
       aria-describedby="description-hint"
     />
 
@@ -25,7 +25,7 @@ class InputTestHost {
     nonNullable: true,
   });
 
-  invalid = false;
+  readonly invalid = signal(false);
 }
 
 describe('InputDirective', () => {
@@ -42,9 +42,7 @@ describe('InputDirective', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    input = fixture.nativeElement.querySelector(
-      'input',
-    ) as HTMLInputElement;
+    input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
   });
 
   it('should apply the design system classes', () => {
@@ -79,13 +77,11 @@ describe('InputDirective', () => {
   });
 
   it('should preserve accessibility attributes', () => {
-    component.invalid = true;
+    component.invalid.set(true);
     fixture.detectChanges();
 
     expect(input.getAttribute('aria-invalid')).toBe('true');
-    expect(input.getAttribute('aria-describedby')).toBe(
-      'description-hint',
-    );
+    expect(input.getAttribute('aria-describedby')).toBe('description-hint');
   });
 
   it('should preserve native input attributes', () => {

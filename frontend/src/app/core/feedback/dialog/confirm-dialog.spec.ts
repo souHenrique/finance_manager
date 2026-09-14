@@ -2,10 +2,7 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Button } from '../../../shared/ui/button/button';
-import {
-  ConfirmDialog,
-  ConfirmDialogData,
-} from './confirm-dialog';
+import { ConfirmDialog, ConfirmDialogData } from './confirm-dialog';
 
 describe('ConfirmDialog', () => {
   let fixture: ComponentFixture<ConfirmDialog>;
@@ -52,9 +49,7 @@ describe('ConfirmDialog', () => {
     expect(title?.textContent).toContain('Excluir orçamento');
 
     expect(description?.id).toBe('confirm-dialog-test-description');
-    expect(description?.textContent).toContain(
-      'Essa ação não poderá ser desfeita.',
-    );
+    expect(description?.textContent).toContain('Essa ação não poderá ser desfeita.');
   });
 
   it('should render the configured button labels', () => {
@@ -90,9 +85,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('should use the danger variant for destructive confirmation', () => {
-    const buttonElements = fixture.debugElement.queryAll(
-      By.directive(Button),
-    );
+    const buttonElements = fixture.debugElement.queryAll(By.directive(Button));
 
     const confirmButton = buttonElements[1]?.componentInstance as Button;
 
@@ -100,9 +93,7 @@ describe('ConfirmDialog', () => {
   });
 
   it('should use the secondary variant for cancellation', () => {
-    const buttonElements = fixture.debugElement.queryAll(
-      By.directive(Button),
-    );
+    const buttonElements = fixture.debugElement.queryAll(By.directive(Button));
 
     const cancelButton = buttonElements[0]?.componentInstance as Button;
 

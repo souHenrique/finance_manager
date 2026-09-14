@@ -21,9 +21,7 @@ describe('Badge', () => {
   });
 
   it('should use the neutral tone by default', () => {
-    const badge = fixture.nativeElement.querySelector(
-      '.badge',
-    ) as HTMLElement;
+    const badge = fixture.nativeElement.querySelector('.badge') as HTMLElement;
 
     expect(badge.classList).toContain('badge--neutral');
   });
@@ -32,9 +30,7 @@ describe('Badge', () => {
     fixture.componentRef.setInput('tone', 'success');
     fixture.detectChanges();
 
-    const badge = fixture.nativeElement.querySelector(
-      '.badge',
-    ) as HTMLElement;
+    const badge = fixture.nativeElement.querySelector('.badge') as HTMLElement;
 
     expect(badge.classList).toContain('badge--success');
   });
@@ -43,9 +39,7 @@ describe('Badge', () => {
     fixture.componentRef.setInput('symbol', '✓');
     fixture.detectChanges();
 
-    const symbol = fixture.nativeElement.querySelector(
-      '[aria-hidden="true"]',
-    ) as HTMLElement;
+    const symbol = fixture.nativeElement.querySelector('[aria-hidden="true"]') as HTMLElement;
 
     expect(symbol.textContent?.trim()).toBe('✓');
   });

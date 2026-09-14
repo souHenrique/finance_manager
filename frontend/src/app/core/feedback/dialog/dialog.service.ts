@@ -8,9 +8,7 @@ export class AppDialogService {
   private readonly dialog = inject(Dialog);
   private nextId = 0;
 
-  confirm(
-    options: Omit<ConfirmDialogData, 'id'>,
-  ): Observable<boolean | undefined> {
+  confirm(options: Omit<ConfirmDialogData, 'id'>): Observable<boolean | undefined> {
     const id = `confirm-dialog-${++this.nextId}`;
 
     return this.dialog.open<boolean, ConfirmDialogData>(ConfirmDialog, {

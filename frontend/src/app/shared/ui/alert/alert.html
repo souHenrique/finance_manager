@@ -14,12 +14,6 @@
   </div>
 
   @if (dismissible()) {
-    <button
-      type="button"
-      aria-label="Fechar aviso"
-      (click)="dismissed.emit()"
-    >
-      ×
-    </button>
+    <button type="button" aria-label="Fechar aviso" (click)="dismissed.emit()">×</button>
   }
 </section>

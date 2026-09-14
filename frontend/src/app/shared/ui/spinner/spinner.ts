@@ -1,8 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
 @Component({
   imports: [],
@@ -16,4 +12,3 @@ export class Spinner {
   readonly label = input('Carregando');
   readonly decorative = input(false);
 }
-

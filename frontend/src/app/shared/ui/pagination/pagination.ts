@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 @Component({
   imports: [],
@@ -28,12 +23,7 @@ export class Pagination {
   }
 
   protected goTo(page: number): void {
-    if (
-      this.disabled() ||
-      page < 1 ||
-      page > this.totalPages() ||
-      page === this.currentPage()
-    ) {
+    if (this.disabled() || page < 1 || page > this.totalPages() || page === this.currentPage()) {
       return;
     }
 

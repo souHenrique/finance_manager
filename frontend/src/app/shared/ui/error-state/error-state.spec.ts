@@ -12,10 +12,7 @@ describe('ErrorState', () => {
 
     fixture = TestBed.createComponent(ErrorState);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput(
-      'message',
-      'Verifique sua conexão e tente novamente.',
-    );
+    fixture.componentRef.setInput('message', 'Verifique sua conexão e tente novamente.');
     fixture.detectChanges();
   });
 
@@ -32,17 +29,13 @@ describe('ErrorState', () => {
   });
 
   it('should use alert role', () => {
-    const errorState = fixture.nativeElement.querySelector(
-      '.error-state',
-    ) as HTMLElement;
+    const errorState = fixture.nativeElement.querySelector('.error-state') as HTMLElement;
 
     expect(errorState.getAttribute('role')).toBe('alert');
   });
 
   it('should render retry by default', () => {
-    const button = fixture.nativeElement.querySelector(
-      'button',
-    ) as HTMLButtonElement;
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
 
     expect(button).not.toBeNull();
     expect(button.textContent).toContain('Tentar novamente');
@@ -53,9 +46,7 @@ describe('ErrorState', () => {
 
     component.retry.subscribe(retry);
 
-    const button = fixture.nativeElement.querySelector(
-      'button',
-    ) as HTMLButtonElement;
+    const button = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
 
     button.click();
 
@@ -66,16 +57,11 @@ describe('ErrorState', () => {
     fixture.componentRef.setInput('retryable', false);
     fixture.detectChanges();
 
-    expect(
-      fixture.nativeElement.querySelector('button'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('button')).toBeNull();
   });
 
   it('should use a custom title', () => {
-    fixture.componentRef.setInput(
-      'title',
-      'Erro ao carregar orçamentos',
-    );
+    fixture.componentRef.setInput('title', 'Erro ao carregar orçamentos');
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('h2')?.textContent).toContain(

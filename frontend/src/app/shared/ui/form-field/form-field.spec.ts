@@ -16,61 +16,40 @@ describe('FormField', () => {
   });
 
   it('should connect the label to the configured control id', () => {
-    const label = fixture.nativeElement.querySelector(
-      'label',
-    ) as HTMLLabelElement;
+    const label = fixture.nativeElement.querySelector('label') as HTMLLabelElement;
 
     expect(label.htmlFor).toBe('description');
     expect(label.textContent).toContain('Descrição');
   });
 
   it('should render hint text with an accessible id', () => {
-    fixture.componentRef.setInput(
-      'hint',
-      'Informe uma descrição',
-    );
+    fixture.componentRef.setInput('hint', 'Informe uma descrição');
     fixture.detectChanges();
 
-    const hint = fixture.nativeElement.querySelector(
-      '.form-field__hint',
-    ) as HTMLElement;
+    const hint = fixture.nativeElement.querySelector('.form-field__hint') as HTMLElement;
 
     expect(hint.id).toBe('description-hint');
     expect(hint.textContent).toContain('Informe uma descrição');
   });
 
   it('should render error instead of hint', () => {
-    fixture.componentRef.setInput(
-      'hint',
-      'Informe uma descrição',
-    );
-    fixture.componentRef.setInput(
-      'error',
-      'A descrição é obrigatória',
-    );
+    fixture.componentRef.setInput('hint', 'Informe uma descrição');
+    fixture.componentRef.setInput('error', 'A descrição é obrigatória');
     fixture.detectChanges();
 
-    const error = fixture.nativeElement.querySelector(
-      '.form-field__error',
-    ) as HTMLElement;
+    const error = fixture.nativeElement.querySelector('.form-field__error') as HTMLElement;
 
     expect(error.id).toBe('description-error');
-    expect(error.textContent).toContain(
-      'A descrição é obrigatória',
-    );
+    expect(error.textContent).toContain('A descrição é obrigatória');
 
-    expect(
-      fixture.nativeElement.querySelector('.form-field__hint'),
-    ).toBeNull();
+    expect(fixture.nativeElement.querySelector('.form-field__hint')).toBeNull();
   });
 
   it('should indicate a required field with text and symbol', () => {
     fixture.componentRef.setInput('required', true);
     fixture.detectChanges();
 
-    const label = fixture.nativeElement.querySelector(
-      'label',
-    ) as HTMLLabelElement;
+    const label = fixture.nativeElement.querySelector('label') as HTMLLabelElement;
 
     expect(label.textContent).toContain('*');
     expect(label.textContent).toContain('obrigatório');

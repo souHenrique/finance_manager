@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DashboardPage } from './dashboard-page';
 
 describe('DashboardPage', () => {
-  let component: DashboardPage;
   let fixture: ComponentFixture<DashboardPage>;
 
   beforeEach(async () => {
@@ -11,11 +10,15 @@ describe('DashboardPage', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(DashboardPage);
-    component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should render the dashboard heading and initial message', () => {
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('h2')?.textContent).toContain('Dashboard');
+    expect(element.querySelector('p')?.textContent).toContain('Frontend configurado com sucesso.');
   });
 });

@@ -17,11 +17,7 @@
         <span>{{ toast.message }}</span>
       </div>
 
-      <button
-        type="button"
-        aria-label="Fechar notificação"
-        (click)="toastService.remove(toast.id)"
-      >
+      <button type="button" aria-label="Fechar notificação" (click)="toastService.remove(toast.id)">
         ×
       </button>
     </article>

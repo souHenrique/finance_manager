@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TextareaDirective } from './textarea';
@@ -14,7 +14,7 @@ import { TextareaDirective } from './textarea';
       rows="4"
       maxlength="500"
       [formControl]="control"
-      [attr.aria-invalid]="invalid"
+      [attr.aria-invalid]="invalid()"
       aria-describedby="notes-hint"
     ></textarea>
 
@@ -26,7 +26,7 @@ class TextareaTestHost {
     nonNullable: true,
   });
 
-  invalid = false;
+  readonly invalid = signal(false);
 }
 
 describe('TextareaDirective', () => {
@@ -43,9 +43,7 @@ describe('TextareaDirective', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    textarea = fixture.nativeElement.querySelector(
-      'textarea',
-    ) as HTMLTextAreaElement;
+    textarea = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
   });
 
   it('should apply the design system classes', () => {
@@ -69,9 +67,7 @@ describe('TextareaDirective', () => {
     textarea.dispatchEvent(new Event('input'));
     fixture.detectChanges();
 
-    expect(component.control.value).toBe(
-      'Texto digitado pelo usuário',
-    );
+    expect(component.control.value).toBe('Texto digitado pelo usuário');
   });
 
   it('should reflect the disabled FormControl state', () => {
@@ -85,13 +81,11 @@ describe('TextareaDirective', () => {
     expect(textarea.id).toBe('notes');
     expect(textarea.rows).toBe(4);
     expect(textarea.maxLength).toBe(500);
-    expect(textarea.getAttribute('aria-describedby')).toBe(
-      'notes-hint',
-    );
+    expect(textarea.getAttribute('aria-describedby')).toBe('notes-hint');
   });
 
   it('should reflect the invalid accessibility state', () => {
-    component.invalid = true;
+    component.invalid.set(true);
     fixture.detectChanges();
 
     expect(textarea.getAttribute('aria-invalid')).toBe('true');

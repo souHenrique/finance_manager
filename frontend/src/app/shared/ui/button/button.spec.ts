@@ -15,9 +15,7 @@ describe('Button', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    nativeButton = fixture.nativeElement.querySelector(
-      'button',
-    ) as HTMLButtonElement;
+    nativeButton = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
   });
 
   it('should use safe default values', () => {
@@ -65,9 +63,7 @@ describe('Button', () => {
 
     expect(nativeButton.disabled).toBe(true);
     expect(nativeButton.getAttribute('aria-busy')).toBe('true');
-    expect(
-      fixture.nativeElement.querySelector('app-spinner'),
-    ).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-spinner')).not.toBeNull();
   });
 
   it('should use submit type when configured', () => {

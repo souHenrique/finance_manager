@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Shell } from './shell';
 
 describe('Shell', () => {
-  let component: Shell;
   let fixture: ComponentFixture<Shell>;
 
   beforeEach(async () => {
@@ -11,11 +10,15 @@ describe('Shell', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(Shell);
-    component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('should render the application title and routed content area', () => {
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('h1')?.textContent).toContain('Finance Manager');
+    expect(element.querySelector('main router-outlet')).not.toBeNull();
   });
 });

@@ -5,8 +5,6 @@
   <p>{{ message() }}</p>
 
   @if (retryable()) {
-    <app-button variant="secondary" (pressed)="retry.emit()">
-      Tentar novamente
-    </app-button>
+    <app-button variant="secondary" (pressed)="retry.emit()"> Tentar novamente </app-button>
   }
 </section>

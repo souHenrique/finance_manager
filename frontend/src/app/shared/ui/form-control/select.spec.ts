@@ -8,12 +8,7 @@ import { SelectDirective } from './select';
   template: `
     <label for="category">Categoria</label>
 
-    <select
-      appSelect
-      id="category"
-      [formControl]="control"
-      aria-describedby="category-hint"
-    >
+    <select appSelect id="category" [formControl]="control" aria-describedby="category-hint">
       <option value="">Selecione</option>
       <option value="food">Alimentação</option>
       <option value="transport">Transporte</option>
@@ -42,9 +37,7 @@ describe('SelectDirective', () => {
     component = fixture.componentInstance;
     fixture.detectChanges();
 
-    select = fixture.nativeElement.querySelector(
-      'select',
-    ) as HTMLSelectElement;
+    select = fixture.nativeElement.querySelector('select') as HTMLSelectElement;
   });
 
   it('should apply the design system classes', () => {
@@ -82,8 +75,6 @@ describe('SelectDirective', () => {
 
   it('should preserve accessibility attributes', () => {
     expect(select.id).toBe('category');
-    expect(select.getAttribute('aria-describedby')).toBe(
-      'category-hint',
-    );
+    expect(select.getAttribute('aria-describedby')).toBe('category-hint');
   });
 });
