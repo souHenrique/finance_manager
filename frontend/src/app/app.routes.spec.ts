@@ -1,12 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { of } from 'rxjs';
 import { routes } from './app.routes';
+import { AccountApiService } from './features/accounts/data-access/account-api.service';
 
 describe('Application routes', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideRouter(routes)],
+      providers: [
+        provideRouter(routes),
+        {
+          provide: AccountApiService,
+          useValue: {
+            findAll: () => of([]),
+          },
+        },
+      ],
     });
   });
 

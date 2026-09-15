@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { AccountApiService } from '../../data-access/account-api.service';
 import { AccountListPage } from './account-list-page';
 
 describe('AccountListPage', () => {
@@ -7,6 +9,14 @@ describe('AccountListPage', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AccountListPage],
+      providers: [
+        {
+          provide: AccountApiService,
+          useValue: {
+            findAll: () => of([]),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AccountListPage);
