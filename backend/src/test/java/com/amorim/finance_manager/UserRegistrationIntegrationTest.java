@@ -47,8 +47,8 @@ class UserRegistrationIntegrationTest {
     void shouldRegisterUserInPostgresql() throws Exception {
         String body = """
             {
-              "name": "Henrique",
-              "email": "henrique@example.com",
+              "name": "Camila",
+              "email": "camila.souza@example.com",
               "password": "SenhaSegura123"
             }
             """;
@@ -57,9 +57,9 @@ class UserRegistrationIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.name").value("Henrique"))
+                .andExpect(jsonPath("$.name").value("Camila"))
                 .andExpect(jsonPath("$.email")
-                        .value("henrique@example.com"))
+                        .value("camila.souza@example.com"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist());
 
         assertThat(userRepository.count()).isEqualTo(1);
@@ -69,8 +69,8 @@ class UserRegistrationIntegrationTest {
     void shouldReturnConflictWhenEmailAlreadyExists() throws Exception {
         String body = """
             {
-              "name": "Henrique",
-              "email": "henrique@example.com",
+              "name": "Camila",
+              "email": "camila.souza@example.com",
               "password": "SenhaSegura123"
             }
             """;
@@ -100,7 +100,7 @@ class UserRegistrationIntegrationTest {
     void shouldRejectInvalidEmail() throws Exception {
         String body = """
             {
-              "name": "Henrique",
+              "name": "Camila",
               "email": "email-invalido",
               "password": "SenhaSegura123"
             }
@@ -128,7 +128,7 @@ class UserRegistrationIntegrationTest {
         String body = """
             {
               "name": "   ",
-              "email": "henrique@example.com",
+              "email": "camila.souza@example.com",
               "password": "SenhaSegura123"
             }
             """;
@@ -145,8 +145,8 @@ class UserRegistrationIntegrationTest {
     void shouldRejectBlankPassword()throws Exception {
         String body = """
             {
-              "name": "Henrique",
-              "email": "henrique@example.com",
+              "name": "Camila",
+              "email": "camila.souza@example.com",
               "password": "   "
             }
             """;
@@ -163,8 +163,8 @@ class UserRegistrationIntegrationTest {
     void shouldNormalizeEmail() throws Exception {
         String body = """
             {
-              "name": "Henrique",
-              "email": "  HENRIQUE@Example.COM  ",
+              "name": "Camila",
+              "email": "  CAMILA.SOUZA@Example.COM  ",
               "password": "SenhaSegura123"
             }
             """;
@@ -174,7 +174,7 @@ class UserRegistrationIntegrationTest {
                         .content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email")
-                        .value("henrique@example.com"));
+                        .value("camila.souza@example.com"));
 
         User savedUser = userRepository.findAll()
                 .stream()
@@ -182,7 +182,7 @@ class UserRegistrationIntegrationTest {
                 .orElseThrow();
 
         assertThat(savedUser.getEmail())
-                .isEqualTo("henrique@example.com");
+                .isEqualTo("camila.souza@example.com");
     }
 
     @Test
@@ -191,8 +191,8 @@ class UserRegistrationIntegrationTest {
 
         String body = """
             {
-              "name": "Henrique",
-              "email": "henrique@example.com",
+              "name": "Camila",
+              "email": "camila.souza@example.com",
               "password": "%s"
             }
             """.formatted(rawPassword);
@@ -225,8 +225,8 @@ class UserRegistrationIntegrationTest {
 
         String registerBody = """
             {
-              "name": "Henrique",
-              "email": "henrique@example.com",
+              "name": "Camila",
+              "email": "camila.souza@example.com",
               "password": "SenhaSegura123"
             }
             """;
@@ -238,7 +238,7 @@ class UserRegistrationIntegrationTest {
 
         String loginBody = """
             {
-              "email": "henrique@example.com",
+              "email": "camila.souza@example.com",
               "password": "senha-incorreta"
             }
             """;

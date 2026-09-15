@@ -61,8 +61,8 @@ describe('RegisterPage', () => {
   }
 
   function fillValidForm(): void {
-    fillInput('register-name', ' Henrique Amorim ');
-    fillInput('register-email', 'henrique@example.com');
+    fillInput('register-name', ' Camila Souza ');
+    fillInput('register-email', 'camila.souza@example.com');
     fillInput('register-password', 'SenhaSegura123');
     fillInput('register-confirm-password', 'SenhaSegura123');
   }
@@ -78,8 +78,8 @@ describe('RegisterPage', () => {
 
   it('should prevent registration when the passwords differ', async () => {
     await openRegisterPage();
-    fillInput('register-name', 'Henrique Amorim');
-    fillInput('register-email', 'henrique@example.com');
+    fillInput('register-name', 'Camila Souza');
+    fillInput('register-email', 'camila.souza@example.com');
     fillInput('register-password', 'SenhaSegura123');
     fillInput('register-confirm-password', 'SenhaDiferente123');
 
@@ -96,8 +96,8 @@ describe('RegisterPage', () => {
     auth.register.mockReturnValue(
       of({
         id: 'f02e76b3-8d53-42dd-b4c5-43fcda2d3d84',
-        name: 'Henrique Amorim',
-        email: 'henrique@example.com',
+        name: 'Camila Souza',
+        email: 'camila.souza@example.com',
         createdAt: '2026-09-15T12:00:00Z',
         updatedAt: '2026-09-15T12:00:00Z',
       }),
@@ -107,8 +107,8 @@ describe('RegisterPage', () => {
     submitForm();
 
     expect(auth.register).toHaveBeenCalledWith({
-      name: 'Henrique Amorim',
-      email: 'henrique@example.com',
+      name: 'Camila Souza',
+      email: 'camila.souza@example.com',
       password: 'SenhaSegura123',
     });
     expect(auth.register.mock.calls[0]?.[0]).not.toHaveProperty('confirmPassword');

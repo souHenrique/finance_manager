@@ -58,7 +58,7 @@ describe('AuthService', () => {
 
   it('should create a session after a successful login', () => {
     const request: LoginRequest = {
-      email: 'henrique@example.com',
+      email: 'camila.souza@example.com',
       password: 'SenhaSegura123',
     };
     const response: AuthResponse = {
@@ -83,8 +83,8 @@ describe('AuthService', () => {
 
   it('should register without creating a session', () => {
     const request: RegisterRequest = {
-      name: 'Henrique Amorim',
-      email: 'henrique@example.com',
+      name: 'Camila Souza',
+      email: 'camila.souza@example.com',
       password: 'SenhaSegura123',
     };
     const response: User = {

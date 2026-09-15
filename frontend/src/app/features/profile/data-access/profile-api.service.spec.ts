@@ -12,8 +12,8 @@ describe('ProfileApiService', () => {
 
   const user: User = {
     id: '2a1fbc5b-cbb9-4879-b0c5-42f034d64261',
-    name: 'Henrique Amorim',
-    email: 'henrique@example.com',
+    name: 'Camila Souza',
+    email: 'camila.souza@example.com',
     createdAt: '2026-09-02T12:00:00Z',
     updatedAt: '2026-09-02T12:30:00Z',
   };
@@ -53,8 +53,8 @@ describe('ProfileApiService', () => {
 
   it('deve atualizar o perfil do usuário autenticado', () => {
     const payload: UpdateProfileRequest = {
-      name: 'Henrique Amorim Silva',
-      email: 'henrique.silva@example.com',
+      name: 'Camila Souza Lima',
+      email: 'camila.lima@example.com',
     };
     const response: User = {
       ...user,
@@ -71,5 +71,26 @@ describe('ProfileApiService', () => {
     expect(request.request.body).toEqual(payload);
 
     request.flush(response);
+  });
+
+  it('deve atualizar somente o nome quando esse for o campo alterado', () => {
+    const payload: UpdateProfileRequest = {
+      name: 'Camila Souza Lima',
+    };
+
+    service.updateCurrentUser(payload).subscribe();
+
+    const request = httpMock.expectOne('/api/v1/users/me');
+
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({
+      name: 'Camila Souza Lima',
+    });
+    expect(request.request.body).not.toHaveProperty('password');
+
+    request.flush({
+      ...user,
+      name: 'Camila Souza Lima',
+    });
   });
 });

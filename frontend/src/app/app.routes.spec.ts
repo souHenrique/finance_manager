@@ -6,6 +6,7 @@ import { routes } from './app.routes';
 import { SessionService } from './core/auth/session.service';
 import { AccountApiService } from './features/accounts/data-access/account-api.service';
 import { AuthService } from './features/auth/services/auth.service';
+import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 
 describe('Application routes', () => {
   let session: { hasValidSession: ReturnType<typeof vi.fn> };
@@ -32,6 +33,20 @@ describe('Application routes', () => {
           provide: AccountApiService,
           useValue: {
             findAll: () => of([]),
+          },
+        },
+        {
+          provide: ProfileApiService,
+          useValue: {
+            getCurrentUser: () =>
+              of({
+                id: '2a1fbc5b-cbb9-4879-b0c5-42f034d64261',
+                name: 'Camila Souza',
+                email: 'camila.souza@example.com',
+                createdAt: '2026-09-02T12:00:00Z',
+                updatedAt: '2026-09-02T12:30:00Z',
+              }),
+            updateCurrentUser: vi.fn(),
           },
         },
       ],

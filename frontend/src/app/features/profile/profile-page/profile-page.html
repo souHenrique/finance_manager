@@ -1,6 +1,99 @@
-<section class="page" aria-labelledby="profile-title">
+<section class="page profile-page" aria-labelledby="profile-title">
   <header class="page__header">
     <h1 id="profile-title">Perfil</h1>
     <p>Consulte e atualize suas informações pessoais.</p>
   </header>
+
+  @if (loading()) {
+    <app-card title="Informações pessoais">
+      <div class="profile-page__loading">
+        <app-skeleton height="2.5rem" />
+        <app-skeleton height="2.5rem" />
+        <app-skeleton width="9rem" height="2.5rem" />
+      </div>
+    </app-card>
+  } @else if (loadError()) {
+    <app-error-state
+      title="Não foi possível carregar o perfil"
+      [message]="loadError()!"
+      (retry)="loadProfile()"
+    />
+  } @else {
+    <app-card
+      title="Informações pessoais"
+      subtitle="Mantenha seus dados atualizados."
+    >
+      @if (submissionError()) {
+        <app-alert
+          tone="danger"
+          title="Não foi possível salvar"
+          [message]="submissionError()!"
+        />
+      }
+
+      <form
+        class="profile-form"
+        [formGroup]="form"
+        (ngSubmit)="submit()"
+        novalidate
+      >
+        <app-form-field
+          label="Nome"
+          controlId="profile-name"
+          [error]="fieldError('name')"
+          [required]="true"
+        >
+          <input
+            appInput
+            id="profile-name"
+            type="text"
+            formControlName="name"
+            autocomplete="name"
+            [attr.aria-invalid]="
+              fieldError('name') ? 'true' : null
+            "
+            [attr.aria-describedby]="
+              fieldError('name')
+                ? 'profile-name-error'
+                : null
+            "
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="E-mail"
+          controlId="profile-email"
+          [error]="fieldError('email')"
+          [required]="true"
+        >
+          <input
+            appInput
+            id="profile-email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            inputmode="email"
+            [attr.aria-invalid]="
+              fieldError('email') ? 'true' : null
+            "
+            [attr.aria-describedby]="
+              fieldError('email')
+                ? 'profile-email-error'
+                : null
+            "
+          />
+        </app-form-field>
+
+        <div class="profile-form__actions">
+          <app-button
+            type="submit"
+            [loading]="saving()"
+            [disabled]="saving()"
+          >
+            Salvar alterações
+          </app-button>
+        </div>
+      </form>
+    </app-card>
+  }
 </section>

@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+.profile-page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.profile-page app-card,
+.profile-page app-error-state {
+  width: min(100%, 42rem);
+}
+
+.profile-page__loading,
+.profile-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.profile-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+}
+
+@media (max-width: 40rem) {
+  .profile-form__actions {
+    justify-content: stretch;
+  }
+
+  .profile-form__actions app-button {
+    width: 100%;
+  }
+}

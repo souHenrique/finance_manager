@@ -37,21 +37,21 @@ class UserServiceTest {
     @Test
     void shouldRegisterUser() {
         RegisterRequest request = new RegisterRequest(
-                "Henrique",
-                "henrique@example.com",
+                "Camila",
+                "camila.souza@example.com",
                 "SenhaSegura123"
         );
 
         User user = new User();
         UserResponse response = new UserResponse(
                 UUID.randomUUID(),
-                "Henrique",
-                "henrique@example.com",
+                "Camila",
+                "camila.souza@example.com",
                 null,
                 null
         );
 
-        when(userRepository.existsByEmail("henrique@example.com"))
+        when(userRepository.existsByEmail("camila.souza@example.com"))
                 .thenReturn(false);
 
         when(passwordEncoder.encode("SenhaSegura123"))
@@ -84,12 +84,12 @@ class UserServiceTest {
     @Test
     void shouldRejectDuplicateEmail() {
         RegisterRequest request = new RegisterRequest(
-                "Henrique",
-                "henrique@example.com",
+                "Camila",
+                "camila.souza@example.com",
                 "SenhaSegura123"
         );
 
-        when(userRepository.existsByEmail("henrique@example.com"))
+        when(userRepository.existsByEmail("camila.souza@example.com"))
                 .thenReturn(true);
 
         assertThatThrownBy(() -> userService.register(request))
