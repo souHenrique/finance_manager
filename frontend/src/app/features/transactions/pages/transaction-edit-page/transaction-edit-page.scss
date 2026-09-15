@@ -1,0 +1,18 @@
+.transaction-edit-page__loading {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.transaction-edit-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-block: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .transaction-edit-page__actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -27,27 +27,27 @@ import { TransactionFilterFormComponent } from '../../components/transaction-fil
 const TRANSACTION_SORT_OPTIONS = [
   {
     value: 'competenceDate,desc',
-    label: 'Competência: mais recente',
+    label: 'Mais recente',
   },
   {
     value: 'competenceDate,asc',
-    label: 'Competência: mais antiga',
+    label: 'Mais antiga',
   },
   {
     value: 'amount,desc',
-    label: 'Valor: maior primeiro',
+    label: 'Maior primeiro',
   },
   {
     value: 'amount,asc',
-    label: 'Valor: menor primeiro',
+    label: 'Menor primeiro',
   },
   {
     value: 'description,asc',
-    label: 'Descrição: A–Z',
+    label: 'A–Z',
   },
   {
     value: 'description,desc',
-    label: 'Descrição: Z–A',
+    label: 'Z–A',
   },
 ] as const;
 

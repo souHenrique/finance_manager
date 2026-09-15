@@ -1,6 +1,32 @@
 <section class="page" aria-labelledby="transaction-create-title">
   <header class="page__header">
-    <h1 id="transaction-create-title">Nova transação</h1>
-    <p>Cadastre uma nova movimentação financeira.</p>
+    <div>
+      <h1 id="transaction-create-title">Nova transação</h1>
+      <p>Cadastre uma receita ou despesa.</p>
+    </div>
   </header>
+
+  @if (optionsState() === 'loading') {
+    <div class="transaction-create-page__loading" aria-label="Carregando dados do formulário">
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+    </div>
+  } @else if (optionsState() === 'error') {
+    <app-error-state
+      title="Não foi possível preparar o formulário"
+      message="Não foi possível carregar contas e categorias. Tente novamente."
+      (retry)="loadOptions()"
+    />
+  } @else {
+    <app-transaction-form
+      mode="create"
+      [accounts]="accounts()"
+      [categories]="categories()"
+      [submitting]="submitting()"
+      (submitted)="create($event)"
+      (cancelled)="goBack()"
+    />
+  }
 </section>

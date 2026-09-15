@@ -1,0 +1,51 @@
+.transaction-detail-page__loading {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.transaction-detail-page__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.transaction-detail-page__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.transaction-detail-page__details div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.transaction-detail-page__details dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.transaction-detail-page__details dd {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+
+@media (max-width: 900px) {
+  .transaction-detail-page__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .transaction-detail-page__card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .transaction-detail-page__details {
+    grid-template-columns: 1fr;
+  }
+}

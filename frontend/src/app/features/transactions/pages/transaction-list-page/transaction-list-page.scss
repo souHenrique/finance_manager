@@ -36,6 +36,22 @@ tbody tr:last-child td {
   border-bottom: 0;
 }
 
+.transaction-list__row--cancelled {
+  background: var(--color-surface-muted);
+}
+
+.transaction-list__row--cancelled .transaction-list__description {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.transaction-list__history-note {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+
 @media (max-width: 640px) {
   .transaction-list__toolbar {
     align-items: stretch;

@@ -1,6 +1,111 @@
 <section class="page" aria-labelledby="transaction-detail-title">
   <header class="page__header">
-    <h1 id="transaction-detail-title">Detalhes da transação</h1>
-    <p>Consulte as informações da transação selecionada.</p>
+    <div>
+      <h1 id="transaction-detail-title">Detalhes da transação</h1>
+      <p>Consulte as informações e o status deste lançamento.</p>
+    </div>
+
+    <app-button variant="secondary" [disabled]="isCancelling()" (pressed)="goBack()">
+      Voltar para transações
+    </app-button>
   </header>
+
+  @if (isLoading()) {
+    <div class="transaction-detail-page__loading" aria-label="Carregando transação">
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+    </div>
+  } @else if (hasLoadError()) {
+    <app-error-state
+      title="Não foi possível carregar a transação"
+      message="Tente novamente em instantes."
+      (retry)="loadTransaction()"
+    />
+  } @else if (transaction(); as currentTransaction) {
+    @if (currentTransaction.status === 'CANCELLED') {
+      <app-alert
+        tone="warning"
+        title="Transação cancelada"
+        message="Este lançamento continua visível no histórico, mas seu impacto financeiro foi revertido."
+      />
+    }
+
+    <app-card
+      [title]="currentTransaction.description"
+      [subtitle]="'Criada em ' + currentTransaction.createdAt"
+    >
+      <div card-actions class="transaction-detail-page__card-actions">
+        <app-badge
+          [label]="statusLabel(currentTransaction.status)"
+          [tone]="statusTone(currentTransaction.status)"
+        />
+
+        @if (isEditable(currentTransaction)) {
+          <app-button variant="secondary" [disabled]="isCancelling()" (pressed)="goToEdit()">
+            Editar
+          </app-button>
+        }
+
+        @if (isCancellationAllowed(currentTransaction)) {
+          <app-button
+            variant="danger"
+            [loading]="isCancelling()"
+            [disabled]="isCancelling()"
+            (pressed)="confirmCancellation()"
+          >
+            Cancelar transação
+          </app-button>
+        }
+      </div>
+
+      <dl class="transaction-detail-page__details">
+        <div>
+          <dt>Valor</dt>
+          <dd>{{ currentTransaction.amount | currency: 'BRL' }}</dd>
+        </div>
+
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ typeLabel(currentTransaction.type) }}</dd>
+        </div>
+
+        <div>
+          <dt>Status</dt>
+          <dd>{{ statusLabel(currentTransaction.status) }}</dd>
+        </div>
+
+        <div>
+          <dt>Competência</dt>
+          <dd>{{ currentTransaction.competenceDate }}</dd>
+        </div>
+
+        <div>
+          <dt>Data efetiva</dt>
+          <dd>{{ currentTransaction.effectiveDate ?? '—' }}</dd>
+        </div>
+
+        <div>
+          <dt>Vencimento</dt>
+          <dd>{{ currentTransaction.dueDate ?? '—' }}</dd>
+        </div>
+
+        <div>
+          <dt>Forma de pagamento</dt>
+          <dd>{{ paymentMethodLabel(currentTransaction.paymentMethod) }}</dd>
+        </div>
+
+        <div>
+          <dt>Categoria</dt>
+          <dd>{{ categoryName(currentTransaction.categoryId) }}</dd>
+        </div>
+
+        <div>
+          <dt>Conta ou cartão</dt>
+          <dd>{{ accountOrCardLabel(currentTransaction) }}</dd>
+        </div>
+      </dl>
+    </app-card>
+  }
 </section>

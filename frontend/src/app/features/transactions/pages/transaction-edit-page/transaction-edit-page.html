@@ -1,0 +1,63 @@
+<section class="page" aria-labelledby="transaction-edit-title">
+  <header class="page__header">
+    <div>
+      <h1 id="transaction-edit-title">Editar transação</h1>
+      <p>Atualize as informações permitidas do lançamento.</p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="transaction-edit-page__loading" aria-label="Carregando transação">
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+    </div>
+  } @else if (hasLoadError()) {
+    <app-error-state
+      title="Não foi possível carregar a transação"
+      message="Tente novamente em instantes."
+      (retry)="loadData()"
+    />
+  } @else if (transaction(); as currentTransaction) {
+    @if (!isEditable(currentTransaction)) {
+      <app-alert
+        tone="warning"
+        title="Edição indisponível"
+        message="Transações canceladas ou de tipos não suportados não podem ser editadas nesta tela."
+      />
+
+      <div class="transaction-edit-page__actions">
+        <app-button variant="secondary" (pressed)="goBack()"> Voltar aos detalhes </app-button>
+      </div>
+    } @else {
+      @if (hasConflict()) {
+        <app-alert
+          tone="warning"
+          title="Dados desatualizados"
+          message="A transação foi alterada em outro momento. Recarregue os dados antes de tentar salvar novamente."
+        />
+
+        <div class="transaction-edit-page__actions">
+          <app-button
+            variant="secondary"
+            [disabled]="isSubmitting()"
+            (pressed)="reloadAfterConflict()"
+          >
+            Recarregar dados
+          </app-button>
+        </div>
+      }
+
+      <app-transaction-form
+        mode="edit"
+        [transaction]="currentTransaction"
+        [accounts]="accounts()"
+        [categories]="categories()"
+        [submitting]="isSubmitting()"
+        (submitted)="update($event)"
+        (cancelled)="goBack()"
+      />
+    }
+  }
+</section>

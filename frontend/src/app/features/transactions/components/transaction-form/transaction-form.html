@@ -1,0 +1,125 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="transaction-form__grid">
+    @if (mode() === 'create') {
+      <app-form-field label="Tipo" controlId="transaction-type">
+        <select appSelect id="transaction-type" formControlName="type" (change)="onTypeChange()">
+          <option [ngValue]="null">Selecione</option>
+
+          @for (type of transactionTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </app-form-field>
+    } @else {
+      <app-form-field label="Tipo" controlId="transaction-type-readonly">
+        <input
+          appInput
+          id="transaction-type-readonly"
+          [value]="selectedType() === 'INCOME' ? 'Receita' : 'Despesa'"
+          readonly
+        />
+      </app-form-field>
+    }
+
+    <app-form-field label="Descrição" controlId="transaction-description">
+      <input
+        appInput
+        id="transaction-description"
+        type="text"
+        formControlName="description"
+        maxlength="255"
+      />
+    </app-form-field>
+
+    <app-form-field label="Valor" controlId="transaction-amount">
+      <input
+        appInput
+        id="transaction-amount"
+        type="number"
+        min="0.01"
+        step="0.01"
+        formControlName="amount"
+      />
+    </app-form-field>
+
+    <app-form-field label="Data de competência" controlId="competence-date">
+      <input appInput id="competence-date" type="date" formControlName="competenceDate" />
+    </app-form-field>
+
+    <app-form-field label="Status" controlId="transaction-status">
+      <select
+        appSelect
+        id="transaction-status"
+        formControlName="status"
+        (change)="onStatusChange()"
+      >
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    @if (form.controls.status.value === 'COMPLETED') {
+      <app-form-field label="Data efetiva" controlId="effective-date">
+        <input appInput id="effective-date" type="date" formControlName="effectiveDate" />
+      </app-form-field>
+    }
+
+    <app-form-field label="Forma de pagamento" controlId="payment-method">
+      <select appSelect id="payment-method" formControlName="paymentMethod">
+        @for (method of paymentMethods; track method.value) {
+          <option [value]="method.value">{{ method.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field label="Categoria" controlId="transaction-category">
+      <select appSelect id="transaction-category" formControlName="categoryId">
+        <option value="">Selecione</option>
+
+        @for (category of visibleCategories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    @if (selectedType() === 'INCOME') {
+      <app-form-field label="Conta de destino" controlId="destination-account">
+        <select appSelect id="destination-account" formControlName="destinationAccountId">
+          <option value="">Selecione</option>
+
+          @for (account of activeAccounts(); track account.id) {
+            <option [value]="account.id">{{ account.name }}</option>
+          }
+        </select>
+      </app-form-field>
+    }
+
+    @if (selectedType() === 'EXPENSE') {
+      <app-form-field label="Conta de origem" controlId="source-account">
+        <select appSelect id="source-account" formControlName="sourceAccountId">
+          <option value="">Selecione</option>
+
+          @for (account of activeAccounts(); track account.id) {
+            <option [value]="account.id">{{ account.name }}</option>
+          }
+        </select>
+      </app-form-field>
+    }
+  </div>
+
+  <div class="transaction-form__actions">
+    <app-button
+      type="button"
+      variant="secondary"
+      [disabled]="submitting()"
+      (pressed)="cancelled.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button type="submit" [loading]="submitting()" [disabled]="submitting()">
+      {{ mode() === 'create' ? 'Criar transação' : 'Salvar alterações' }}
+    </app-button>
+  </div>
+</form>

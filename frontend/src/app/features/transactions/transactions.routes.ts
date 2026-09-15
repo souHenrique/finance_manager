@@ -10,6 +10,14 @@ export const TRANSACTION_ROUTES: Routes = [
       ),
   },
   {
+    path: ':id/edit',
+    title: 'Editar transação | Finance Manager',
+    loadComponent: () =>
+      import('./pages/transaction-edit-page/transaction-edit-page').then(
+        ({ TransactionEditPage }) => TransactionEditPage,
+      ),
+  },
+  {
     path: ':id',
     title: 'Detalhes da transação | Finance Manager',
     loadComponent: () =>

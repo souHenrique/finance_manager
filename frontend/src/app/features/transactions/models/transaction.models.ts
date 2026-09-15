@@ -52,7 +52,7 @@ export interface UpdateTransactionRequest {
   description?: string;
   amount?: number;
   competenceDate?: string;
-  effectiveDate?: string;
+  effectiveDate?: string | null;
   status?: TransactionStatus;
   paymentMethod?: PaymentMethod;
   sourceAccountId?: string;
