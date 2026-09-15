@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { AuthService } from '../../features/auth/services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -11,4 +13,10 @@ import { RouterLink } from '@angular/router';
 export class Header {
   readonly menuOpen = input(false);
   readonly menuToggle = output<void>();
+
+  private readonly auth = inject(AuthService);
+
+  protected logout(): void {
+    this.auth.logout();
+  }
 }

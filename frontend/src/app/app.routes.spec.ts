@@ -3,13 +3,31 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { routes } from './app.routes';
+import { SessionService } from './core/auth/session.service';
 import { AccountApiService } from './features/accounts/data-access/account-api.service';
+import { AuthService } from './features/auth/services/auth.service';
 
 describe('Application routes', () => {
+  let session: { hasValidSession: ReturnType<typeof vi.fn> };
+
   beforeEach(() => {
+    session = {
+      hasValidSession: vi.fn().mockReturnValue(true),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         provideRouter(routes),
+        {
+          provide: SessionService,
+          useValue: session,
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            logout: vi.fn(),
+          },
+        },
         {
           provide: AccountApiService,
           useValue: {
@@ -40,6 +58,16 @@ describe('Application routes', () => {
 
     expect(harness.routeNativeElement?.querySelector('app-header')).not.toBeNull();
     expect(harness.routeNativeElement?.querySelector('app-sidebar')).not.toBeNull();
+  });
+
+  it('should redirect an unauthenticated user away from a private route', async () => {
+    session.hasValidSession.mockReturnValue(false);
+    const harness = await RouterTestingHarness.create();
+
+    await harness.navigateByUrl('/dashboard');
+
+    expect(TestBed.inject(Router).url).toBe('/login?returnUrl=%2Fdashboard');
+    expect(harness.routeNativeElement?.querySelector('app-header')).toBeNull();
   });
 
   it.each([

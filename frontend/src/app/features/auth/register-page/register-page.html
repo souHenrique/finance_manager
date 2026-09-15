@@ -1,6 +1,134 @@
-<section class="page" aria-labelledby="register-title">
-  <header class="page__header">
-    <h1 id="register-title">Criar conta</h1>
-    <p>Cadastre-se para começar a organizar suas finanças.</p>
-  </header>
-</section>
+<main class="auth-page">
+  <section
+    class="auth-page__card"
+    aria-labelledby="register-title"
+  >
+    <header class="auth-page__header">
+      <h1 id="register-title">Criar conta</h1>
+
+      <p>
+        Cadastre-se para começar a organizar suas finanças.
+      </p>
+    </header>
+
+    @if (submissionError()) {
+      <app-alert
+        tone="danger"
+        title="Não foi possível criar a conta"
+        [message]="submissionError()!"
+      />
+    }
+
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      novalidate
+    >
+      <app-form-field
+        label="Nome"
+        controlId="register-name"
+        [error]="fieldError('name')"
+        [required]="true"
+      >
+        <input
+          appInput
+          id="register-name"
+          type="text"
+          formControlName="name"
+          autocomplete="name"
+          [attr.aria-invalid]="
+            fieldError('name') ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            fieldError('name')
+              ? 'register-name-error'
+              : null
+          "
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="E-mail"
+        controlId="register-email"
+        [error]="fieldError('email')"
+        [required]="true"
+      >
+        <input
+          appInput
+          id="register-email"
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          inputmode="email"
+          [attr.aria-invalid]="
+            fieldError('email') ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            fieldError('email')
+              ? 'register-email-error'
+              : null
+          "
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Senha"
+        controlId="register-password"
+        [error]="fieldError('password')"
+        [required]="true"
+      >
+        <input
+          appInput
+          id="register-password"
+          type="password"
+          formControlName="password"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            fieldError('password') ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            fieldError('password')
+              ? 'register-password-error'
+              : null
+          "
+        />
+      </app-form-field>
+
+      <app-form-field
+        label="Confirmar senha"
+        controlId="register-confirm-password"
+        [error]="confirmationError()"
+        [required]="true"
+      >
+        <input
+          appInput
+          id="register-confirm-password"
+          type="password"
+          formControlName="confirmPassword"
+          autocomplete="new-password"
+          [attr.aria-invalid]="
+            confirmationError() ? 'true' : null
+          "
+          [attr.aria-describedby]="
+            confirmationError()
+              ? 'register-confirm-password-error'
+              : null
+          "
+        />
+      </app-form-field>
+
+      <app-button
+        type="submit"
+        [loading]="loading()"
+        [disabled]="loading()"
+      >
+        Criar conta
+      </app-button>
+    </form>
+
+    <p class="auth-page__footer">
+      Já possui uma conta?
+      <a routerLink="/login">Entrar</a>
+    </p>
+  </section>
+</main>
