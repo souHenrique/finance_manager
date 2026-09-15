@@ -1,0 +1,80 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <app-form-field
+    label="Nome"
+    controlId="category-name"
+    [required]="true"
+    [error]="
+      form.controls.name.touched && form.controls.name.invalid
+        ? 'Informe um nome de até 120 caracteres.'
+        : undefined
+    "
+  >
+    <input
+      appInput
+      id="category-name"
+      type="text"
+      formControlName="name"
+      maxlength="120"
+      autocomplete="off"
+    />
+  </app-form-field>
+
+  @if (mode() === 'create') {
+    <app-form-field
+      label="Tipo"
+      controlId="category-type"
+      [required]="true"
+    >
+      <select
+        appSelect
+        id="category-type"
+        formControlName="type"
+      >
+        <option value="EXPENSE">Despesa</option>
+        <option value="INCOME">Receita</option>
+      </select>
+    </app-form-field>
+
+    @if (parentCategory(); as parent) {
+      <div class="category-form__parent">
+        <span>Categoria pai</span>
+        <strong>{{ parent.name }}</strong>
+      </div>
+    }
+  }
+
+  @if (mode() === 'edit') {
+    <app-form-field
+      label="Status"
+      controlId="category-status"
+    >
+      <select
+        appSelect
+        id="category-status"
+        formControlName="status"
+      >
+        <option value="ACTIVE">Ativa</option>
+        <option value="INACTIVE">Inativa</option>
+      </select>
+    </app-form-field>
+  }
+
+  <div class="category-form__actions">
+    <app-button
+      type="button"
+      variant="secondary"
+      [disabled]="submitting()"
+      (pressed)="cancelled.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button
+      type="submit"
+      [loading]="submitting()"
+      [disabled]="submitting()"
+    >
+      {{ mode() === 'create' ? 'Salvar categoria' : 'Salvar alterações' }}
+    </app-button>
+  </div>
+</form>

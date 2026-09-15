@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.category-form__parent {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.category-form__parent span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.category-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .category-form__actions {
+    flex-direction: column-reverse;
+  }
+}

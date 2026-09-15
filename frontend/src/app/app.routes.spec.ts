@@ -7,6 +7,7 @@ import { SessionService } from './core/auth/session.service';
 import { AccountApiService } from './features/accounts/data-access/account-api.service';
 import { AuthService } from './features/auth/services/auth.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
+import { CategoryApiService } from './features/categories/data-access/category-api.service';
 
 describe('Application routes', () => {
   let session: { hasValidSession: ReturnType<typeof vi.fn> };
@@ -27,12 +28,6 @@ describe('Application routes', () => {
           provide: AuthService,
           useValue: {
             logout: vi.fn(),
-          },
-        },
-        {
-          provide: AccountApiService,
-          useValue: {
-            findAll: () => of([]),
           },
         },
         {
@@ -68,7 +63,13 @@ describe('Application routes', () => {
               }),
             ),
           },
-        }
+        },
+        {
+          provide: CategoryApiService,
+          useValue: {
+            findAll: vi.fn().mockReturnValue(of([])),
+          },
+        },
       ],
     });
   });

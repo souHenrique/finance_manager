@@ -1,0 +1,24 @@
+.category-list__tabs {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.category-list__form {
+  margin-bottom: var(--space-6);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+@media (max-width: 640px) {
+  .category-list__tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .category-list__form {
+    padding: var(--space-4);
+  }
+}

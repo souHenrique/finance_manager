@@ -1,6 +1,87 @@
 <section class="page" aria-labelledby="categories-title">
   <header class="page__header">
-    <h1 id="categories-title">Categorias</h1>
-    <p>Organize suas receitas e despesas por categoria.</p>
+    <div>
+      <h1 id="categories-title">Categorias</h1>
+      <p>Organize receitas e despesas por categoria.</p>
+    </div>
+
+    <app-button (pressed)="startCreateRoot()">
+      Nova categoria
+    </app-button>
   </header>
+
+  <div
+    class="category-list__tabs"
+    role="tablist"
+    aria-label="Tipo de categoria"
+  >
+    <app-button
+      role="tab"
+      [attr.aria-selected]="activeType() === 'EXPENSE'"
+      [variant]="activeType() === 'EXPENSE' ? 'primary' : 'secondary'"
+      (pressed)="selectType('EXPENSE')"
+    >
+      Despesas
+    </app-button>
+
+    <app-button
+      role="tab"
+      [attr.aria-selected]="activeType() === 'INCOME'"
+      [variant]="activeType() === 'INCOME' ? 'primary' : 'secondary'"
+      (pressed)="selectType('INCOME')"
+    >
+      Receitas
+    </app-button>
+  </div>
+
+  @if (formMode(); as mode) {
+    <section
+      class="category-list__form"
+      aria-label="{{ mode === 'create' ? 'Nova categoria' : 'Editar categoria' }}"
+    >
+      <app-category-form
+        [mode]="mode"
+        [category]="selectedCategory()"
+        [parentCategory]="selectedParent()"
+        [defaultType]="activeType()"
+        [submitting]="isSubmitting()"
+        (created)="createCategory($event)"
+        (updated)="updateCategory($event)"
+        (cancelled)="closeForm()"
+      />
+    </section>
+  }
+
+  @if (state() === 'loading') {
+    <div aria-label="Carregando categorias">
+      <app-skeleton />
+      <app-skeleton />
+      <app-skeleton />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar as categorias"
+      message="Tente novamente em instantes."
+      (retry)="loadCategories()"
+    />
+  } @else if (activeTree().length === 0) {
+    <app-empty-state
+      [title]="
+        activeType() === 'EXPENSE'
+          ? 'Nenhuma categoria de despesa'
+          : 'Nenhuma categoria de receita'
+      "
+      description="Crie uma categoria principal para começar a organizar seus lançamentos."
+    >
+      <app-button empty-state-actions (pressed)="startCreateRoot()">
+        Nova categoria
+      </app-button>
+    </app-empty-state>
+  } @else {
+    <app-category-tree
+      [nodes]="activeTree()"
+      (createChild)="startCreateChild($event)"
+      (edit)="startEdit($event)"
+    />
+  }
 </section>

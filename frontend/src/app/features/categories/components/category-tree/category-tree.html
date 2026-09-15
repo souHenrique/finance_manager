@@ -1,0 +1,45 @@
+<ul class="category-tree" role="tree">
+  @for (node of nodes(); track node.id) {
+    <li
+      role="treeitem"
+      [attr.aria-expanded]="node.children.length > 0"
+      aria-selected="false"
+    >
+      <div class="category-tree__item">
+        <div>
+          <strong>{{ node.name }}</strong>
+
+          @if (node.status === 'INACTIVE') {
+            <app-badge label="Inativa" tone="neutral" />
+          }
+        </div>
+
+        <div class="category-tree__actions">
+          <app-button
+            variant="ghost"
+            size="sm"
+            (pressed)="createChild.emit(node)"
+          >
+            Adicionar subcategoria
+          </app-button>
+
+          <app-button
+            variant="ghost"
+            size="sm"
+            (pressed)="edit.emit(node)"
+          >
+            Editar
+          </app-button>
+        </div>
+      </div>
+
+      @if (node.children.length > 0) {
+        <app-category-tree
+          [nodes]="node.children"
+          (createChild)="createChild.emit($event)"
+          (edit)="edit.emit($event)"
+        />
+      }
+    </li>
+  }
+</ul>
