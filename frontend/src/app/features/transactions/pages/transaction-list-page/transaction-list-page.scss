@@ -1,3 +1,10 @@
+.transaction-list__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
 .transaction-list__toolbar {
   display: flex;
   align-items: center;
@@ -53,8 +60,13 @@ tbody tr:last-child td {
 }
 
 @media (max-width: 640px) {
+  .transaction-list__header-actions,
   .transaction-list__toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .transaction-list__header-actions app-button {
+    width: 100%;
   }
 }

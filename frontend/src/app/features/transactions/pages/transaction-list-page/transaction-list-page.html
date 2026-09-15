@@ -5,7 +5,18 @@
       <p>Consulte e gerencie suas movimentações financeiras.</p>
     </div>
 
-    <app-button routerLink="/transactions/new"> Nova transação </app-button>
+    <div class="transaction-list__header-actions">
+      <app-button
+        variant="secondary"
+        [loading]="isExporting()"
+        [disabled]="isExporting()"
+        (pressed)="exportCsv()"
+      >
+        Exportar CSV
+      </app-button>
+
+      <app-button routerLink="/transactions/new"> Nova transação </app-button>
+    </div>
   </header>
 
   <app-transaction-filter-form

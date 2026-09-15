@@ -13,6 +13,7 @@ import { CategoryApiService } from './features/categories/data-access/category-a
 import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
+import { TransactionExportApiService } from './features/transactions/data-access/transaction-export-api.service';
 import { TransferApiService } from './features/transfers/data-access/transfer-api.service';
 
 describe('Application routes', () => {
@@ -132,6 +133,10 @@ describe('Application routes', () => {
               }),
             ),
           },
+        },
+        {
+          provide: TransactionExportApiService,
+          useValue: { download: vi.fn() },
         },
         {
           provide: TransferApiService,

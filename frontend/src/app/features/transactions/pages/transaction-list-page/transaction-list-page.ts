@@ -1,6 +1,8 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { catchError, forkJoin, of } from 'rxjs';
+import { catchError, finalize, forkJoin, of } from 'rxjs';
+
+import { RouterLink } from '@angular/router';
 
 import { AccountApiService } from '../../../accounts/data-access/account-api.service';
 import { Account } from '../../../accounts/models/account.models';
@@ -8,21 +10,18 @@ import { CategoryApiService } from '../../../categories/data-access/category-api
 import { Category } from '../../../categories/models/category.models';
 import { CreditCardApiService } from '../../../credit-cards/data-access/credit-card-api.service';
 import { CreditCard } from '../../../credit-cards/models/credit-card.models';
-import { PageResponse } from '../../../../shared/models/pagination';
-import { TransactionApiService } from '../../data-access/transaction-api.service';
-
-import { Transaction, TransactionFilters, TransactionQuery } from '../../models/transaction.models';
-
-import { RouterLink } from '@angular/router';
-
 import { Badge } from '../../../../shared/ui/badge/badge';
 import { Button } from '../../../../shared/ui/button/button';
 import { EmptyState } from '../../../../shared/ui/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/ui/error-state/error-state';
+import { SelectDirective } from '../../../../shared/ui/form-control/select';
+import { PageResponse } from '../../../../shared/models/pagination';
 import { Pagination } from '../../../../shared/ui/pagination/pagination';
 import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
-import { SelectDirective } from '../../../../shared/ui/form-control/select';
 import { TransactionFilterFormComponent } from '../../components/transaction-filter-form/transaction-filter-form';
+import { TransactionApiService } from '../../data-access/transaction-api.service';
+import { TransactionExportApiService } from '../../data-access/transaction-export-api.service';
+import { Transaction, TransactionFilters, TransactionQuery } from '../../models/transaction.models';
 
 const TRANSACTION_SORT_OPTIONS = [
   {
@@ -77,6 +76,7 @@ export class TransactionListPage implements OnInit {
   private readonly creditCardApi = inject(CreditCardApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly transactionApi = inject(TransactionApiService);
+  private readonly transactionExportApi = inject(TransactionExportApiService);
 
   readonly accounts = signal<Account[]>([]);
   readonly categories = signal<Category[]>([]);
@@ -89,6 +89,7 @@ export class TransactionListPage implements OnInit {
 
   readonly result = signal<PageResponse<Transaction> | null>(null);
   readonly listState = signal<TransactionListState>('loading');
+  readonly isExporting = signal(false);
 
   readonly sortOptions = TRANSACTION_SORT_OPTIONS;
 
@@ -106,10 +107,6 @@ export class TransactionListPage implements OnInit {
   readonly creditCardNameById = computed(
     () => new Map(this.creditCards().map((card) => [card.id, card.name])),
   );
-
-  accountName(id: string | null): string {
-    return id ? (this.accountNameById().get(id) ?? 'Conta removida') : '—';
-  }
 
   ngOnInit(): void {
     this.loadFilterOptions();
@@ -150,24 +147,6 @@ export class TransactionListPage implements OnInit {
         },
       });
   }
-  categoryLabel(category: Category): string {
-    if (!category.parentCategoryId) {
-      return category.name;
-    }
-
-    const parent = this.categories().find((item) => item.id === category.parentCategoryId);
-
-    return parent ? `${parent.name} — ${category.name}` : category.name;
-  }
-
-  private buildQuery(): TransactionQuery {
-    return {
-      ...this.filters(),
-      page: this.page(),
-      size: this.pageSize(),
-      sort: this.sort(),
-    };
-  }
 
   loadTransactions(): void {
     this.listState.set('loading');
@@ -183,6 +162,27 @@ export class TransactionListPage implements OnInit {
         error: () => {
           this.listState.set('error');
         },
+      });
+  }
+
+  exportCsv(): void {
+    if (this.isExporting()) {
+      return;
+    }
+
+    this.isExporting.set(true);
+
+    this.transactionExportApi
+      .download(this.filters())
+      .pipe(
+        finalize(() => this.isExporting.set(false)),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: (csv) => {
+          this.downloadCsv(csv);
+        },
+        error: () => undefined,
       });
   }
 
@@ -217,6 +217,20 @@ export class TransactionListPage implements OnInit {
     this.sort.set(sort);
     this.page.set(0);
     this.loadTransactions();
+  }
+
+  accountName(id: string | null): string {
+    return id ? (this.accountNameById().get(id) ?? 'Conta removida') : '—';
+  }
+
+  categoryLabel(category: Category): string {
+    if (!category.parentCategoryId) {
+      return category.name;
+    }
+
+    const parent = this.categories().find((item) => item.id === category.parentCategoryId);
+
+    return parent ? `${parent.name} — ${category.name}` : category.name;
   }
 
   categoryName(id: string | null): string {
@@ -260,5 +274,29 @@ export class TransactionListPage implements OnInit {
     }
 
     return 'neutral';
+  }
+
+  private buildQuery(): TransactionQuery {
+    return {
+      ...this.filters(),
+      page: this.page(),
+      size: this.pageSize(),
+      sort: this.sort(),
+    };
+  }
+
+  private downloadCsv(csv: Blob): void {
+    const objectUrl = URL.createObjectURL(csv);
+    const link = document.createElement('a');
+
+    link.href = objectUrl;
+    link.download = 'transactions.csv';
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    URL.revokeObjectURL(objectUrl);
   }
 }

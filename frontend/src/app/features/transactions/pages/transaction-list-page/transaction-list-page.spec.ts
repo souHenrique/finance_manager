@@ -10,6 +10,7 @@ import { CreditCardApiService } from '../../../credit-cards/data-access/credit-c
 import { CreditCard } from '../../../credit-cards/models/credit-card.models';
 import { PageResponse } from '../../../../shared/models/pagination';
 import { TransactionApiService } from '../../data-access/transaction-api.service';
+import { TransactionExportApiService } from '../../data-access/transaction-export-api.service';
 import { Transaction } from '../../models/transaction.models';
 import { TransactionListPage } from './transaction-list-page';
 
@@ -17,6 +18,7 @@ describe('TransactionListPage', () => {
   let fixture: ComponentFixture<TransactionListPage>;
   let component: TransactionListPage;
   let transactionApi: { findAll: ReturnType<typeof vi.fn> };
+  let transactionExportApi: { download: ReturnType<typeof vi.fn> };
 
   const account: Account = {
     id: '5a8c2f54-8366-46c9-9b5d-08d55f7c2a7b',
@@ -85,8 +87,17 @@ describe('TransactionListPage', () => {
     last: true,
   };
 
+  const csv = new Blob(['id,description\n1,Jesse Pinkman'], {
+    type: 'text/csv;charset=UTF-8',
+  });
+
   beforeEach(async () => {
     transactionApi = { findAll: vi.fn().mockReturnValue(of(result)) };
+    transactionExportApi = { download: vi.fn().mockReturnValue(of(csv)) };
+
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:transactions-csv');
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 
     await TestBed.configureTestingModule({
       imports: [TransactionListPage],
@@ -95,6 +106,10 @@ describe('TransactionListPage', () => {
         {
           provide: TransactionApiService,
           useValue: transactionApi,
+        },
+        {
+          provide: TransactionExportApiService,
+          useValue: transactionExportApi,
         },
         {
           provide: AccountApiService,
@@ -110,6 +125,10 @@ describe('TransactionListPage', () => {
         },
       ],
     }).compileComponents();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   function createPage(): void {
@@ -246,5 +265,72 @@ describe('TransactionListPage', () => {
     expect(content).toContain('Concluída');
     expect(content).toContain(category.name);
     expect(content).toContain(account.name);
+  });
+
+  it('should export the exact active filters without pagination', () => {
+    createPage();
+    const filters = {
+      startDate: '2026-09-01',
+      endDate: '2026-09-30',
+      categoryId: category.id,
+      accountId: account.id,
+      type: 'EXPENSE' as const,
+      status: 'COMPLETED' as const,
+      minAmount: 50,
+      maxAmount: 500,
+      description: 'Jesse',
+    };
+    component.filters.set(filters);
+
+    component.exportCsv();
+
+    expect(transactionExportApi.download).toHaveBeenCalledWith(filters);
+    expect(transactionExportApi.download).not.toHaveBeenCalledWith(
+      expect.objectContaining({ page: expect.anything() }),
+    );
+  });
+
+  it('should download the returned blob as transactions.csv', () => {
+    const appendChild = vi.spyOn(document.body, 'appendChild');
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click');
+    createPage();
+
+    component.exportCsv();
+
+    const link = appendChild.mock.calls.find(
+      ([element]) => element instanceof HTMLAnchorElement,
+    )?.[0] as HTMLAnchorElement;
+
+    expect(URL.createObjectURL).toHaveBeenCalledWith(csv);
+    expect(link.download).toBe('transactions.csv');
+    expect(click).toHaveBeenCalledOnce();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:transactions-csv');
+    expect(component.isExporting()).toBe(false);
+  });
+
+  it('should prevent duplicate exports while the first download is pending', () => {
+    const response = new Subject<Blob>();
+    transactionExportApi.download.mockReturnValue(response.asObservable());
+    createPage();
+
+    component.exportCsv();
+    component.exportCsv();
+
+    expect(transactionExportApi.download).toHaveBeenCalledTimes(1);
+    expect(component.isExporting()).toBe(true);
+
+    response.next(csv);
+    response.complete();
+
+    expect(component.isExporting()).toBe(false);
+  });
+
+  it('should re-enable export after an error', () => {
+    transactionExportApi.download.mockReturnValue(throwError(() => new Error('network')));
+    createPage();
+
+    component.exportCsv();
+
+    expect(component.isExporting()).toBe(false);
   });
 });
