@@ -2,14 +2,18 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { of } from 'rxjs';
+
 import { routes } from './app.routes';
 import { SessionService } from './core/auth/session.service';
+import { AppDialogService } from './core/feedback/dialog/dialog.service';
+import { ToastService } from './core/feedback/toast/toast.service';
 import { AccountApiService } from './features/accounts/data-access/account-api.service';
 import { AuthService } from './features/auth/services/auth.service';
-import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { CategoryApiService } from './features/categories/data-access/category-api.service';
 import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
+import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
+import { TransferApiService } from './features/transfers/data-access/transfer-api.service';
 
 describe('Application routes', () => {
   let session: { hasValidSession: ReturnType<typeof vi.fn> };
@@ -30,6 +34,18 @@ describe('Application routes', () => {
           provide: AuthService,
           useValue: {
             logout: vi.fn(),
+          },
+        },
+        {
+          provide: AppDialogService,
+          useValue: {
+            confirm: vi.fn().mockReturnValue(of(false)),
+          },
+        },
+        {
+          provide: ToastService,
+          useValue: {
+            show: vi.fn(),
           },
         },
         {
@@ -84,10 +100,12 @@ describe('Application routes', () => {
             findAll: vi.fn().mockReturnValue(
               of({
                 content: [],
+                page: 0,
+                size: 20,
                 totalElements: 0,
                 totalPages: 0,
-                size: 20,
-                number: 0,
+                first: true,
+                last: true,
               }),
             ),
             findById: vi.fn().mockReturnValue(
@@ -113,6 +131,12 @@ describe('Application routes', () => {
                 updatedAt: '2026-09-15T10:00:00Z',
               }),
             ),
+          },
+        },
+        {
+          provide: TransferApiService,
+          useValue: {
+            create: vi.fn(),
           },
         },
       ],

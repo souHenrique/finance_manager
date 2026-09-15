@@ -5,9 +5,7 @@
       <p>Consulte e gerencie suas movimentações financeiras.</p>
     </div>
 
-    <app-button routerLink="/transactions/new">
-      Nova transação
-    </app-button>
+    <app-button routerLink="/transactions/new"> Nova transação </app-button>
   </header>
 
   <app-transaction-filter-form
@@ -55,33 +53,27 @@
         title="Nenhuma transação encontrada"
         description="Altere os filtros ou crie uma nova transação."
       >
-        <app-button empty-state-actions routerLink="/transactions/new">
-          Nova transação
-        </app-button>
+        <app-button empty-state-actions routerLink="/transactions/new"> Nova transação </app-button>
       </app-empty-state>
     } @else {
       <div class="transaction-list__table-wrapper">
         <table>
           <thead>
-          <tr>
-            <th scope="col">Competência</th>
-            <th scope="col">Descrição</th>
-            <th scope="col">Tipo</th>
-            <th scope="col">Status</th>
-            <th scope="col">Categoria</th>
-            <th scope="col">Conta/Cartão</th>
-            <th scope="col">Valor</th>
-            <th scope="col">Ações</th>
-          </tr>
+            <tr>
+              <th scope="col">Competência</th>
+              <th scope="col">Descrição</th>
+              <th scope="col">Tipo</th>
+              <th scope="col">Status</th>
+              <th scope="col">Categoria</th>
+              <th scope="col">Conta/Cartão</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Ações</th>
+            </tr>
           </thead>
 
           <tbody>
             @for (transaction of page.content; track transaction.id) {
-              <tr
-                [class.transaction-list__row--cancelled]="
-                  transaction.status === 'CANCELLED'
-                "
-              >
+              <tr [class.transaction-list__row--cancelled]="transaction.status === 'CANCELLED'">
                 <td>{{ transaction.competenceDate }}</td>
 
                 <td>
@@ -112,10 +104,7 @@
                     {{ creditCardName(transaction.creditCardId) }}
                   } @else {
                     {{
-                      accountName(
-                        transaction.sourceAccountId ??
-                        transaction.destinationAccountId
-                      )
+                      accountName(transaction.sourceAccountId ?? transaction.destinationAccountId)
                     }}
                   }
                 </td>
@@ -123,9 +112,7 @@
                 <td>{{ transaction.amount }}</td>
 
                 <td>
-                  <a [routerLink]="['/transactions', transaction.id]">
-                    Ver detalhes
-                  </a>
+                  <a [routerLink]="['/transactions', transaction.id]"> Ver detalhes </a>
                 </td>
               </tr>
             }

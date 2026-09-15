@@ -1,0 +1,38 @@
+.transfer-create-page__loading {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.transfer-create-page__fields {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.transfer-create-page__error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-danger);
+  font-size: var(--font-size-sm);
+}
+
+.transfer-create-page__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .transfer-create-page__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-create-page__actions {
+    flex-direction: column-reverse;
+  }
+}
