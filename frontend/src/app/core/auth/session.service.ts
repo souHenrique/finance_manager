@@ -12,9 +12,7 @@ const SESSION_STORAGE_KEY = 'finance-manager.session';
   providedIn: 'root',
 })
 export class SessionService {
-  private readonly sessionState = signal<StoredSession | null>(
-    this.restoreSession(),
-  );
+  private readonly sessionState = signal<StoredSession | null>(this.restoreSession());
 
   private expirationTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -26,11 +24,7 @@ export class SessionService {
     this.scheduleExpiration();
   }
 
-  start(
-    token: string,
-    tokenType: string,
-    expiresInSeconds: number,
-  ): void {
+  start(token: string, tokenType: string, expiresInSeconds: number): void {
     const normalizedToken = token.trim();
     const normalizedTokenType = tokenType.trim();
 
@@ -51,10 +45,7 @@ export class SessionService {
     };
 
     this.sessionState.set(session);
-    sessionStorage.setItem(
-      SESSION_STORAGE_KEY,
-      JSON.stringify(session),
-    );
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
 
     this.scheduleExpiration();
   }
@@ -89,9 +80,7 @@ export class SessionService {
   }
 
   private restoreSession(): StoredSession | null {
-    const serializedSession = sessionStorage.getItem(
-      SESSION_STORAGE_KEY,
-    );
+    const serializedSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
 
     if (!serializedSession) {
       return null;
@@ -100,10 +89,7 @@ export class SessionService {
     try {
       const session: unknown = JSON.parse(serializedSession);
 
-      if (
-        !this.isStoredSession(session) ||
-        session.expiresAt <= Date.now()
-      ) {
+      if (!this.isStoredSession(session) || session.expiresAt <= Date.now()) {
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
         return null;
       }

@@ -1,9 +1,5 @@
 import { inject } from '@angular/core';
-import {
-  CanActivateChildFn,
-  CanActivateFn,
-  Router,
-} from '@angular/router';
+import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
 
 import { SessionService } from '../auth/session.service';
 
@@ -26,9 +22,6 @@ export const authGuard: CanActivateFn = (_route, state) => {
   return checkAuthentication(state.url);
 };
 
-export const authChildGuard: CanActivateChildFn = (
-  _childRoute,
-  state,
-) => {
+export const authChildGuard: CanActivateChildFn = (_childRoute, state) => {
   return checkAuthentication(state.url);
 };

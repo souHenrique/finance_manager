@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -29,14 +23,10 @@ import { Skeleton } from '../../../shared/ui/skeleton/skeleton';
 import { ProfileApiService } from '../data-access/profile-api.service';
 import { UpdateProfileRequest } from '../models/profile.models';
 
-const nonBlankValidator: ValidatorFn = (
-  control: AbstractControl,
-): ValidationErrors | null => {
+const nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
 
-  return typeof value === 'string' && value.trim().length > 0
-    ? null
-    : { required: true };
+  return typeof value === 'string' && value.trim().length > 0 ? null : { required: true };
 };
 
 type ProfileField = 'name' | 'email';
@@ -65,28 +55,17 @@ export class ProfilePage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly submitted = signal(false);
-  protected readonly loadError = signal<string | undefined>(
-    undefined,
-  );
-  protected readonly submissionError = signal<string | undefined>(
-    undefined,
-  );
+  protected readonly loadError = signal<string | undefined>(undefined);
+  protected readonly submissionError = signal<string | undefined>(undefined);
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
       nonNullable: true,
-      validators: [
-        nonBlankValidator,
-        Validators.maxLength(120),
-      ],
+      validators: [nonBlankValidator, Validators.maxLength(120)],
     }),
     email: new FormControl('', {
       nonNullable: true,
-      validators: [
-        nonBlankValidator,
-        Validators.email,
-        Validators.maxLength(320),
-      ],
+      validators: [nonBlankValidator, Validators.email, Validators.maxLength(320)],
     }),
   });
 
@@ -161,9 +140,7 @@ export class ProfilePage implements OnInit {
       });
   }
 
-  protected fieldError(
-    fieldName: ProfileField,
-  ): string | undefined {
+  protected fieldError(fieldName: ProfileField): string | undefined {
     const control = this.form.controls[fieldName];
 
     if (!this.submitted() && !control.touched) {
@@ -174,32 +151,21 @@ export class ProfilePage implements OnInit {
       return 'Campo obrigatório.';
     }
 
-    if (
-      fieldName === 'name' &&
-      control.hasError('maxlength')
-    ) {
+    if (fieldName === 'name' && control.hasError('maxlength')) {
       return 'Nome deve possuir no máximo 120 caracteres.';
     }
 
-    if (
-      fieldName === 'email' &&
-      control.hasError('email')
-    ) {
+    if (fieldName === 'email' && control.hasError('email')) {
       return 'Informe um e-mail válido.';
     }
 
-    if (
-      fieldName === 'email' &&
-      control.hasError('maxlength')
-    ) {
+    if (fieldName === 'email' && control.hasError('maxlength')) {
       return 'E-mail deve possuir no máximo 320 caracteres.';
     }
 
     const serverError = control.getError('server');
 
-    return typeof serverError === 'string'
-      ? serverError
-      : undefined;
+    return typeof serverError === 'string' ? serverError : undefined;
   }
 
   private setProfile(profile: User): void {
@@ -235,9 +201,7 @@ export class ProfilePage implements OnInit {
       request.email = email;
     }
 
-    return Object.keys(request).length > 0
-      ? request
-      : null;
+    return Object.keys(request).length > 0 ? request : null;
   }
 
   private handleUpdateError(error: unknown): void {

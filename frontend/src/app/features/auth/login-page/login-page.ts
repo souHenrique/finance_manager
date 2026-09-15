@@ -1,20 +1,6 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import {
-  ActivatedRoute,
-  Router,
-  RouterLink,
-} from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { ApiRequestError } from '../../../core/http/api-request-error';
@@ -26,14 +12,7 @@ import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-login-page',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    Alert,
-    Button,
-    FormField,
-    InputDirective,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, Alert, Button, FormField, InputDirective],
   templateUrl: './login-page.html',
   styleUrl: './login-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,17 +24,12 @@ export class LoginPage {
 
   protected readonly loading = signal(false);
   protected readonly submitted = signal(false);
-  protected readonly submissionError = signal<string | undefined>(
-    undefined,
-  );
+  protected readonly submissionError = signal<string | undefined>(undefined);
 
   protected readonly form = new FormGroup({
     email: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.email,
-      ],
+      validators: [Validators.required, Validators.email],
     }),
     password: new FormControl('', {
       nonNullable: true,
@@ -91,9 +65,7 @@ export class LoginPage {
       });
   }
 
-  protected fieldError(
-    fieldName: 'email' | 'password',
-  ): string | undefined {
+  protected fieldError(fieldName: 'email' | 'password'): string | undefined {
     const control = this.form.controls[fieldName];
 
     if (!this.submitted() && !control.touched) {
@@ -104,28 +76,19 @@ export class LoginPage {
       return 'Campo obrigatório.';
     }
 
-    if (
-      fieldName === 'email' &&
-      control.hasError('email')
-    ) {
+    if (fieldName === 'email' && control.hasError('email')) {
       return 'Informe um e-mail válido.';
     }
 
     const serverError = control.getError('server');
 
-    return typeof serverError === 'string'
-      ? serverError
-      : undefined;
+    return typeof serverError === 'string' ? serverError : undefined;
   }
 
   private getReturnUrl(): string {
-    const returnUrl =
-      this.route.snapshot.queryParamMap.get('returnUrl');
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
-    if (
-      returnUrl?.startsWith('/') &&
-      !returnUrl.startsWith('//')
-    ) {
+    if (returnUrl?.startsWith('/') && !returnUrl.startsWith('//')) {
       return returnUrl;
     }
 
@@ -134,9 +97,7 @@ export class LoginPage {
 
   private handleError(error: unknown): void {
     if (!(error instanceof ApiRequestError)) {
-      this.submissionError.set(
-        'Não foi possível entrar. Tente novamente.',
-      );
+      this.submissionError.set('Não foi possível entrar. Tente novamente.');
       return;
     }
 

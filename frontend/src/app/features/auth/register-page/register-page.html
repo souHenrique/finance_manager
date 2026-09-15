@@ -1,14 +1,9 @@
 <main class="auth-page">
-  <section
-    class="auth-page__card"
-    aria-labelledby="register-title"
-  >
+  <section class="auth-page__card" aria-labelledby="register-title">
     <header class="auth-page__header">
       <h1 id="register-title">Criar conta</h1>
 
-      <p>
-        Cadastre-se para começar a organizar suas finanças.
-      </p>
+      <p>Cadastre-se para começar a organizar suas finanças.</p>
     </header>
 
     @if (submissionError()) {
@@ -19,11 +14,7 @@
       />
     }
 
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      novalidate
-    >
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <app-form-field
         label="Nome"
         controlId="register-name"
@@ -36,14 +27,8 @@
           type="text"
           formControlName="name"
           autocomplete="name"
-          [attr.aria-invalid]="
-            fieldError('name') ? 'true' : null
-          "
-          [attr.aria-describedby]="
-            fieldError('name')
-              ? 'register-name-error'
-              : null
-          "
+          [attr.aria-invalid]="fieldError('name') ? 'true' : null"
+          [attr.aria-describedby]="fieldError('name') ? 'register-name-error' : null"
         />
       </app-form-field>
 
@@ -60,14 +45,8 @@
           formControlName="email"
           autocomplete="email"
           inputmode="email"
-          [attr.aria-invalid]="
-            fieldError('email') ? 'true' : null
-          "
-          [attr.aria-describedby]="
-            fieldError('email')
-              ? 'register-email-error'
-              : null
-          "
+          [attr.aria-invalid]="fieldError('email') ? 'true' : null"
+          [attr.aria-describedby]="fieldError('email') ? 'register-email-error' : null"
         />
       </app-form-field>
 
@@ -83,14 +62,8 @@
           type="password"
           formControlName="password"
           autocomplete="new-password"
-          [attr.aria-invalid]="
-            fieldError('password') ? 'true' : null
-          "
-          [attr.aria-describedby]="
-            fieldError('password')
-              ? 'register-password-error'
-              : null
-          "
+          [attr.aria-invalid]="fieldError('password') ? 'true' : null"
+          [attr.aria-describedby]="fieldError('password') ? 'register-password-error' : null"
         />
       </app-form-field>
 
@@ -106,22 +79,12 @@
           type="password"
           formControlName="confirmPassword"
           autocomplete="new-password"
-          [attr.aria-invalid]="
-            confirmationError() ? 'true' : null
-          "
-          [attr.aria-describedby]="
-            confirmationError()
-              ? 'register-confirm-password-error'
-              : null
-          "
+          [attr.aria-invalid]="confirmationError() ? 'true' : null"
+          [attr.aria-describedby]="confirmationError() ? 'register-confirm-password-error' : null"
         />
       </app-form-field>
 
-      <app-button
-        type="submit"
-        [loading]="loading()"
-        [disabled]="loading()"
-      >
+      <app-button type="submit" [loading]="loading()" [disabled]="loading()">
         Criar conta
       </app-button>
     </form>

@@ -17,14 +17,7 @@ import { DecimalPipe } from '@angular/common';
 
 @Component({
   selector: 'app-account-detail-page',
-  imports: [
-    DecimalPipe,
-    Badge,
-    Button,
-    Card,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [DecimalPipe, Badge, Button, Card, ErrorState, Skeleton],
   templateUrl: './account-detail-page.html',
   styleUrl: './account-detail-page.scss',
 })
@@ -83,8 +76,7 @@ export class AccountDetailPage implements OnInit {
       return;
     }
 
-    const targetStatus: AccountStatus =
-      account.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const targetStatus: AccountStatus = account.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
 
     const isDeactivation = targetStatus === 'INACTIVE';
 
@@ -125,9 +117,7 @@ export class AccountDetailPage implements OnInit {
   }
 
   accountTypeLabel(type: AccountType): string {
-    return (
-      ACCOUNT_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type
-    );
+    return ACCOUNT_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
   }
 
   statusLabel(status: AccountStatus): string {

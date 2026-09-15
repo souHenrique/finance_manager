@@ -19,24 +19,12 @@
       (retry)="loadProfile()"
     />
   } @else {
-    <app-card
-      title="Informações pessoais"
-      subtitle="Mantenha seus dados atualizados."
-    >
+    <app-card title="Informações pessoais" subtitle="Mantenha seus dados atualizados.">
       @if (submissionError()) {
-        <app-alert
-          tone="danger"
-          title="Não foi possível salvar"
-          [message]="submissionError()!"
-        />
+        <app-alert tone="danger" title="Não foi possível salvar" [message]="submissionError()!" />
       }
 
-      <form
-        class="profile-form"
-        [formGroup]="form"
-        (ngSubmit)="submit()"
-        novalidate
-      >
+      <form class="profile-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
         <app-form-field
           label="Nome"
           controlId="profile-name"
@@ -49,14 +37,8 @@
             type="text"
             formControlName="name"
             autocomplete="name"
-            [attr.aria-invalid]="
-              fieldError('name') ? 'true' : null
-            "
-            [attr.aria-describedby]="
-              fieldError('name')
-                ? 'profile-name-error'
-                : null
-            "
+            [attr.aria-invalid]="fieldError('name') ? 'true' : null"
+            [attr.aria-describedby]="fieldError('name') ? 'profile-name-error' : null"
           />
         </app-form-field>
 
@@ -73,23 +55,13 @@
             formControlName="email"
             autocomplete="email"
             inputmode="email"
-            [attr.aria-invalid]="
-              fieldError('email') ? 'true' : null
-            "
-            [attr.aria-describedby]="
-              fieldError('email')
-                ? 'profile-email-error'
-                : null
-            "
+            [attr.aria-invalid]="fieldError('email') ? 'true' : null"
+            [attr.aria-describedby]="fieldError('email') ? 'profile-email-error' : null"
           />
         </app-form-field>
 
         <div class="profile-form__actions">
-          <app-button
-            type="submit"
-            [loading]="saving()"
-            [disabled]="saving()"
-          >
+          <app-button type="submit" [loading]="saving()" [disabled]="saving()">
             Salvar alterações
           </app-button>
         </div>

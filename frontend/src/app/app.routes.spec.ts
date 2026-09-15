@@ -8,6 +8,8 @@ import { AccountApiService } from './features/accounts/data-access/account-api.s
 import { AuthService } from './features/auth/services/auth.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { CategoryApiService } from './features/categories/data-access/category-api.service';
+import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
+import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
 
 describe('Application routes', () => {
   let session: { hasValidSession: ReturnType<typeof vi.fn> };
@@ -68,6 +70,26 @@ describe('Application routes', () => {
           provide: CategoryApiService,
           useValue: {
             findAll: vi.fn().mockReturnValue(of([])),
+          },
+        },
+        {
+          provide: CreditCardApiService,
+          useValue: {
+            findAll: vi.fn().mockReturnValue(of([])),
+          },
+        },
+        {
+          provide: TransactionApiService,
+          useValue: {
+            findAll: vi.fn().mockReturnValue(
+              of({
+                content: [],
+                totalElements: 0,
+                totalPages: 0,
+                size: 20,
+                number: 0,
+              }),
+            ),
           },
         },
       ],

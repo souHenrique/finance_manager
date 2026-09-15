@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -24,14 +19,10 @@ import { InputDirective } from '../../../shared/ui/form-control/input';
 import { FormField } from '../../../shared/ui/form-field/form-field';
 import { AuthService } from '../services/auth.service';
 
-const nonBlankValidator: ValidatorFn = (
-  control: AbstractControl,
-): ValidationErrors | null => {
+const nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
 
-  return typeof value === 'string' && value.trim().length > 0
-    ? null
-    : { required: true };
+  return typeof value === 'string' && value.trim().length > 0 ? null : { required: true };
 };
 
 const passwordsMatchValidator: ValidatorFn = (
@@ -40,23 +31,14 @@ const passwordsMatchValidator: ValidatorFn = (
   const password = control.get('password')?.value;
   const confirmation = control.get('confirmPassword')?.value;
 
-  return password === confirmation
-    ? null
-    : { passwordMismatch: true };
+  return password === confirmation ? null : { passwordMismatch: true };
 };
 
 type RegisterField = 'name' | 'email' | 'password';
 
 @Component({
   selector: 'app-register-page',
-  imports: [
-    ReactiveFormsModule,
-    RouterLink,
-    Alert,
-    Button,
-    InputDirective,
-    FormField,
-  ],
+  imports: [ReactiveFormsModule, RouterLink, Alert, Button, InputDirective, FormField],
   templateUrl: './register-page.html',
   styleUrl: './register-page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,9 +50,7 @@ export class RegisterPage {
 
   protected readonly loading = signal(false);
   protected readonly submitted = signal(false);
-  protected readonly submissionError = signal<string | undefined>(
-    undefined,
-  );
+  protected readonly submissionError = signal<string | undefined>(undefined);
 
   protected readonly form = new FormGroup(
     {
@@ -80,10 +60,7 @@ export class RegisterPage {
       }),
       email: new FormControl('', {
         nonNullable: true,
-        validators: [
-          nonBlankValidator,
-          Validators.email,
-        ],
+        validators: [nonBlankValidator, Validators.email],
       }),
       password: new FormControl('', {
         nonNullable: true,
@@ -108,11 +85,7 @@ export class RegisterPage {
       return;
     }
 
-    const {
-      name,
-      email,
-      password,
-    } = this.form.getRawValue();
+    const { name, email, password } = this.form.getRawValue();
 
     this.loading.set(true);
 
@@ -143,9 +116,7 @@ export class RegisterPage {
       });
   }
 
-  protected fieldError(
-    fieldName: RegisterField,
-  ): string | undefined {
+  protected fieldError(fieldName: RegisterField): string | undefined {
     const control = this.form.controls[fieldName];
 
     if (!this.submitted() && !control.touched) {
@@ -156,18 +127,13 @@ export class RegisterPage {
       return 'Campo obrigatório.';
     }
 
-    if (
-      fieldName === 'email' &&
-      control.hasError('email')
-    ) {
+    if (fieldName === 'email' && control.hasError('email')) {
       return 'Informe um e-mail válido.';
     }
 
     const serverError = control.getError('server');
 
-    return typeof serverError === 'string'
-      ? serverError
-      : undefined;
+    return typeof serverError === 'string' ? serverError : undefined;
   }
 
   protected confirmationError(): string | undefined {
@@ -190,9 +156,7 @@ export class RegisterPage {
 
   private handleError(error: unknown): void {
     if (!(error instanceof ApiRequestError)) {
-      this.submissionError.set(
-        'Não foi possível criar sua conta. Tente novamente.',
-      );
+      this.submissionError.set('Não foi possível criar sua conta. Tente novamente.');
       return;
     }
 

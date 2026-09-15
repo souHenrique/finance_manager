@@ -8,13 +8,10 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(SessionService);
   const apiBaseUrl = inject(API_BASE_URL);
 
-  const isApiRequest =
-    request.url === apiBaseUrl ||
-    request.url.startsWith(`${apiBaseUrl}/`);
+  const isApiRequest = request.url === apiBaseUrl || request.url.startsWith(`${apiBaseUrl}/`);
 
   const isPublicAuthRequest =
-    request.url === `${apiBaseUrl}/auth/login` ||
-    request.url === `${apiBaseUrl}/auth/register`;
+    request.url === `${apiBaseUrl}/auth/login` || request.url === `${apiBaseUrl}/auth/register`;
 
   const authorization = session.getAuthorizationHeader();
 

@@ -1,11 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 
@@ -29,14 +22,7 @@ type LoadingState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-category-list-page',
-  imports: [
-    Button,
-    CategoryFormComponent,
-    CategoryTreeComponent,
-    EmptyState,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [Button, CategoryFormComponent, CategoryTreeComponent, EmptyState, ErrorState, Skeleton],
   templateUrl: './category-list-page.html',
   styleUrl: './category-list-page.scss',
 })
@@ -54,9 +40,7 @@ export class CategoryListPage implements OnInit {
   readonly selectedParent = signal<Category | null>(null);
   readonly isSubmitting = signal(false);
 
-  readonly activeTree = computed(() =>
-    buildCategoryTree(this.categories(), this.activeType()),
-  );
+  readonly activeTree = computed(() => buildCategoryTree(this.categories(), this.activeType()));
 
   ngOnInit(): void {
     this.loadCategories();

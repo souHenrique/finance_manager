@@ -20,16 +20,8 @@
   </app-form-field>
 
   @if (mode() === 'create') {
-    <app-form-field
-      label="Tipo"
-      controlId="category-type"
-      [required]="true"
-    >
-      <select
-        appSelect
-        id="category-type"
-        formControlName="type"
-      >
+    <app-form-field label="Tipo" controlId="category-type" [required]="true">
+      <select appSelect id="category-type" formControlName="type">
         <option value="EXPENSE">Despesa</option>
         <option value="INCOME">Receita</option>
       </select>
@@ -44,15 +36,8 @@
   }
 
   @if (mode() === 'edit') {
-    <app-form-field
-      label="Status"
-      controlId="category-status"
-    >
-      <select
-        appSelect
-        id="category-status"
-        formControlName="status"
-      >
+    <app-form-field label="Status" controlId="category-status">
+      <select appSelect id="category-status" formControlName="status">
         <option value="ACTIVE">Ativa</option>
         <option value="INACTIVE">Inativa</option>
       </select>
@@ -69,11 +54,7 @@
       Cancelar
     </app-button>
 
-    <app-button
-      type="submit"
-      [loading]="submitting()"
-      [disabled]="submitting()"
-    >
+    <app-button type="submit" [loading]="submitting()" [disabled]="submitting()">
       {{ mode() === 'create' ? 'Salvar categoria' : 'Salvar alterações' }}
     </app-button>
   </div>

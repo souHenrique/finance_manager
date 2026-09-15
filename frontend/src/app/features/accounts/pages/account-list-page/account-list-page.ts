@@ -14,15 +14,7 @@ type LoadingState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-account-list-page',
-  imports: [
-    RouterLink,
-    Card,
-    Badge,
-    Button,
-    EmptyState,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [RouterLink, Card, Badge, Button, EmptyState, ErrorState, Skeleton],
   styleUrl: './account-list-page.scss',
   templateUrl: './account-list-page.html',
 })

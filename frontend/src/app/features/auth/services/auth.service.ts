@@ -5,11 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { SessionService } from '../../../core/auth/session.service';
 import { User } from '../../../shared/models/user.models';
 import { AuthApiService } from '../data-access/auth-api.service';
-import {
-  AuthResponse,
-  LoginRequest,
-  RegisterRequest,
-} from '../models/auth.models';
+import { AuthResponse, LoginRequest, RegisterRequest } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root',
@@ -22,11 +18,7 @@ export class AuthService {
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.authApi.login(request).pipe(
       tap((response) => {
-        this.session.start(
-          response.token,
-          response.tokenType,
-          response.expiresIn,
-        );
+        this.session.start(response.token, response.tokenType, response.expiresIn);
       }),
     );
   }

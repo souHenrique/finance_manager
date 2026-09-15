@@ -6,18 +6,10 @@
     </header>
 
     @if (submissionError()) {
-      <app-alert
-        tone="danger"
-        title="Não foi possível entrar"
-        [message]="submissionError()!"
-      />
+      <app-alert tone="danger" title="Não foi possível entrar" [message]="submissionError()!" />
     }
 
-    <form
-      [formGroup]="form"
-      (ngSubmit)="submit()"
-      novalidate
-    >
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <app-form-field
         label="E-mail"
         controlId="login-email"
@@ -49,13 +41,7 @@
         />
       </app-form-field>
 
-      <app-button
-        type="submit"
-        [loading]="loading()"
-        [disabled]="loading()"
-      >
-        Entrar
-      </app-button>
+      <app-button type="submit" [loading]="loading()" [disabled]="loading()"> Entrar </app-button>
     </form>
 
     <p>

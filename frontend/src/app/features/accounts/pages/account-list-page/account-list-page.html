@@ -5,9 +5,7 @@
       <p>Consulte e gerencie suas contas financeiras.</p>
     </div>
 
-    <app-button routerLink="/accounts/new">
-      Nova conta
-    </app-button>
+    <app-button routerLink="/accounts/new"> Nova conta </app-button>
   </header>
 
   @if (state() === 'loading') {
@@ -27,9 +25,7 @@
       title="Nenhuma conta cadastrada"
       description="Cadastre sua primeira conta para acompanhar seus saldos."
     >
-      <app-button empty-state-actions (pressed)="goToCreate()">
-        Nova conta
-      </app-button>
+      <app-button empty-state-actions (pressed)="goToCreate()"> Nova conta </app-button>
     </app-empty-state>
   } @else {
     <div class="account-list">

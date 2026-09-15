@@ -18,13 +18,7 @@ export type CategoryFormMode = 'create' | 'edit';
 
 @Component({
   selector: 'app-category-form',
-  imports: [
-    ReactiveFormsModule,
-    Button,
-    FormField,
-    InputDirective,
-    SelectDirective,
-  ],
+  imports: [ReactiveFormsModule, Button, FormField, InputDirective, SelectDirective],
   templateUrl: './category-form.html',
   styleUrl: './category-form.scss',
 })

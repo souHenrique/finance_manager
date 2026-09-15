@@ -1,10 +1,6 @@
 <ul class="category-tree" role="tree">
   @for (node of nodes(); track node.id) {
-    <li
-      role="treeitem"
-      [attr.aria-expanded]="node.children.length > 0"
-      aria-selected="false"
-    >
+    <li role="treeitem" [attr.aria-expanded]="node.children.length > 0" aria-selected="false">
       <div class="category-tree__item">
         <div>
           <strong>{{ node.name }}</strong>
@@ -15,21 +11,11 @@
         </div>
 
         <div class="category-tree__actions">
-          <app-button
-            variant="ghost"
-            size="sm"
-            (pressed)="createChild.emit(node)"
-          >
+          <app-button variant="ghost" size="sm" (pressed)="createChild.emit(node)">
             Adicionar subcategoria
           </app-button>
 
-          <app-button
-            variant="ghost"
-            size="sm"
-            (pressed)="edit.emit(node)"
-          >
-            Editar
-          </app-button>
+          <app-button variant="ghost" size="sm" (pressed)="edit.emit(node)"> Editar </app-button>
         </div>
       </div>
 

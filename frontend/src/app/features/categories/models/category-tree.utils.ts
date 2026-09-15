@@ -1,10 +1,7 @@
 import { Category, CategoryType } from './category.models';
 import { CategoryTreeNode } from './category-tree.models';
 
-export function buildCategoryTree(
-  categories: Category[],
-  type: CategoryType,
-): CategoryTreeNode[] {
+export function buildCategoryTree(categories: Category[], type: CategoryType): CategoryTreeNode[] {
   const categoriesOfType = categories.filter((category) => category.type === type);
 
   const nodes = new Map<string, CategoryTreeNode>(

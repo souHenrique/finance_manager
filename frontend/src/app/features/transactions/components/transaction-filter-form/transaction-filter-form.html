@@ -1,0 +1,149 @@
+<form [formGroup]="form" (ngSubmit)="apply()" novalidate>
+  <div class="transaction-filter-form__grid">
+    <app-form-field label="Competência inicial" controlId="start-date">
+      <input appInput id="start-date" type="date" formControlName="startDate" />
+    </app-form-field>
+
+    <app-form-field label="Competência final" controlId="end-date">
+      <input appInput id="end-date" type="date" formControlName="endDate" />
+    </app-form-field>
+
+    <app-form-field label="Categoria" controlId="category-id">
+      <select appSelect id="category-id" formControlName="categoryId">
+        <option value="">Todas as categorias</option>
+
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">
+            {{ category.name }}
+            {{ category.status === 'INACTIVE' ? ' — Inativa' : '' }}
+          </option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field label="Conta" controlId="account-id">
+      <select appSelect id="account-id" formControlName="accountId">
+        <option value="">Todas as contas</option>
+
+        @for (account of accounts(); track account.id) {
+          <option [value]="account.id">
+            {{ account.name }}
+            {{ account.status === 'INACTIVE' ? ' — Inativa' : '' }}
+          </option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field label="Cartão" controlId="credit-card-id">
+      <select appSelect id="credit-card-id" formControlName="creditCardId">
+        <option value="">Todos os cartões</option>
+
+        @for (card of creditCards(); track card.id) {
+          <option [value]="card.id">
+            {{ card.name }}
+            {{ card.status !== 'ACTIVE' ? ' — Indisponível' : '' }}
+          </option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field label="Tipo" controlId="transaction-type">
+      <select appSelect id="transaction-type" formControlName="type">
+        <option [ngValue]="null">Todos os tipos</option>
+
+        @for (type of types; track type.value) {
+          <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field label="Status" controlId="transaction-status">
+      <select appSelect id="transaction-status" formControlName="status">
+        <option [ngValue]="null">Todos os status</option>
+
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field
+      label="Valor mínimo"
+      controlId="min-amount"
+      [error]="
+        form.controls.minAmount.touched && form.controls.minAmount.invalid
+          ? 'Informe um valor maior ou igual a zero.'
+          : undefined
+      "
+    >
+      <input
+        appInput
+        id="min-amount"
+        type="number"
+        min="0"
+        step="0.01"
+        formControlName="minAmount"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Valor máximo"
+      controlId="max-amount"
+      [error]="
+        form.controls.maxAmount.touched && form.controls.maxAmount.invalid
+          ? 'Informe um valor maior ou igual a zero.'
+          : undefined
+      "
+    >
+      <input
+        appInput
+        id="max-amount"
+        type="number"
+        min="0"
+        step="0.01"
+        formControlName="maxAmount"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Descrição"
+      controlId="description"
+      [error]="
+        form.controls.description.touched && form.controls.description.invalid
+          ? 'A descrição pode ter no máximo 255 caracteres.'
+          : undefined
+      "
+    >
+      <input
+        appInput
+        id="description"
+        type="search"
+        formControlName="description"
+        maxlength="255"
+        placeholder="Ex.: mercado"
+      />
+    </app-form-field>
+  </div>
+
+  @if (form.errors?.['invalidDateRange']) {
+    <p class="transaction-filter-form__error" role="alert">
+      A data inicial não pode ser posterior à data final.
+    </p>
+  }
+
+  @if (form.errors?.['invalidAmountRange']) {
+    <p class="transaction-filter-form__error" role="alert">
+      O valor mínimo não pode ser maior que o valor máximo.
+    </p>
+  }
+
+  <div class="transaction-filter-form__actions">
+    <app-button type="button" variant="secondary" [disabled]="submitting()" (pressed)="clear()">
+      Limpar filtros
+    </app-button>
+
+    <app-button type="submit" [loading]="submitting()" [disabled]="submitting()">
+      Aplicar filtros
+    </app-button>
+  </div>
+</form>

@@ -12,10 +12,7 @@
       <app-skeleton height="8rem" />
     </div>
   } @else if (hasLoadError()) {
-    <app-error-state
-      message="Não foi possível carregar esta conta."
-      (retry)="loadAccount()"
-    />
+    <app-error-state message="Não foi possível carregar esta conta." (retry)="loadAccount()" />
   } @else if (account(); as currentAccount) {
     <app-card
       [title]="currentAccount.name"
@@ -51,11 +48,7 @@
       </dl>
 
       <div class="account-detail__actions">
-        <app-button
-          variant="secondary"
-          [disabled]="isChangingStatus()"
-          (pressed)="goToEdit()"
-        >
+        <app-button variant="secondary" [disabled]="isChangingStatus()" (pressed)="goToEdit()">
           Editar
         </app-button>
 
@@ -65,9 +58,7 @@
           [disabled]="isChangingStatus()"
           (pressed)="confirmStatusChange()"
         >
-          {{ currentAccount.status === 'ACTIVE'
-          ? 'Inativar conta'
-          : 'Ativar conta' }}
+          {{ currentAccount.status === 'ACTIVE' ? 'Inativar conta' : 'Ativar conta' }}
         </app-button>
       </div>
     </app-card>
