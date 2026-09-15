@@ -1,0 +1,79 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <app-form-field
+    label="Nome da conta"
+    controlId="name"
+    [required]="true"
+    [error]="
+      form.controls.name.touched && form.controls.name.invalid
+        ? 'Informe um nome de até 120 caracteres.'
+        : undefined
+    "
+  >
+    <input appInput id="name" type="text" formControlName="name" autocomplete="off" />
+  </app-form-field>
+
+  <app-form-field
+    label="Tipo de conta"
+    controlId="type"
+    [required]="true"
+    [error]="
+      form.controls.type.touched && form.controls.type.invalid
+        ? 'Selecione o tipo da conta.'
+        : undefined
+    "
+  >
+    <select appSelect id="type" formControlName="type">
+      @for (type of accountTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+      }
+    </select>
+  </app-form-field>
+
+  <app-form-field label="Instituição financeira" controlId="institution">
+    <input
+      appInput
+      id="institution"
+      type="text"
+      formControlName="institution"
+      maxlength="160"
+      autocomplete="off"
+    />
+  </app-form-field>
+
+  @if (isCreateMode()) {
+    <app-form-field
+      label="Saldo inicial"
+      controlId="initialBalance"
+      [required]="true"
+      [hint]="'Use valores negativos quando a conta já iniciar em débito.'"
+      [error]="
+        form.controls.initialBalance.touched && form.controls.initialBalance.invalid
+          ? 'Informe o saldo inicial.'
+          : undefined
+      "
+    >
+      <input
+        appInput
+        id="initialBalance"
+        type="number"
+        step="0.01"
+        formControlName="initialBalance"
+      />
+    </app-form-field>
+  }
+
+  <div class="account-form__actions">
+    <app-button
+      type="button"
+      variant="secondary"
+      [disabled]="submitting()"
+      (pressed)="cancelled.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button type="submit" [loading]="submitting()" [disabled]="submitting()">
+      {{ isCreateMode() ? 'Criar conta' : 'Salvar alterações' }}
+    </app-button>
+  </div>
+</form>

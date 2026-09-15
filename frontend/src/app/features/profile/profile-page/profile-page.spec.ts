@@ -19,8 +19,8 @@ describe('ProfilePage', () => {
 
   const user: User = {
     id: '2a1fbc5b-cbb9-4879-b0c5-42f034d64261',
-    name: 'Camila Souza',
-    email: 'camila.souza@example.com',
+    name: 'Jesse Pinkman',
+    email: 'jesse.pinkman@example.com',
     createdAt: '2026-09-02T12:00:00Z',
     updatedAt: '2026-09-02T12:30:00Z',
   };
@@ -159,7 +159,7 @@ describe('ProfilePage', () => {
   it('should send only the changed name and show a success toast', () => {
     const updatedUser: User = {
       ...user,
-      name: 'Camila Souza Lima',
+      name: 'Skyler White',
       updatedAt: '2026-09-15T12:00:00Z',
     };
 
@@ -167,13 +167,13 @@ describe('ProfilePage', () => {
 
     createPage();
 
-    fillInput('profile-name', 'Camila Souza Lima');
+    fillInput('profile-name', 'Skyler White');
     submitForm();
 
     expect(profileApi.updateCurrentUser).toHaveBeenCalledWith({
-      name: 'Camila Souza Lima',
+      name: 'Skyler White',
     });
-    expect(getInput('profile-name').value).toBe('Camila Souza Lima');
+    expect(getInput('profile-name').value).toBe('Skyler White');
     expect(toast.show).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Perfil atualizado',
@@ -184,7 +184,7 @@ describe('ProfilePage', () => {
   it('should send only the changed email', () => {
     const updatedUser: User = {
       ...user,
-      email: 'camila.lima@example.com',
+      email: 'skyler.white@example.com',
       updatedAt: '2026-09-15T12:00:00Z',
     };
 
@@ -192,11 +192,11 @@ describe('ProfilePage', () => {
 
     createPage();
 
-    fillInput('profile-email', 'camila.lima@example.com');
+    fillInput('profile-email', 'skyler.white@example.com');
     submitForm();
 
     expect(profileApi.updateCurrentUser).toHaveBeenCalledWith({
-      email: 'camila.lima@example.com',
+      email: 'skyler.white@example.com',
     });
   });
 

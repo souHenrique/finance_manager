@@ -41,14 +41,34 @@ describe('Application routes', () => {
             getCurrentUser: () =>
               of({
                 id: '2a1fbc5b-cbb9-4879-b0c5-42f034d64261',
-                name: 'Camila Souza',
-                email: 'camila.souza@example.com',
+                name: 'Jesse Pinkman',
+                email: 'jesse.pinkman@example.com',
                 createdAt: '2026-09-02T12:00:00Z',
                 updatedAt: '2026-09-02T12:30:00Z',
               }),
             updateCurrentUser: vi.fn(),
           },
         },
+        {
+          provide: AccountApiService,
+          useValue: {
+            findAll: vi.fn().mockReturnValue(of([])),
+            findById: vi.fn().mockReturnValue(
+              of({
+                id: '123',
+                name: 'Conta Walter',
+                type: 'CHECKING',
+                institution: 'Banco Albuquerque',
+                initialBalance: 1000,
+                currentBalance: 1000,
+                status: 'ACTIVE',
+                version: 0,
+                createdAt: '2026-09-15T10:00:00Z',
+                updatedAt: '2026-09-15T10:00:00Z',
+              }),
+            ),
+          },
+        }
       ],
     });
   });

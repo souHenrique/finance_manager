@@ -1,0 +1,36 @@
+<section aria-labelledby="page-title">
+  <header>
+    <h1 id="page-title">Editar conta</h1>
+    <p>Atualize os dados cadastrais da sua conta.</p>
+  </header>
+
+  @if (isLoading()) {
+    <app-skeleton />
+  } @else if (hasLoadError()) {
+    <app-error-state
+      title="Não foi possível carregar a conta"
+      message="Tente novamente em instantes."
+      (retry)="loadAccount()"
+    />
+  } @else if (account(); as currentAccount) {
+    @if (hasConflict()) {
+      <app-alert
+        tone="warning"
+        title="Dados desatualizados"
+        message="Esta conta foi alterada em outro momento. Recarregue os dados antes de tentar salvar novamente."
+      />
+
+      <app-button variant="secondary" (pressed)="reloadAfterConflict()">
+        Recarregar dados
+      </app-button>
+    }
+
+    <app-account-form
+      mode="edit"
+      [account]="currentAccount"
+      [submitting]="isSubmitting()"
+      (submitted)="updateAccount($event.update)"
+      (cancelled)="goBack()"
+    />
+  }
+</section>

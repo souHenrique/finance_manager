@@ -33,7 +33,7 @@ describe('AuthApiService', () => {
 
   it('deve autenticar o usuário', () => {
     const payload: LoginRequest = {
-      email: 'camila.souza@example.com',
+      email: 'jesse.pinkman@example.com',
       password: 'SenhaSegura123',
     };
     const response: AuthResponse = {
@@ -56,8 +56,8 @@ describe('AuthApiService', () => {
 
   it('deve cadastrar o usuário', () => {
     const payload: RegisterRequest = {
-      name: 'Camila Souza',
-      email: 'camila.souza@example.com',
+      name: 'Jesse Pinkman',
+      email: 'jesse.pinkman@example.com',
       password: 'SenhaSegura123',
     };
     const response: User = {

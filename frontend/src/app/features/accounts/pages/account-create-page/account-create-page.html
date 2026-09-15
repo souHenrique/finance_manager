@@ -1,0 +1,13 @@
+<section aria-labelledby="page-title">
+  <header>
+    <h1 id="page-title">Nova conta</h1>
+    <p>Cadastre uma conta para acompanhar seu saldo financeiro.</p>
+  </header>
+
+  <app-account-form
+    mode="create"
+    [submitting]="isSubmitting()"
+    (submitted)="createAccount($event.create)"
+    (cancelled)="goBack()"
+  />
+</section>

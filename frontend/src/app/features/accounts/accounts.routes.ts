@@ -2,11 +2,27 @@ import { Routes } from '@angular/router';
 
 export const ACCOUNT_ROUTES: Routes = [
   {
+    path: 'new',
+    title: 'Nova conta | Finance Manager',
+    loadComponent: () =>
+      import('./pages/account-create-page/account-create-page').then(
+        (module) => module.AccountCreatePageComponent,
+      ),
+  },
+  {
+    path: ':id/edit',
+    title: 'Editar conta | Finance Manager',
+    loadComponent: () =>
+      import('./pages/account-edit-page/account-edit-page').then(
+        (module) => module.AccountEditPageComponent,
+      ),
+  },
+  {
     path: ':id',
     title: 'Detalhes da conta | Finance Manager',
     loadComponent: () =>
       import('./pages/account-detail-page/account-detail-page').then(
-        ({ AccountDetailPage }) => AccountDetailPage,
+        (module) => module.AccountDetailPage,
       ),
   },
   {
@@ -15,7 +31,7 @@ export const ACCOUNT_ROUTES: Routes = [
     title: 'Contas | Finance Manager',
     loadComponent: () =>
       import('./pages/account-list-page/account-list-page').then(
-        ({ AccountListPage }) => AccountListPage,
+        (module) => module.AccountListPage,
       ),
   },
 ];

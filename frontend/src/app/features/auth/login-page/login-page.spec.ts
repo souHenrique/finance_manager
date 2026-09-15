@@ -77,12 +77,12 @@ describe('LoginPage', () => {
       }),
     );
 
-    fillInput('login-email', 'camila.souza@example.com');
+    fillInput('login-email', 'jesse.pinkman@example.com');
     fillInput('login-password', 'SenhaSegura123');
     submitForm();
 
     expect(auth.login).toHaveBeenCalledWith({
-      email: 'camila.souza@example.com',
+      email: 'jesse.pinkman@example.com',
       password: 'SenhaSegura123',
     });
     expect(navigateByUrl).toHaveBeenCalledWith('/dashboard');
@@ -100,7 +100,7 @@ describe('LoginPage', () => {
       }),
     );
 
-    fillInput('login-email', 'camila.souza@example.com');
+    fillInput('login-email', 'jesse.pinkman@example.com');
     fillInput('login-password', 'SenhaSegura123');
     submitForm();
 
@@ -119,7 +119,7 @@ describe('LoginPage', () => {
       }),
     );
 
-    fillInput('login-email', 'camila.souza@example.com');
+    fillInput('login-email', 'jesse.pinkman@example.com');
     fillInput('login-password', 'SenhaSegura123');
     submitForm();
 
@@ -147,7 +147,7 @@ describe('LoginPage', () => {
       ),
     );
 
-    fillInput('login-email', 'camila.souza@example.com');
+    fillInput('login-email', 'jesse.pinkman@example.com');
     fillInput('login-password', 'SenhaSegura123');
     submitForm();
 

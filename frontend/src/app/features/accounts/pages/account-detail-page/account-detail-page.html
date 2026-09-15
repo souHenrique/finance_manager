@@ -1,6 +1,75 @@
 <section class="page" aria-labelledby="account-detail-title">
   <header class="page__header">
-    <h1 id="account-detail-title">Detalhes da conta</h1>
-    <p>Consulte as informações e movimentações da conta.</p>
+    <div>
+      <h1 id="account-detail-title">Detalhes da conta</h1>
+      <p>Consulte os dados e o saldo atual da conta.</p>
+    </div>
   </header>
+
+  @if (isLoading()) {
+    <div class="account-detail__skeletons" aria-label="Carregando conta">
+      <app-skeleton height="2rem" />
+      <app-skeleton height="8rem" />
+    </div>
+  } @else if (hasLoadError()) {
+    <app-error-state
+      message="Não foi possível carregar esta conta."
+      (retry)="loadAccount()"
+    />
+  } @else if (account(); as currentAccount) {
+    <app-card
+      [title]="currentAccount.name"
+      [subtitle]="currentAccount.institution || 'Instituição não informada'"
+    >
+      <div card-actions>
+        <app-badge
+          [label]="statusLabel(currentAccount.status)"
+          [tone]="statusTone(currentAccount.status)"
+        />
+      </div>
+
+      <dl class="account-detail__data">
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ accountTypeLabel(currentAccount.type) }}</dd>
+        </div>
+
+        <div>
+          <dt>Saldo inicial</dt>
+          <dd>{{ currentAccount.initialBalance | number: '1.2-2' }}</dd>
+        </div>
+
+        <div>
+          <dt>Saldo atual</dt>
+          <dd>{{ currentAccount.currentBalance | number: '1.2-2' }}</dd>
+        </div>
+
+        <div>
+          <dt>Status</dt>
+          <dd>{{ statusLabel(currentAccount.status) }}</dd>
+        </div>
+      </dl>
+
+      <div class="account-detail__actions">
+        <app-button
+          variant="secondary"
+          [disabled]="isChangingStatus()"
+          (pressed)="goToEdit()"
+        >
+          Editar
+        </app-button>
+
+        <app-button
+          [variant]="currentAccount.status === 'ACTIVE' ? 'danger' : 'primary'"
+          [loading]="isChangingStatus()"
+          [disabled]="isChangingStatus()"
+          (pressed)="confirmStatusChange()"
+        >
+          {{ currentAccount.status === 'ACTIVE'
+          ? 'Inativar conta'
+          : 'Ativar conta' }}
+        </app-button>
+      </div>
+    </app-card>
+  }
 </section>

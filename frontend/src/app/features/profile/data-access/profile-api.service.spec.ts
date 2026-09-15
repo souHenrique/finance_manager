@@ -12,8 +12,8 @@ describe('ProfileApiService', () => {
 
   const user: User = {
     id: '2a1fbc5b-cbb9-4879-b0c5-42f034d64261',
-    name: 'Camila Souza',
-    email: 'camila.souza@example.com',
+    name: 'Jesse Pinkman',
+    email: 'jesse.pinkman@example.com',
     createdAt: '2026-09-02T12:00:00Z',
     updatedAt: '2026-09-02T12:30:00Z',
   };
@@ -53,8 +53,8 @@ describe('ProfileApiService', () => {
 
   it('deve atualizar o perfil do usuário autenticado', () => {
     const payload: UpdateProfileRequest = {
-      name: 'Camila Souza Lima',
-      email: 'camila.lima@example.com',
+      name: 'Skyler White',
+      email: 'skyler.white@example.com',
     };
     const response: User = {
       ...user,
@@ -75,7 +75,7 @@ describe('ProfileApiService', () => {
 
   it('deve atualizar somente o nome quando esse for o campo alterado', () => {
     const payload: UpdateProfileRequest = {
-      name: 'Camila Souza Lima',
+      name: 'Skyler White',
     };
 
     service.updateCurrentUser(payload).subscribe();
@@ -84,13 +84,13 @@ describe('ProfileApiService', () => {
 
     expect(request.request.method).toBe('PATCH');
     expect(request.request.body).toEqual({
-      name: 'Camila Souza Lima',
+      name: 'Skyler White',
     });
     expect(request.request.body).not.toHaveProperty('password');
 
     request.flush({
       ...user,
-      name: 'Camila Souza Lima',
+      name: 'Skyler White',
     });
   });
 });

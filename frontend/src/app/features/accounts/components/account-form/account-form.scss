@@ -1,0 +1,21 @@
+:host {
+  display: block;
+}
+
+form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.account-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .account-form__actions {
+    flex-direction: column-reverse;
+  }
+}

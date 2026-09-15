@@ -1,6 +1,52 @@
 <section class="page" aria-labelledby="accounts-title">
   <header class="page__header">
-    <h1 id="accounts-title">Contas</h1>
-    <p>Consulte e gerencie suas contas financeiras.</p>
+    <div>
+      <h1 id="accounts-title">Contas</h1>
+      <p>Consulte e gerencie suas contas financeiras.</p>
+    </div>
+
+    <app-button routerLink="/accounts/new">
+      Nova conta
+    </app-button>
   </header>
+
+  @if (state() === 'loading') {
+    <div class="account-list__skeletons" aria-label="Carregando contas">
+      <app-skeleton />
+      <app-skeleton />
+      <app-skeleton />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar as contas"
+      message="Tente novamente em instantes."
+      (retry)="loadAccounts()"
+    />
+  } @else if (accounts().length === 0) {
+    <app-empty-state
+      title="Nenhuma conta cadastrada"
+      description="Cadastre sua primeira conta para acompanhar seus saldos."
+    >
+      <app-button empty-state-actions (pressed)="goToCreate()">
+        Nova conta
+      </app-button>
+    </app-empty-state>
+  } @else {
+    <div class="account-list">
+      @for (account of accounts(); track account.id) {
+        <app-card>
+          <a [routerLink]="['/accounts', account.id]">
+            <strong>{{ account.name }}</strong>
+            <span>{{ account.institution || 'Instituição não informada' }}</span>
+            <span>{{ account.currentBalance }}</span>
+          </a>
+
+          <app-badge
+            [label]="account.status === 'ACTIVE' ? 'Ativa' : 'Inativa'"
+            [tone]="account.status === 'ACTIVE' ? 'success' : 'neutral'"
+          />
+        </app-card>
+      }
+    </div>
+  }
 </section>
