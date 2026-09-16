@@ -2,6 +2,22 @@ import { Routes } from '@angular/router';
 
 export const CREDIT_CARD_ROUTES: Routes = [
   {
+    path: 'new',
+    title: 'Novo cartão | Finance Manager',
+    loadComponent: () =>
+      import('./pages/credit-card-create-page/credit-card-create-page').then(
+        ({ CreditCardCreatePage }) => CreditCardCreatePage,
+      ),
+  },
+  {
+    path: ':id/edit',
+    title: 'Editar cartão | Finance Manager',
+    loadComponent: () =>
+      import('./pages/credit-card-edit-page/credit-card-edit-page').then(
+        ({ CreditCardEditPage }) => CreditCardEditPage,
+      ),
+  },
+  {
     path: ':id',
     title: 'Detalhes do cartão | Finance Manager',
     loadComponent: () =>

@@ -1,0 +1,44 @@
+<section class="page" aria-labelledby="credit-card-create-title">
+  <header class="page__header">
+    <div>
+      <h1 id="credit-card-create-title">Novo cartão de crédito</h1>
+      <p>Informe os dados do cartão e a conta usada para pagar suas faturas.</p>
+    </div>
+  </header>
+
+  @if (accountLoadState() === 'loading') {
+    <div class="credit-card-create__skeletons" aria-label="Carregando contas">
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+    </div>
+  } @else if (accountLoadState() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar as contas"
+      message="Tente novamente para selecionar a conta padrão do cartão."
+      (retry)="loadAccounts()"
+    />
+  } @else if (!hasActiveAccounts()) {
+    <div class="credit-card-create__no-account">
+      <app-alert
+        tone="warning"
+        title="Nenhuma conta ativa disponível"
+        message="Crie ou ative uma conta antes de cadastrar um cartão, pois ela será usada como referência para o pagamento das faturas."
+      />
+
+      <div class="credit-card-create__actions">
+        <app-button variant="secondary" (pressed)="goBack()"> Voltar </app-button>
+        <app-button routerLink="/accounts/new"> Criar conta </app-button>
+      </div>
+    </div>
+  } @else {
+    <app-credit-card-form
+      mode="create"
+      [accounts]="accounts()"
+      [submitting]="isSubmitting()"
+      (submitted)="createCreditCard($event.create)"
+      (cancelled)="goBack()"
+    />
+  }
+</section>

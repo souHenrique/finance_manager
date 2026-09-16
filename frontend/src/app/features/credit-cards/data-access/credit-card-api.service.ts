@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+
 import { ApiUrlService } from '../../../core/http/api-url.service';
 import { Transaction } from '../../transactions/models/transaction.models';
 import {
@@ -26,7 +27,9 @@ export class CreditCardApiService {
   }
 
   findById(id: string): Observable<CreditCard> {
-    return this.http.get<CreditCard>(this.apiUrl.build(`credit-cards/${encodeURIComponent(id)}`));
+    return this.http.get<CreditCard>(
+      this.apiUrl.build(`credit-cards/${encodeURIComponent(id)}`),
+    );
   }
 
   update(id: string, request: UpdateCreditCardRequest): Observable<CreditCard> {
@@ -36,7 +39,10 @@ export class CreditCardApiService {
     );
   }
 
-  createPurchase(id: string, request: CreateCreditCardPurchaseRequest): Observable<Transaction[]> {
+  createPurchase(
+    id: string,
+    request: CreateCreditCardPurchaseRequest,
+  ): Observable<Transaction[]> {
     return this.http.post<Transaction[]>(
       this.apiUrl.build(`credit-cards/${encodeURIComponent(id)}/purchases`),
       request,

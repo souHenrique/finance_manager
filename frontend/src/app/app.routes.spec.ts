@@ -93,6 +93,21 @@ describe('Application routes', () => {
           provide: CreditCardApiService,
           useValue: {
             findAll: vi.fn().mockReturnValue(of([])),
+            findById: vi.fn().mockReturnValue(
+              of({
+                id: '123',
+                name: 'Cartão Heisenberg',
+                creditLimit: 5000,
+                availableLimit: 3200,
+                closingDay: 10,
+                dueDay: 17,
+                defaultAccountId: '123',
+                status: 'ACTIVE',
+                version: 0,
+              }),
+            ),
+            create: vi.fn(),
+            update: vi.fn(),
           },
         },
         {
@@ -190,7 +205,9 @@ describe('Application routes', () => {
     '/accounts/123',
     '/categories',
     '/credit-cards',
+    '/credit-cards/new',
     '/credit-cards/123',
+    '/credit-cards/123/edit',
     '/invoices',
     '/invoices/123',
     '/budgets',

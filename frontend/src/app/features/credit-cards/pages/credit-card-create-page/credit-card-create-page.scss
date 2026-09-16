@@ -1,0 +1,27 @@
+.credit-card-create__skeletons {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
+}
+
+.credit-card-create__no-account {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
+}
+
+.credit-card-create__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .credit-card-create__actions {
+    flex-direction: column-reverse;
+  }
+
+  .credit-card-create__actions app-button {
+    width: 100%;
+  }
+}

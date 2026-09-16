@@ -1,0 +1,39 @@
+.credit-card-form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.credit-card-form__days {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.credit-card-form__account-warning {
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-warning-surface);
+  color: var(--color-warning-text);
+}
+
+.credit-card-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .credit-card-form__days {
+    grid-template-columns: 1fr;
+  }
+
+  .credit-card-form__actions {
+    flex-direction: column-reverse;
+  }
+
+  .credit-card-form__actions app-button {
+    width: 100%;
+  }
+}

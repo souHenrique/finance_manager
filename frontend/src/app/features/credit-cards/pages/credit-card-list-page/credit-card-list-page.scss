@@ -1,0 +1,54 @@
+.credit-card-list__skeletons,
+.credit-card-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.credit-card-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.credit-card-list__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.credit-card-list__details div {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.credit-card-list__details dt {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.credit-card-list__details dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.credit-card-list__available-limit {
+  color: var(--color-success-text) !important;
+}
+
+.credit-card-list__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-5);
+}
+
+@media (max-width: 640px) {
+  .credit-card-list__details {
+    grid-template-columns: 1fr;
+  }
+
+  .credit-card-list__actions app-button {
+    width: 100%;
+  }
+}

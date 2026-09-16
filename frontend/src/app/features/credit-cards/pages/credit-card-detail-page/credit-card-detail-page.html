@@ -1,6 +1,126 @@
 <section class="page" aria-labelledby="credit-card-detail-title">
   <header class="page__header">
-    <h1 id="credit-card-detail-title">Detalhes do cartão</h1>
-    <p>Consulte os dados e as faturas do cartão.</p>
+    <div>
+      <h1 id="credit-card-detail-title">Detalhes do cartão</h1>
+      <p>Consulte limites, datas de fatura e a conta padrão de pagamento.</p>
+    </div>
+
+    <app-button variant="secondary" (pressed)="goBack()">
+      Voltar para Cartões
+    </app-button>
   </header>
+
+  @if (isLoading()) {
+    <div class="credit-card-detail__skeletons" aria-label="Carregando cartão">
+      <app-skeleton height="2rem" />
+      <app-skeleton height="16rem" />
+    </div>
+  } @else if (hasLoadError()) {
+    <app-error-state
+      title="Não foi possível carregar o cartão"
+      message="Tente novamente em instantes."
+      (retry)="loadData()"
+    />
+  } @else if (creditCard(); as currentCreditCard) {
+    <app-card
+      [title]="currentCreditCard.name"
+      [subtitle]="'Conta padrão: ' + accountName(currentCreditCard.defaultAccountId)"
+    >
+      <div card-actions>
+        <app-badge
+          [label]="statusLabel(currentCreditCard.status)"
+          [tone]="statusTone(currentCreditCard.status)"
+        />
+      </div>
+
+      <dl class="credit-card-detail__data">
+        <div>
+          <dt>Limite total</dt>
+          <dd>R$ {{ currentCreditCard.creditLimit | number: '1.2-2' }}</dd>
+        </div>
+
+        <div>
+          <dt>Limite disponível</dt>
+          <dd class="credit-card-detail__available-limit">
+            R$ {{ currentCreditCard.availableLimit | number: '1.2-2' }}
+          </dd>
+        </div>
+
+        <div>
+          <dt>Limite comprometido</dt>
+          <dd>R$ {{ committedLimit(currentCreditCard) | number: '1.2-2' }}</dd>
+        </div>
+
+        <div>
+          <dt>Fechamento da fatura</dt>
+          <dd>Dia {{ currentCreditCard.closingDay }}</dd>
+        </div>
+
+        <div>
+          <dt>Vencimento da fatura</dt>
+          <dd>Dia {{ currentCreditCard.dueDay }}</dd>
+        </div>
+
+        <div>
+          <dt>Conta padrão</dt>
+          <dd>{{ accountName(currentCreditCard.defaultAccountId) }}</dd>
+        </div>
+      </dl>
+
+      <div class="credit-card-detail__actions">
+        <app-button
+          variant="secondary"
+          [disabled]="isChangingStatus()"
+          (pressed)="goToEdit()"
+        >
+          Editar
+        </app-button>
+
+        @if (currentCreditCard.status === 'ACTIVE') {
+          <app-button
+            variant="secondary"
+            [loading]="changingStatus() === 'BLOCKED'"
+            [disabled]="isChangingStatus()"
+            (pressed)="confirmStatusChange('BLOCKED')"
+          >
+            Bloquear cartão
+          </app-button>
+
+          <app-button
+            variant="danger"
+            [loading]="changingStatus() === 'INACTIVE'"
+            [disabled]="isChangingStatus()"
+            (pressed)="confirmStatusChange('INACTIVE')"
+          >
+            Inativar cartão
+          </app-button>
+        } @else if (currentCreditCard.status === 'BLOCKED') {
+          <app-button
+            [loading]="changingStatus() === 'ACTIVE'"
+            [disabled]="isChangingStatus()"
+            (pressed)="confirmStatusChange('ACTIVE')"
+          >
+            Ativar cartão
+          </app-button>
+
+          <app-button
+            variant="danger"
+            [loading]="changingStatus() === 'INACTIVE'"
+            [disabled]="isChangingStatus()"
+            (pressed)="confirmStatusChange('INACTIVE')"
+          >
+            Inativar cartão
+          </app-button>
+        } @else {
+          <app-button
+            [loading]="changingStatus() === 'ACTIVE'"
+            [disabled]="isChangingStatus()"
+            (pressed)="confirmStatusChange('ACTIVE')"
+          >
+            Ativar cartão
+          </app-button>
+        }
+      </div>
+    </app-card>
+  }
 </section>

@@ -6,20 +6,20 @@ Frontend do Finance Manager desenvolvido com Angular 22, TypeScript, SCSS e arqu
 
 - Node.js 24.15 ou superior dentro da versão 24;
 
-- npm 11;
+- pnpm 11.19;
 
 - backend disponível em http://localhost:8080.
 
 ## Instalação
 
 ```
-npm install
+pnpm install
 ```
 
 ## Execução
 
 ```
-npm start
+pnpm start
 ```
 
 A aplicação ficará disponível em:
@@ -44,14 +44,14 @@ src/app/
 ## Scripts
 
 ```bash
-npm start
-npm run build
-npm test
-npm run test:ci
-npm run lint
-npm run lint:fix
-npm run format
-npm run format:check
+pnpm start
+pnpm build
+pnpm test
+pnpm test:ci
+pnpm lint
+pnpm lint:fix
+pnpm format
+pnpm format:check
 ```
 
 ## Configuração da API

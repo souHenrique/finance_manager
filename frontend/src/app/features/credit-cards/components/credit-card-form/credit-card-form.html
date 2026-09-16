@@ -1,0 +1,126 @@
+<form class="credit-card-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <app-form-field
+    label="Nome do cartão"
+    controlId="name"
+    [required]="true"
+    [error]="
+      form.controls.name.touched && form.controls.name.invalid
+        ? 'Informe um nome de até 120 caracteres.'
+        : undefined
+    "
+  >
+    <input
+      appInput
+      id="name"
+      type="text"
+      formControlName="name"
+      maxlength="120"
+      autocomplete="off"
+    />
+  </app-form-field>
+
+  <app-form-field
+    label="Limite total"
+    controlId="credit-limit"
+    [required]="true"
+    [hint]="creditLimitHint()"
+    [error]="creditLimitError()"
+  >
+    <input
+      appInput
+      id="credit-limit"
+      type="number"
+      formControlName="creditLimit"
+      min="0.01"
+      step="0.01"
+      inputmode="decimal"
+    />
+  </app-form-field>
+
+  <div class="credit-card-form__days">
+    <app-form-field
+      label="Dia de fechamento"
+      controlId="closing-day"
+      [required]="true"
+      hint="Dia usado como referência para fechar a fatura."
+      [error]="dayError('closingDay')"
+    >
+      <input
+        appInput
+        id="closing-day"
+        type="number"
+        formControlName="closingDay"
+        min="1"
+        max="31"
+        step="1"
+        inputmode="numeric"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Dia de vencimento"
+      controlId="due-day"
+      [required]="true"
+      hint="Dia previsto para pagamento da fatura."
+      [error]="dayError('dueDay')"
+    >
+      <input
+        appInput
+        id="due-day"
+        type="number"
+        formControlName="dueDay"
+        min="1"
+        max="31"
+        step="1"
+        inputmode="numeric"
+      />
+    </app-form-field>
+  </div>
+
+  <app-form-field
+    label="Conta padrão para pagamento"
+    controlId="default-account-id"
+    [required]="true"
+    hint="Essa conta será usada como referência ao pagar as faturas do cartão."
+    [error]="
+      form.controls.defaultAccountId.touched && form.controls.defaultAccountId.invalid
+        ? 'Selecione uma conta ativa.'
+        : undefined
+    "
+  >
+    <select appSelect id="default-account-id" formControlName="defaultAccountId">
+      <option value="" disabled>Selecione uma conta</option>
+
+      @for (account of activeAccounts(); track account.id) {
+        <option [value]="account.id">
+          {{ account.name }} — {{ account.institution || 'Instituição não informada' }}
+        </option>
+      }
+    </select>
+  </app-form-field>
+
+  @if (activeAccounts().length === 0) {
+    <p class="credit-card-form__account-warning" role="alert">
+      É necessário ter pelo menos uma conta ativa para definir o pagamento padrão da fatura.
+    </p>
+  }
+
+  <div class="credit-card-form__actions">
+    <app-button
+      type="button"
+      variant="secondary"
+      [disabled]="submitting()"
+      (pressed)="cancelled.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button
+      type="submit"
+      [loading]="submitting()"
+      [disabled]="submitting() || activeAccounts().length === 0"
+    >
+      {{ isCreateMode() ? 'Criar cartão' : 'Salvar alterações' }}
+    </app-button>
+  </div>
+</form>

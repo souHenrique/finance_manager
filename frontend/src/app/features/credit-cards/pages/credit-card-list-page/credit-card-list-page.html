@@ -1,6 +1,82 @@
 <section class="page" aria-labelledby="credit-cards-title">
   <header class="page__header">
-    <h1 id="credit-cards-title">Cartões de crédito</h1>
-    <p>Consulte e gerencie seus cartões de crédito.</p>
+    <div>
+      <h1 id="credit-cards-title">Cartões de crédito</h1>
+      <p>Consulte limites, vencimentos e contas padrão dos seus cartões.</p>
+    </div>
+
+    <app-button routerLink="/credit-cards/new"> Novo cartão </app-button>
   </header>
+
+  @if (state() === 'loading') {
+    <div class="credit-card-list__skeletons" aria-label="Carregando cartões">
+      <app-skeleton height="14rem" />
+      <app-skeleton height="14rem" />
+      <app-skeleton height="14rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar os cartões"
+      message="Tente novamente em instantes."
+      (retry)="loadCreditCards()"
+    />
+  } @else if (creditCards().length === 0) {
+    <app-empty-state
+      title="Nenhum cartão cadastrado"
+      description="Cadastre um cartão para acompanhar seus limites e faturas."
+    >
+      <app-button empty-state-actions routerLink="/credit-cards/new">
+        Novo cartão
+      </app-button>
+    </app-empty-state>
+  } @else {
+    <div class="credit-card-list">
+      @for (creditCard of creditCards(); track creditCard.id) {
+        <app-card
+          [title]="creditCard.name"
+          [subtitle]="'Conta padrão: ' + accountName(creditCard.defaultAccountId)"
+        >
+          <div card-actions>
+            <app-badge
+              [label]="statusLabel(creditCard.status)"
+              [tone]="statusTone(creditCard.status)"
+            />
+          </div>
+
+          <dl class="credit-card-list__details">
+            <div>
+              <dt>Limite total</dt>
+              <dd>R$ {{ creditCard.creditLimit | number: '1.2-2' }}</dd>
+            </div>
+
+            <div>
+              <dt>Limite disponível</dt>
+              <dd class="credit-card-list__available-limit">
+                R$ {{ creditCard.availableLimit | number: '1.2-2' }}
+              </dd>
+            </div>
+
+            <div>
+              <dt>Fechamento</dt>
+              <dd>Dia {{ creditCard.closingDay }}</dd>
+            </div>
+
+            <div>
+              <dt>Vencimento</dt>
+              <dd>Dia {{ creditCard.dueDay }}</dd>
+            </div>
+          </dl>
+
+          <div class="credit-card-list__actions">
+            <app-button
+              variant="secondary"
+              [routerLink]="['/credit-cards', creditCard.id]"
+            >
+              Ver detalhes
+            </app-button>
+          </div>
+        </app-card>
+      }
+    </div>
+  }
 </section>

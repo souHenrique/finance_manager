@@ -22,6 +22,7 @@ frontend/.angular/
 frontend/coverage/
 frontend/.cache/
 frontend/.nx/
+.pnpm-store/
 
 npm-debug.log*
 yarn-debug.log*
