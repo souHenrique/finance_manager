@@ -3,7 +3,7 @@ import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angula
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { filter, forkJoin, map, switchMap, tap } from 'rxjs';
+import { EMPTY, forkJoin, map, switchMap, take } from 'rxjs';
 
 import { AccountApiService } from '../../../accounts/data-access/account-api.service';
 import { Account } from '../../../accounts/models/account.models';
@@ -26,7 +26,7 @@ import { InvoiceApiService } from '../../data-access/invoice-api.service';
 import { InvoiceDetail, InvoiceStatus } from '../../models/invoice.models';
 
 type InvoiceDetailState = 'loading' | 'success' | 'error';
-type InvoiceOperation = 'closing' | 'paying' | null;
+type InvoiceOperation = 'confirming-close' | 'closing' | 'confirming-payment' | 'paying' | null;
 
 @Component({
   selector: 'app-invoice-detail-page',
@@ -82,14 +82,18 @@ export class InvoiceDetailPage implements OnInit {
     this.loadInvoice();
   }
 
-  loadInvoice(): void {
+  loadInvoice(preserveConflictMessage = false): void {
     if (!this.invoiceId) {
       void this.router.navigate(['/invoices']);
       return;
     }
 
     this.state.set('loading');
-    this.conflictMessage.set('');
+
+    if (!preserveConflictMessage) {
+      this.conflictMessage.set('');
+    }
+
     this.isPaymentFormOpen.set(false);
 
     this.invoiceApi
@@ -140,6 +144,8 @@ export class InvoiceDetailPage implements OnInit {
       return;
     }
 
+    this.operation.set('confirming-close');
+
     this.dialog
       .confirm({
         title: 'Fechar fatura?',
@@ -149,13 +155,19 @@ export class InvoiceDetailPage implements OnInit {
         cancelLabel: 'Cancelar',
       })
       .pipe(
-        filter((confirmed): confirmed is true => confirmed === true),
-        tap(() => this.operation.set('closing')),
-        switchMap(() =>
-          this.invoiceApi.close(invoice.id, {
+        take(1),
+        switchMap((confirmed) => {
+          if (!confirmed) {
+            this.operation.set(null);
+            return EMPTY;
+          }
+
+          this.operation.set('closing');
+
+          return this.invoiceApi.close(invoice.id, {
             expectedVersion: invoice.version,
-          }),
-        ),
+          });
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -190,6 +202,8 @@ export class InvoiceDetailPage implements OnInit {
       ? `usando a conta ${sourceAccount.name}`
       : 'com os créditos disponíveis';
 
+    this.operation.set('confirming-payment');
+
     this.dialog
       .confirm({
         title: 'Pagar fatura?',
@@ -199,14 +213,20 @@ export class InvoiceDetailPage implements OnInit {
         danger: true,
       })
       .pipe(
-        filter((confirmed): confirmed is true => confirmed === true),
-        tap(() => this.operation.set('paying')),
-        switchMap(() =>
-          this.invoiceApi.pay(invoice.id, {
+        take(1),
+        switchMap((confirmed) => {
+          if (!confirmed) {
+            this.operation.set(null);
+            return EMPTY;
+          }
+
+          this.operation.set('paying');
+
+          return this.invoiceApi.pay(invoice.id, {
             sourceAccountId,
             expectedVersion: invoice.version,
-          }),
-        ),
+          });
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe({
@@ -238,10 +258,6 @@ export class InvoiceDetailPage implements OnInit {
     if (creditCard) {
       void this.router.navigate(['/credit-cards', creditCard.id]);
     }
-  }
-
-  reloadAfterConflict(): void {
-    this.loadInvoice();
   }
 
   referenceLabel(invoice: InvoiceDetail): string {
@@ -335,7 +351,10 @@ export class InvoiceDetailPage implements OnInit {
 
   private handleMutationError(error: unknown): void {
     if (error instanceof ApiRequestError && error.status === 409) {
-      this.conflictMessage.set(error.message);
+      this.conflictMessage.set(
+        `${error.message} Os dados atualizados foram carregados. Revise-os e confirme a operação novamente.`,
+      );
+      this.loadInvoice(true);
     }
   }
 

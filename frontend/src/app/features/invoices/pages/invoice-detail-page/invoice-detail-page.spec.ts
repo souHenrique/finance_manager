@@ -218,6 +218,25 @@ describe('InvoiceDetailPage', () => {
     expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
   });
 
+  it('should prevent a second close while confirmation or request is pending', () => {
+    const confirmation = new Subject<boolean>();
+    const closing = new Subject<InvoiceDetail>();
+    dialog.confirm.mockReturnValue(confirmation.asObservable());
+    invoiceApi.close.mockReturnValue(closing.asObservable());
+    createPage();
+
+    component.closeInvoice();
+    component.closeInvoice();
+
+    expect(dialog.confirm).toHaveBeenCalledOnce();
+    expect(component.isProcessing()).toBe(true);
+
+    confirmation.next(true);
+    component.closeInvoice();
+
+    expect(invoiceApi.close).toHaveBeenCalledOnce();
+  });
+
   it('should expose payment only for a closed invoice', () => {
     invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
 
@@ -257,12 +276,39 @@ describe('InvoiceDetailPage', () => {
       sourceAccountId: account.id,
       expectedVersion: invoice.version,
     });
+    expect(dialog.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Conta Walter'),
+      }),
+    );
+    expect(dialog.confirm.mock.calls[0][0].message).toContain('850,75');
     expect(toast.show).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Fatura paga',
       message: 'O pagamento foi registrado e o limite do cartão foi atualizado.',
     });
     expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+  });
+
+  it('should prevent a second payment while confirmation or request is pending', () => {
+    const confirmation = new Subject<boolean>();
+    const payment = new Subject<unknown>();
+    invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
+    dialog.confirm.mockReturnValue(confirmation.asObservable());
+    invoiceApi.pay.mockReturnValue(payment.asObservable());
+    createPage();
+    component.openPaymentForm();
+
+    component.payInvoice();
+    component.payInvoice();
+
+    expect(dialog.confirm).toHaveBeenCalledOnce();
+    expect(component.isProcessing()).toBe(true);
+
+    confirmation.next(true);
+    component.payInvoice();
+
+    expect(invoiceApi.pay).toHaveBeenCalledOnce();
   });
 
   it('should allow a credit-only payment without requiring an account', () => {
@@ -308,7 +354,7 @@ describe('InvoiceDetailPage', () => {
     expect(cancelledContent).not.toContain('Pagar fatura');
   });
 
-  it('should show a reload action for a conflict without automatically repeating the request', () => {
+  it('should reload a conflicting invoice without automatically repeating the operation', () => {
     const conflict = new ApiRequestError({
       timestamp: '2026-09-16T10:00:00Z',
       status: 409,
@@ -317,6 +363,9 @@ describe('InvoiceDetailPage', () => {
       path: `/api/v1/invoices/${invoice.id}/close`,
       fieldErrors: [],
     });
+    const refreshedInvoice = { ...invoice, version: invoice.version + 1 };
+    dialog.confirm.mockReturnValueOnce(of(true)).mockReturnValueOnce(of(false));
+    invoiceApi.findById.mockReturnValueOnce(of(invoice)).mockReturnValueOnce(of(refreshedInvoice));
     invoiceApi.close.mockReturnValue(throwError(() => conflict));
     createPage();
 
@@ -325,11 +374,14 @@ describe('InvoiceDetailPage', () => {
 
     expect(invoiceApi.close).toHaveBeenCalledOnce();
     expect(fixture.nativeElement.textContent).toContain(conflict.message);
+    expect(component.invoice()).toEqual(refreshedInvoice);
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+    expect(fixture.nativeElement.textContent).not.toContain('Recarregar fatura');
 
-    component.reloadAfterConflict();
+    component.closeInvoice();
 
     expect(invoiceApi.close).toHaveBeenCalledOnce();
-    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+    expect(dialog.confirm).toHaveBeenCalledTimes(2);
   });
 
   it('should navigate back to invoices and to the related credit card', () => {

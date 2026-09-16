@@ -25,14 +25,6 @@
       @if (conflictMessage()) {
         <div class="invoice-detail__conflict">
           <app-alert tone="warning" title="A fatura foi alterada" [message]="conflictMessage()" />
-
-          <app-button
-            variant="secondary"
-            [disabled]="isProcessing()"
-            (pressed)="reloadAfterConflict()"
-          >
-            Recarregar fatura
-          </app-button>
         </div>
       }
 
