@@ -1,0 +1,92 @@
+:host {
+  display: block;
+}
+
+.report-category-chart {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.report-category-chart h3,
+.report-category-chart p {
+  margin: 0;
+}
+
+.report-category-chart h3 {
+  font-size: var(--font-size-lg);
+}
+
+.report-category-chart__description,
+.report-category-chart__empty {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.report-category-chart__bars {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.report-category-chart__bar-row {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.report-category-chart__label {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+}
+
+.report-category-chart__track {
+  height: var(--space-3);
+  overflow: hidden;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-pill);
+}
+
+.report-category-chart__bar {
+  display: block;
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transition: width var(--duration-normal);
+}
+
+.report-category-chart__bar--income {
+  background: var(--color-success-border);
+}
+
+.report-category-chart__bar--expense {
+  background: var(--color-danger-border);
+}
+
+.report-category-chart__table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+caption {
+  padding-bottom: var(--space-3);
+  text-align: left;
+  color: var(--color-text-muted);
+}
+
+th,
+td {
+  padding: var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+th:last-child,
+td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}

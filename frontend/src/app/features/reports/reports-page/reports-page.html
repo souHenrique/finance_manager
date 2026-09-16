@@ -1,6 +1,240 @@
-<section class="page" aria-labelledby="reports-title">
-  <header class="page__header">
-    <h1 id="reports-title">Relatórios</h1>
-    <p>Analise receitas, despesas e resultados por competência.</p>
+<section class="reports" aria-labelledby="reports-title">
+  <header class="reports__header">
+    <div>
+      <h1 id="reports-title">Relatórios financeiros</h1>
+      <p>Analise movimentações por caixa e competência sem misturar os dois regimes.</p>
+    </div>
   </header>
+
+  <aside class="reports__basis" aria-label="Regimes contábeis dos relatórios">
+    <strong>Base dos relatórios</strong>
+    <p><b>CASH</b> usa a data de efetivação das movimentações.</p>
+    <p>
+      <b>COMPETENCE</b> usa a data de competência; compras no cartão entram aqui, mas o pagamento da
+      fatura não cria uma nova despesa.
+    </p>
+  </aside>
+
+  <nav class="reports__tabs" aria-label="Tipo de relatório">
+    @for (tab of tabs; track tab.id) {
+      <app-button
+        [variant]="activeMode() === tab.id ? 'primary' : 'secondary'"
+        [attr.aria-current]="activeMode() === tab.id ? 'page' : null"
+        (pressed)="selectMode(tab.id)"
+      >
+        {{ tab.label }} · {{ tab.basis }}
+      </app-button>
+    }
+  </nav>
+
+  <app-card title="Período do relatório" [subtitle]="basisDescription(activeTab().basis)">
+    <form class="reports__filters" [formGroup]="filters" (ngSubmit)="loadReport()">
+      @switch (activeMode()) {
+        @case ('daily') {
+          <app-form-field label="Data" controlId="report-date" [required]="true">
+            <input appInput id="report-date" type="date" formControlName="date" />
+          </app-form-field>
+        }
+        @case ('weekly') {
+          <app-form-field label="Data da semana" controlId="report-date" [required]="true">
+            <input appInput id="report-date" type="date" formControlName="date" />
+          </app-form-field>
+        }
+        @case ('monthly') {
+          <app-form-field label="Mês" controlId="report-month" [required]="true">
+            <input appInput id="report-month" type="month" formControlName="month" />
+          </app-form-field>
+        }
+        @case ('annual') {
+          <app-form-field label="Ano" controlId="report-year" [required]="true">
+            <input
+              appInput
+              id="report-year"
+              type="number"
+              min="1"
+              max="9999"
+              formControlName="year"
+            />
+          </app-form-field>
+        }
+        @case ('competence') {
+          <app-form-field label="Data inicial" controlId="report-start-date" [required]="true">
+            <input appInput id="report-start-date" type="date" formControlName="startDate" />
+          </app-form-field>
+          <app-form-field label="Data final" controlId="report-end-date" [required]="true">
+            <input appInput id="report-end-date" type="date" formControlName="endDate" />
+          </app-form-field>
+        }
+      }
+
+      <app-button type="submit" [loading]="state() === 'loading'"> Gerar relatório </app-button>
+    </form>
+
+    @if (validationMessage(); as message) {
+      <p class="reports__validation" role="alert">{{ message }}</p>
+    }
+  </app-card>
+
+  @if (state() === 'loading') {
+    <div class="reports__skeletons" aria-label="Carregando relatório">
+      <app-skeleton height="12rem" />
+      <app-skeleton height="16rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar o relatório"
+      message="Revise o período e tente novamente."
+      (retry)="loadReport()"
+    />
+  } @else if (result(); as report) {
+    @if (report.mode === 'annual') {
+      <section class="reports__result" aria-label="Relatório anual de caixa">
+        <app-card [title]="report.title" [subtitle]="'Ano de ' + report.period">
+          <div card-actions>
+            <app-badge [label]="report.basis" tone="info" />
+          </div>
+
+          <p class="reports__basis-label">Base: {{ basisDescription(report.basis) }}</p>
+          <p class="reports__chart-description">
+            Gráfico da evolução mensal. A tabela equivalente está disponível logo abaixo.
+          </p>
+
+          <div
+            class="reports__annual-chart"
+            role="img"
+            [attr.aria-label]="annualChartDescription(report)"
+          >
+            @let maximum = annualMaximum(report);
+            @for (month of report.data.evolution; track month.month) {
+              <article class="reports__annual-row">
+                <h3>{{ monthLabel(month.month) }}</h3>
+                <div class="reports__annual-values">
+                  <span>Entradas {{ month.totals.inflows | currency: 'BRL' }}</span>
+                  <span>Saídas {{ month.totals.outflows | currency: 'BRL' }}</span>
+                  <span>Resultado {{ month.totals.net | currency: 'BRL' }}</span>
+                </div>
+                <div class="reports__annual-bars" aria-hidden="true">
+                  <span class="reports__annual-track"
+                    ><i
+                      class="reports__annual-bar reports__annual-bar--income"
+                      [style.width.%]="annualBarWidth(month.totals.inflows, maximum)"
+                    ></i
+                  ></span>
+                  <span class="reports__annual-track"
+                    ><i
+                      class="reports__annual-bar reports__annual-bar--expense"
+                      [style.width.%]="annualBarWidth(month.totals.outflows, maximum)"
+                    ></i
+                  ></span>
+                  <span class="reports__annual-track"
+                    ><i
+                      class="reports__annual-bar"
+                      [class.reports__annual-bar--negative]="month.totals.net < 0"
+                      [style.width.%]="annualBarWidth(month.totals.net, maximum)"
+                    ></i
+                  ></span>
+                </div>
+              </article>
+            }
+          </div>
+
+          <div class="reports__table-wrapper">
+            <table>
+              <caption>
+                Tabela alternativa ao gráfico anual de fluxo de caixa.
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Mês</th>
+                  <th scope="col">Entradas</th>
+                  <th scope="col">Saídas</th>
+                  <th scope="col">Resultado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (month of report.data.evolution; track month.month) {
+                  <tr>
+                    <th scope="row">{{ monthLabel(month.month) }}</th>
+                    <td>{{ month.totals.inflows | currency: 'BRL' }}</td>
+                    <td>{{ month.totals.outflows | currency: 'BRL' }}</td>
+                    <td>{{ month.totals.net | currency: 'BRL' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </app-card>
+      </section>
+    } @else {
+      <section class="reports__result" aria-label="Resumo do relatório">
+        <app-card [title]="report.title" [subtitle]="report.period">
+          <div card-actions>
+            <app-badge
+              [label]="report.basis"
+              [tone]="report.basis === 'CASH' ? 'info' : 'neutral'"
+            />
+          </div>
+
+          <p class="reports__basis-label">Base: {{ basisDescription(report.basis) }}</p>
+
+          <dl class="reports__summary">
+            <div>
+              <dt>{{ incomeLabel(report) }}</dt>
+              <dd>{{ report.summary.inflows | currency: 'BRL' }}</dd>
+            </div>
+            <div>
+              <dt>{{ expenseLabel(report) }}</dt>
+              <dd>{{ report.summary.outflows | currency: 'BRL' }}</dd>
+            </div>
+            <div>
+              <dt>Resultado</dt>
+              <dd>{{ report.summary.net | currency: 'BRL' }}</dd>
+            </div>
+            @if (report.basis === 'CASH') {
+              <div>
+                <dt>Pagamentos de fatura</dt>
+                <dd>{{ report.summary.invoicePayments | currency: 'BRL' }}</dd>
+                <small>Já incluídos nas saídas.</small>
+              </div>
+            }
+          </dl>
+
+          @if (report.previousSummary; as previousSummary) {
+            <section class="reports__comparison" aria-label="Comparação semanal">
+              <h3>Comparação com {{ report.previousPeriod }}</h3>
+              <p>
+                Semana anterior: entradas {{ previousSummary.inflows | currency: 'BRL' }}, saídas
+                {{ previousSummary.outflows | currency: 'BRL' }} e resultado
+                {{ previousSummary.net | currency: 'BRL' }}.
+              </p>
+              @if (report.comparison; as comparison) {
+                <dl>
+                  <div>
+                    <dt>Variação das entradas</dt>
+                    <dd>{{ comparison.inflowsDifference | currency: 'BRL' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Variação das saídas</dt>
+                    <dd>{{ comparison.outflowsDifference | currency: 'BRL' }}</dd>
+                  </div>
+                  <div>
+                    <dt>Variação do resultado</dt>
+                    <dd>{{ comparison.netDifference | currency: 'BRL' }}</dd>
+                  </div>
+                </dl>
+              }
+            </section>
+          }
+        </app-card>
+
+        <app-card title="Categorias" subtitle="Distribuição das receitas e despesas do período.">
+          <app-report-category-chart
+            [entries]="categoryEntries(report.summary)"
+            title="Distribuição por categoria"
+            tableCaption="Tabela alternativa ao gráfico de categorias."
+          />
+        </app-card>
+      </section>
+    }
+  }
 </section>

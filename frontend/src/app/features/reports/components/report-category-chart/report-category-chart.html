@@ -1,0 +1,56 @@
+<section class="report-category-chart" [attr.aria-label]="title()">
+  <h3>{{ title() }}</h3>
+
+  @if (entries().length > 0) {
+    <p class="report-category-chart__description">
+      Gráfico de barras por categoria. A tabela equivalente aparece logo abaixo.
+    </p>
+
+    <div class="report-category-chart__bars" role="img" [attr.aria-label]="chartDescription()">
+      @for (entry of entries(); track entry.type + entry.label) {
+        <div class="report-category-chart__bar-row">
+          <div class="report-category-chart__label">
+            <span>{{ entry.type }}: {{ entry.label }}</span>
+            <strong>{{ entry.amount | currency: 'BRL' }}</strong>
+          </div>
+          <div class="report-category-chart__track" aria-hidden="true">
+            <span
+              class="report-category-chart__bar"
+              [class.report-category-chart__bar--income]="entry.type === 'Receita'"
+              [class.report-category-chart__bar--expense]="entry.type === 'Despesa'"
+              [style.width.%]="barWidth(entry.amount)"
+            ></span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="report-category-chart__table-wrapper">
+      <table>
+        <caption>
+          {{
+            tableCaption()
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Tipo</th>
+            <th scope="col">Categoria</th>
+            <th scope="col">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.type + entry.label) {
+            <tr>
+              <td>{{ entry.type }}</td>
+              <td>{{ entry.label }}</td>
+              <td>{{ entry.amount | currency: 'BRL' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="report-category-chart__empty">Não há movimentações por categoria neste período.</p>
+  }
+</section>

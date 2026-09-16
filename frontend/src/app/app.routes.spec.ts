@@ -15,6 +15,7 @@ import { CreditCardApiService } from './features/credit-cards/data-access/credit
 import { DashboardApiService } from './features/dashboard/data-access/dashboard-api.service';
 import { InvoiceApiService } from './features/invoices/data-access/invoice-api.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
+import { ReportApiService } from './features/reports/data-access/report-api.service';
 import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
 import { TransactionExportApiService } from './features/transactions/data-access/transaction-export-api.service';
 import { TransferApiService } from './features/transfers/data-access/transfer-api.service';
@@ -64,6 +65,31 @@ describe('Application routes', () => {
                 updatedAt: '2026-09-02T12:30:00Z',
               }),
             updateCurrentUser: vi.fn(),
+          },
+        },
+        {
+          provide: ReportApiService,
+          useValue: {
+            getDaily: vi.fn(),
+            getWeekly: vi.fn(),
+            getMonthly: vi.fn().mockReturnValue(
+              of({
+                year: 2026,
+                month: 9,
+                startDate: '2026-09-01',
+                endDate: '2026-09-30',
+                summary: {
+                  inflows: 0,
+                  outflows: 0,
+                  net: 0,
+                  invoicePayments: 0,
+                  incomeCategories: [],
+                  expenseCategories: [],
+                },
+              }),
+            ),
+            getAnnual: vi.fn(),
+            getCompetence: vi.fn(),
           },
         },
         {
