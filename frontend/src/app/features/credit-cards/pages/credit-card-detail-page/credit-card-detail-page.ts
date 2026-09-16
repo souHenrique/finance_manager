@@ -216,4 +216,17 @@ export class CreditCardDetailPage implements OnInit {
         };
     }
   }
+
+  goToNewPurchase(): void {
+    const creditCard = this.creditCard();
+
+    if (creditCard?.status === 'ACTIVE') {
+      void this.router.navigate([
+        '/credit-cards',
+        creditCard.id,
+        'purchases',
+        'new',
+      ]);
+    }
+  }
 }

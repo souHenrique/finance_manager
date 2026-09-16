@@ -1,0 +1,145 @@
+<form
+  class="credit-card-purchase-form"
+  [formGroup]="form"
+  (ngSubmit)="submit()"
+  novalidate
+>
+  <app-alert
+    tone="info"
+    title="Impacto da compra"
+    message="A compra reduz o limite disponível do cartão. Ela não reduz o saldo de nenhuma conta bancária."
+  />
+
+  <fieldset
+    class="credit-card-purchase-form__fields"
+    [disabled]="submitting()"
+  >
+    <app-form-field
+      label="Descrição"
+      controlId="purchase-description"
+      [required]="true"
+      [error]="descriptionError()"
+    >
+      <input
+        appInput
+        id="purchase-description"
+        type="text"
+        formControlName="description"
+        maxlength="255"
+        autocomplete="off"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Valor total"
+      controlId="purchase-amount"
+      [required]="true"
+      [error]="amountError()"
+    >
+      <input
+        appInput
+        id="purchase-amount"
+        type="number"
+        formControlName="amount"
+        min="0.01"
+        step="0.01"
+        inputmode="decimal"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Data da compra"
+      controlId="purchase-date"
+      [required]="true"
+      [error]="purchaseDateError()"
+    >
+      <input
+        appInput
+        id="purchase-date"
+        type="date"
+        formControlName="purchaseDate"
+      />
+    </app-form-field>
+
+    <app-form-field
+      label="Categoria de despesa"
+      controlId="purchase-category"
+      [required]="true"
+      [error]="categoryError()"
+    >
+      <select
+        appSelect
+        id="purchase-category"
+        formControlName="categoryId"
+      >
+        <option value="">Selecione uma categoria</option>
+
+        @for (category of activeExpenseCategories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field
+      label="Quantidade de parcelas"
+      controlId="installment-count"
+      [required]="true"
+      hint="Use 1 para uma compra à vista."
+      [error]="installmentCountError()"
+    >
+      <input
+        appInput
+        id="installment-count"
+        type="number"
+        formControlName="installmentCount"
+        min="1"
+        step="1"
+        inputmode="numeric"
+      />
+    </app-form-field>
+  </fieldset>
+
+  @if (activeExpenseCategories().length === 0) {
+    <p class="credit-card-purchase-form__warning" role="alert">
+      Cadastre ou ative uma categoria de despesa antes de registrar uma compra.
+    </p>
+  }
+
+  @if (
+    form.controls.amount.valid &&
+    form.controls.installmentCount.valid &&
+    form.controls.amount.value &&
+    form.controls.installmentCount.value
+    ) {
+    <aside class="credit-card-purchase-form__summary" aria-live="polite">
+      <strong>Resumo informado</strong>
+      <span>
+        {{ formatAmount(form.controls.amount.value) }} em
+        {{ form.controls.installmentCount.value }}
+        parcela(s).
+      </span>
+      <small>
+        O backend calculará os valores finais das parcelas, competências e faturas.
+      </small>
+    </aside>
+  }
+
+  <div class="credit-card-purchase-form__actions">
+    <app-button
+      type="button"
+      variant="secondary"
+      [disabled]="submitting()"
+      (pressed)="cancelled.emit()"
+    >
+      Cancelar
+    </app-button>
+
+    <app-button
+      type="submit"
+      [loading]="submitting()"
+      [disabled]="submitting() || activeExpenseCategories().length === 0"
+    >
+      Registrar compra
+    </app-button>
+  </div>
+</form>

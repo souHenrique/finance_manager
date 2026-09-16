@@ -112,6 +112,7 @@ describe('CreditCardDetailPage', () => {
     const content = fixture.nativeElement.textContent as string;
 
     expect(content).toContain('Editar');
+    expect(content).toContain('Nova compra');
     expect(content).toContain('Bloquear cartão');
     expect(content).toContain('Inativar cartão');
   });
@@ -169,8 +170,17 @@ describe('CreditCardDetailPage', () => {
     const content = fixture.nativeElement.textContent as string;
 
     expect(content).toContain('Ativar cartão');
+    expect(content).not.toContain('Nova compra');
     expect(content).not.toContain('Bloquear cartão');
     expect(content).not.toContain('Inativar cartão');
+  });
+
+  it('should not expose new purchases for a blocked card', () => {
+    creditCardApi.findById.mockReturnValue(of({ ...creditCard, status: 'BLOCKED' }));
+
+    createPage();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Nova compra');
   });
 
   it('should navigate to card editing and back to the card list', () => {
@@ -181,5 +191,18 @@ describe('CreditCardDetailPage', () => {
 
     expect(router.navigate).toHaveBeenNthCalledWith(1, ['/credit-cards', creditCard.id, 'edit']);
     expect(router.navigate).toHaveBeenNthCalledWith(2, ['/credit-cards']);
+  });
+
+  it('should navigate to a new purchase only for an active card', () => {
+    createPage();
+
+    component.goToNewPurchase();
+
+    expect(router.navigate).toHaveBeenCalledWith([
+      '/credit-cards',
+      creditCard.id,
+      'purchases',
+      'new',
+    ]);
   });
 });

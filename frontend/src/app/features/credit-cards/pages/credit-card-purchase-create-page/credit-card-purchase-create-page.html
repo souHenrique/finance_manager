@@ -1,0 +1,91 @@
+<section class="page" aria-labelledby="credit-card-purchase-create-title">
+  <header class="page__header">
+    <div>
+      <h1 id="credit-card-purchase-create-title">Nova compra no cartão</h1>
+
+      @if (creditCard(); as currentCreditCard) {
+        <p>
+          Registre uma compra no cartão {{ currentCreditCard.name }}.
+          O saldo da conta bancária não será alterado.
+        </p>
+      } @else {
+        <p>Registre uma compra à vista ou parcelada no cartão.</p>
+      }
+    </div>
+  </header>
+
+  @if (state() === 'loading') {
+    <div
+      class="credit-card-purchase-create__skeletons"
+      aria-label="Carregando dados da compra"
+    >
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+      <app-skeleton height="2rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível preparar a compra"
+      message="Não foi possível carregar o cartão ou as categorias."
+      (retry)="loadData()"
+    />
+  } @else if (creditCard(); as currentCreditCard) {
+    @if (currentCreditCard.status !== 'ACTIVE') {
+      <div class="credit-card-purchase-create__blocked">
+        <app-alert
+          tone="warning"
+          title="Cartão indisponível para compras"
+          message="Ative o cartão antes de registrar uma nova compra."
+        />
+
+        <app-button variant="secondary" (pressed)="goBack()">
+          Voltar para o cartão
+        </app-button>
+      </div>
+    } @else if (!hasActiveExpenseCategories()) {
+      <div class="credit-card-purchase-create__blocked">
+        <app-alert
+          tone="warning"
+          title="Nenhuma categoria de despesa disponível"
+          message="Crie ou ative uma categoria de despesa antes de registrar uma compra."
+        />
+
+        <div class="credit-card-purchase-create__actions">
+          <app-button variant="secondary" (pressed)="goBack()">
+            Voltar para o cartão
+          </app-button>
+
+          <app-button (pressed)="goToCategories()">
+            Ir para Categorias
+          </app-button>
+        </div>
+      </div>
+    } @else {
+      @if (conflictMessage()) {
+        <div class="credit-card-purchase-create__conflict">
+          <app-alert
+            tone="warning"
+            title="Não foi possível registrar a compra"
+            [message]="conflictMessage()"
+          />
+
+          <app-button
+            variant="secondary"
+            [disabled]="isSubmitting()"
+            (pressed)="loadData()"
+          >
+            Recarregar dados do cartão
+          </app-button>
+        </div>
+      }
+
+      <app-credit-card-purchase-form
+        [categories]="categories()"
+        [submitting]="isSubmitting()"
+        (submitted)="createPurchase($event)"
+        (cancelled)="goBack()"
+      />
+    }
+  }
+</section>

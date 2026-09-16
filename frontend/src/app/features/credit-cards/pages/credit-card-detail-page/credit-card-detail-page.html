@@ -94,6 +94,10 @@
           >
             Inativar cartão
           </app-button>
+
+          <app-button (pressed)="goToNewPurchase()">
+            Nova compra
+          </app-button>
         } @else if (currentCreditCard.status === 'BLOCKED') {
           <app-button
             [loading]="changingStatus() === 'ACTIVE'"

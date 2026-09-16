@@ -1,0 +1,23 @@
+.credit-card-purchase-create__skeletons,
+.credit-card-purchase-create__blocked,
+.credit-card-purchase-create__conflict {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
+}
+
+.credit-card-purchase-create__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 640px) {
+  .credit-card-purchase-create__actions {
+    flex-direction: column-reverse;
+  }
+
+  .credit-card-purchase-create__actions app-button {
+    width: 100%;
+  }
+}
