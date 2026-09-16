@@ -1,6 +1,235 @@
 <section class="page" aria-labelledby="invoice-detail-title">
   <header class="page__header">
-    <h1 id="invoice-detail-title">Detalhes da fatura</h1>
-    <p>Consulte os lançamentos e o status da fatura.</p>
+    <div>
+      <h1 id="invoice-detail-title">Detalhes da fatura</h1>
+      <p>Consulte compras, parcelas, créditos e o status de pagamento.</p>
+    </div>
+
+    <app-button variant="secondary" (pressed)="goBack()"> Voltar para faturas </app-button>
   </header>
+
+  @if (state() === 'loading') {
+    <div class="invoice-detail__skeletons" aria-label="Carregando fatura">
+      <app-skeleton height="2rem" />
+      <app-skeleton height="14rem" />
+      <app-skeleton height="16rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar a fatura"
+      message="Tente novamente em instantes."
+      (retry)="loadInvoice()"
+    />
+  } @else if (invoice(); as currentInvoice) {
+    @if (creditCard(); as currentCreditCard) {
+      @if (conflictMessage()) {
+        <div class="invoice-detail__conflict">
+          <app-alert tone="warning" title="A fatura foi alterada" [message]="conflictMessage()" />
+
+          <app-button
+            variant="secondary"
+            [disabled]="isProcessing()"
+            (pressed)="reloadAfterConflict()"
+          >
+            Recarregar fatura
+          </app-button>
+        </div>
+      }
+
+      <app-card
+        [title]="'Fatura ' + referenceLabel(currentInvoice)"
+        [subtitle]="'Cartão: ' + currentCreditCard.name"
+      >
+        <div card-actions>
+          <app-badge
+            [label]="statusLabel(currentInvoice.status)"
+            [tone]="statusTone(currentInvoice.status)"
+          />
+        </div>
+
+        <dl class="invoice-detail__data">
+          <div>
+            <dt>Período</dt>
+            <dd>{{ referenceLabel(currentInvoice) }}</dd>
+          </div>
+
+          <div>
+            <dt>Fechamento</dt>
+            <dd>{{ formatDate(currentInvoice.closingDate) }}</dd>
+          </div>
+
+          <div>
+            <dt>Vencimento</dt>
+            <dd>{{ formatDate(currentInvoice.dueDate) }}</dd>
+          </div>
+
+          <div>
+            <dt>Valor total</dt>
+            <dd>R$ {{ currentInvoice.totalAmount | number: '1.2-2' }}</dd>
+          </div>
+
+          <div>
+            <dt>Versão</dt>
+            <dd>{{ currentInvoice.version }}</dd>
+          </div>
+
+          @if (currentInvoice.paidAt) {
+            <div>
+              <dt>Pagamento registrado</dt>
+              <dd>{{ currentInvoice.paidAt }}</dd>
+            </div>
+          }
+        </dl>
+
+        <div class="invoice-detail__actions">
+          <app-button variant="secondary" [disabled]="isProcessing()" (pressed)="goToCreditCard()">
+            Ver cartão
+          </app-button>
+
+          @if (currentInvoice.status === 'OPEN') {
+            <app-button
+              [loading]="operation() === 'closing'"
+              [disabled]="isProcessing()"
+              (pressed)="closeInvoice()"
+            >
+              Fechar fatura
+            </app-button>
+          }
+
+          @if (currentInvoice.status === 'CLOSED') {
+            <app-button [disabled]="isProcessing()" (pressed)="openPaymentForm()">
+              Pagar fatura
+            </app-button>
+          }
+        </div>
+      </app-card>
+
+      @if (currentInvoice.status === 'CLOSED' && activeAccounts().length === 0) {
+        <app-alert
+          tone="info"
+          title="Pagamento exclusivamente com créditos"
+          message="Não há conta ativa disponível. O pagamento só poderá ser concluído se os créditos elegíveis quitarem o valor integral da fatura."
+        />
+      }
+
+      @if (currentInvoice.status === 'CLOSED' && isPaymentFormOpen()) {
+        <section class="invoice-detail__payment" aria-labelledby="invoice-payment-title">
+          <h2 id="invoice-payment-title">Pagar fatura</h2>
+
+          <p>
+            O backend aplicará automaticamente créditos elegíveis e definirá o valor efetivamente
+            debitado da conta.
+          </p>
+
+          <form [formGroup]="paymentForm" (ngSubmit)="payInvoice()" novalidate>
+            <fieldset [disabled]="isProcessing()">
+              <app-form-field
+                label="Conta de pagamento"
+                controlId="payment-account"
+                hint="Opcional quando créditos elegíveis quitarem todo o valor da fatura."
+              >
+                <select appSelect id="payment-account" formControlName="sourceAccountId">
+                  <option value="">Usar créditos disponíveis</option>
+
+                  @for (account of activeAccounts(); track account.id) {
+                    <option [value]="account.id">
+                      {{ account.name }} —
+                      {{ account.institution || 'Instituição não informada' }}
+                    </option>
+                  }
+                </select>
+              </app-form-field>
+            </fieldset>
+
+            <div class="invoice-detail__payment-actions">
+              <app-button
+                type="button"
+                variant="secondary"
+                [disabled]="isProcessing()"
+                (pressed)="isPaymentFormOpen.set(false)"
+              >
+                Cancelar
+              </app-button>
+
+              <app-button
+                type="submit"
+                [loading]="operation() === 'paying'"
+                [disabled]="isProcessing()"
+              >
+                Confirmar pagamento
+              </app-button>
+            </div>
+          </form>
+        </section>
+      }
+
+      @if (currentInvoice.status === 'PAID') {
+        <app-alert
+          tone="success"
+          title="Fatura quitada"
+          message="O pagamento já foi registrado. Não há novas ações financeiras disponíveis."
+        />
+      }
+
+      @if (currentInvoice.status === 'CANCELLED') {
+        <app-alert
+          tone="info"
+          title="Fatura cancelada"
+          message="Esta fatura permanece disponível apenas para consulta do histórico."
+        />
+      }
+
+      @if (currentInvoice.creditAppliedAmount > 0) {
+        <section class="invoice-detail__credit" aria-labelledby="invoice-credit-title">
+          <h2 id="invoice-credit-title">Créditos aplicados</h2>
+          <p>
+            R$
+            {{ currentInvoice.creditAppliedAmount | number: '1.2-2' }}
+            foram aplicados pelo backend nesta fatura.
+          </p>
+        </section>
+      }
+
+      <section class="invoice-detail__transactions" aria-labelledby="invoice-transactions-title">
+        <h2 id="invoice-transactions-title">Compras e parcelas</h2>
+
+        @if (currentInvoice.transactions.length === 0) {
+          <p>Nenhuma compra ou parcela vinculada a esta fatura.</p>
+        } @else {
+          <div class="invoice-detail__table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">Competência</th>
+                  <th scope="col">Descrição</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Parcela</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Valor</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (transaction of currentInvoice.transactions; track transaction.id) {
+                  <tr>
+                    <td>{{ formatDate(transaction.competenceDate) }}</td>
+                    <td>{{ transaction.description }}</td>
+                    <td>{{ transactionTypeLabel(transaction.type) }}</td>
+                    <td>{{ installmentLabel(transaction) }}</td>
+                    <td>
+                      <app-badge
+                        [label]="transactionStatusLabel(transaction.status)"
+                        [tone]="transactionStatusTone(transaction.status)"
+                      />
+                    </td>
+                    <td>R$ {{ transaction.amount | number: '1.2-2' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
 </section>

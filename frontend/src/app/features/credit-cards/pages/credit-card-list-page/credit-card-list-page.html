@@ -25,9 +25,7 @@
       title="Nenhum cartão cadastrado"
       description="Cadastre um cartão para acompanhar seus limites e faturas."
     >
-      <app-button empty-state-actions routerLink="/credit-cards/new">
-        Novo cartão
-      </app-button>
+      <app-button empty-state-actions routerLink="/credit-cards/new"> Novo cartão </app-button>
     </app-empty-state>
   } @else {
     <div class="credit-card-list">
@@ -68,11 +66,15 @@
           </dl>
 
           <div class="credit-card-list__actions">
+            <app-button variant="secondary" [routerLink]="['/credit-cards', creditCard.id]">
+              Ver detalhes
+            </app-button>
             <app-button
               variant="secondary"
-              [routerLink]="['/credit-cards', creditCard.id]"
+              [routerLink]="['/invoices']"
+              [queryParams]="{ creditCardId: creditCard.id }"
             >
-              Ver detalhes
+              Ver faturas
             </app-button>
           </div>
         </app-card>

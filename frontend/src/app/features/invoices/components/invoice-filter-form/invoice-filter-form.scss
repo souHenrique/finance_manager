@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.invoice-filter-form__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.invoice-filter-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+@media (max-width: 1024px) {
+  .invoice-filter-form__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .invoice-filter-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-filter-form__actions {
+    flex-direction: column-reverse;
+  }
+
+  .invoice-filter-form__actions app-button {
+    width: 100%;
+  }
+}

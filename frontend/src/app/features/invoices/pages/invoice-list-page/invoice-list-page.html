@@ -1,6 +1,91 @@
 <section class="page" aria-labelledby="invoices-title">
   <header class="page__header">
-    <h1 id="invoices-title">Faturas</h1>
-    <p>Acompanhe as faturas dos seus cartões de crédito.</p>
+    <div>
+      <h1 id="invoices-title">Faturas</h1>
+      <p>Consulte faturas, vencimentos, valores e o histórico dos cartões.</p>
+    </div>
   </header>
+
+  <app-invoice-filter-form
+    [initialFilters]="filters()"
+    [creditCards]="creditCards()"
+    [submitting]="state() === 'loading'"
+    (applied)="applyFilters($event)"
+    (cleared)="clearFilters()"
+  />
+
+  @if (hasCreditCardsError()) {
+    <app-alert
+      tone="warning"
+      title="Não foi possível carregar os cartões"
+      message="A listagem de faturas continua disponível, mas o filtro por cartão pode estar incompleto."
+    />
+  }
+
+  @if (state() === 'loading') {
+    <div class="invoice-list__skeletons" aria-label="Carregando faturas">
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+      <app-skeleton height="3rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar as faturas"
+      message="Tente novamente em instantes."
+      (retry)="loadInvoices()"
+    />
+  } @else if (result(); as pageResult) {
+    @if (pageResult.content.length === 0) {
+      <app-empty-state
+        title="Nenhuma fatura encontrada"
+        description="Altere os filtros ou registre uma compra no cartão para gerar uma fatura."
+      />
+    } @else {
+      <div class="invoice-list__table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Cartão</th>
+              <th scope="col">Referência</th>
+              <th scope="col">Fechamento</th>
+              <th scope="col">Vencimento</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Status</th>
+              <th scope="col">Ações</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (invoice of pageResult.content; track invoice.id) {
+              <tr>
+                <td>{{ creditCardName(invoice.creditCardId) }}</td>
+                <td>{{ referenceLabel(invoice) }}</td>
+                <td>{{ formatDate(invoice.closingDate) }}</td>
+                <td>{{ formatDate(invoice.dueDate) }}</td>
+                <td>R$ {{ invoice.totalAmount | number: '1.2-2' }}</td>
+                <td>
+                  <app-badge
+                    [label]="statusLabel(invoice.status)"
+                    [tone]="statusTone(invoice.status)"
+                  />
+                </td>
+                <td>
+                  <a [routerLink]="['/invoices', invoice.id]"> Ver detalhes </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (pageResult.totalPages > 1) {
+        <app-pagination
+          [currentPage]="pageResult.page + 1"
+          [totalPages]="pageResult.totalPages"
+          [disabled]="state() === 'loading'"
+          (pageChange)="changePage($event)"
+        />
+      }
+    }
+  }
 </section>

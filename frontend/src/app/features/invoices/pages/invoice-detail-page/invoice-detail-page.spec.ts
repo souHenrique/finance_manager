@@ -1,24 +1,344 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Subject, of, throwError } from 'rxjs';
+
+import { AccountApiService } from '../../../accounts/data-access/account-api.service';
+import { Account } from '../../../accounts/models/account.models';
+import { CreditCardApiService } from '../../../credit-cards/data-access/credit-card-api.service';
+import { CreditCard } from '../../../credit-cards/models/credit-card.models';
+import { Transaction } from '../../../transactions/models/transaction.models';
+import { AppDialogService } from '../../../../core/feedback/dialog/dialog.service';
+import { ToastService } from '../../../../core/feedback/toast/toast.service';
+import { ApiRequestError } from '../../../../core/http/api-request-error';
+import { InvoiceApiService } from '../../data-access/invoice-api.service';
+import { InvoiceDetail } from '../../models/invoice.models';
 import { InvoiceDetailPage } from './invoice-detail-page';
 
 describe('InvoiceDetailPage', () => {
   let fixture: ComponentFixture<InvoiceDetailPage>;
+  let component: InvoiceDetailPage;
+  let accountApi: { findAll: ReturnType<typeof vi.fn> };
+  let creditCardApi: { findById: ReturnType<typeof vi.fn> };
+  let dialog: { confirm: ReturnType<typeof vi.fn> };
+  let invoiceApi: {
+    findById: ReturnType<typeof vi.fn>;
+    close: ReturnType<typeof vi.fn>;
+    pay: ReturnType<typeof vi.fn>;
+  };
+  let router: { navigate: ReturnType<typeof vi.fn> };
+  let toast: { show: ReturnType<typeof vi.fn> };
+
+  const account: Account = {
+    id: '0f6d7313-77f8-4b48-a63d-5338dd95461e',
+    name: 'Conta Walter',
+    type: 'CHECKING',
+    institution: 'Banco Albuquerque',
+    initialBalance: 1500,
+    currentBalance: 1800,
+    status: 'ACTIVE',
+    version: 1,
+    createdAt: '2026-09-16T10:00:00Z',
+    updatedAt: '2026-09-16T10:00:00Z',
+  };
+
+  const inactiveAccount: Account = {
+    ...account,
+    id: 'a63330b4-5742-4e7e-9e4f-547b4df7246d',
+    name: 'Conta Gus',
+    status: 'INACTIVE',
+  };
+
+  const creditCard: CreditCard = {
+    id: 'd89835ee-3463-4a35-a2e9-38d96ab17418',
+    name: 'Cartão Heisenberg',
+    creditLimit: 5000,
+    availableLimit: 3200,
+    closingDay: 10,
+    dueDay: 17,
+    defaultAccountId: account.id,
+    status: 'ACTIVE',
+    version: 2,
+  };
+
+  const purchase: Transaction = {
+    id: '3e207b3a-769a-42c6-bffc-2989bb091212',
+    description: 'Mercado do Jesse',
+    amount: 116.96,
+    competenceDate: '2026-09-16',
+    effectiveDate: null,
+    dueDate: '2026-10-17',
+    type: 'CREDIT_CARD_PURCHASE',
+    status: 'COMPLETED',
+    paymentMethod: 'CREDIT_CARD',
+    sourceAccountId: null,
+    destinationAccountId: null,
+    categoryId: '4e207b3a-769a-42c6-bffc-2989bb091212',
+    creditCardId: creditCard.id,
+    invoiceId: '72486234-ef50-4c7e-99a7-9193a28533a8',
+    installmentGroupId: '5e207b3a-769a-42c6-bffc-2989bb091212',
+    installmentNumber: 2,
+    installmentCount: 3,
+    createdAt: '2026-09-16T10:00:00Z',
+    updatedAt: '2026-09-16T10:00:00Z',
+  };
+
+  const invoice: InvoiceDetail = {
+    id: '72486234-ef50-4c7e-99a7-9193a28533a8',
+    creditCardId: creditCard.id,
+    referenceMonth: 9,
+    referenceYear: 2026,
+    closingDate: '2026-09-20',
+    dueDate: '2026-09-28',
+    totalAmount: 850.75,
+    status: 'OPEN',
+    paidAt: null,
+    version: 4,
+    transactions: [purchase],
+    creditAppliedAmount: 0,
+  };
 
   beforeEach(async () => {
+    accountApi = {
+      findAll: vi.fn().mockReturnValue(of([account, inactiveAccount])),
+    };
+    creditCardApi = {
+      findById: vi.fn().mockReturnValue(of(creditCard)),
+    };
+    dialog = { confirm: vi.fn().mockReturnValue(of(true)) };
+    invoiceApi = {
+      findById: vi.fn().mockReturnValue(of(invoice)),
+      close: vi.fn().mockReturnValue(of({ ...invoice, status: 'CLOSED', version: 5 })),
+      pay: vi.fn().mockReturnValue(
+        of({
+          invoiceId: invoice.id,
+          totalAmount: invoice.totalAmount,
+          creditAppliedAmount: 0,
+          cashPaidAmount: invoice.totalAmount,
+          paymentTransactionId: '6e207b3a-769a-42c6-bffc-2989bb091212',
+          paidAt: '2026-09-28T14:30:00Z',
+        }),
+      ),
+    };
+    router = { navigate: vi.fn().mockResolvedValue(true) };
+    toast = { show: vi.fn() };
+
     await TestBed.configureTestingModule({
       imports: [InvoiceDetailPage],
+      providers: [
+        { provide: AccountApiService, useValue: accountApi },
+        { provide: CreditCardApiService, useValue: creditCardApi },
+        { provide: AppDialogService, useValue: dialog },
+        { provide: InvoiceApiService, useValue: invoiceApi },
+        { provide: Router, useValue: router },
+        { provide: ToastService, useValue: toast },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              paramMap: convertToParamMap({ id: invoice.id }),
+            },
+          },
+        },
+      ],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(InvoiceDetailPage);
-    fixture.detectChanges();
   });
 
-  it('should render the invoice details heading and description', () => {
-    const element = fixture.nativeElement as HTMLElement;
+  function createPage(): void {
+    fixture = TestBed.createComponent(InvoiceDetailPage);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  }
 
-    expect(element.querySelector('h1')?.textContent).toContain('Detalhes da fatura');
-    expect(element.querySelector('p')?.textContent).toContain(
-      'Consulte os lançamentos e o status da fatura.',
+  it('should load invoice, card, purchases, installments and version', () => {
+    createPage();
+
+    const content = fixture.nativeElement.textContent as string;
+
+    expect(invoiceApi.findById).toHaveBeenCalledWith(invoice.id);
+    expect(creditCardApi.findById).toHaveBeenCalledWith(creditCard.id);
+    expect(accountApi.findAll).toHaveBeenCalledOnce();
+    expect(content).toContain('Cartão Heisenberg');
+    expect(content).toContain('09/2026');
+    expect(content).toContain('Versão');
+    expect(content).toContain('Mercado do Jesse');
+    expect(content).toContain('Parcela 2 de 3');
+    expect(content).toContain('Fechar fatura');
+  });
+
+  it('should render loading while the invoice is pending', () => {
+    const invoices = new Subject<InvoiceDetail>();
+    invoiceApi.findById.mockReturnValue(invoices.asObservable());
+
+    createPage();
+
+    expect(fixture.nativeElement.querySelector('app-skeleton')).not.toBeNull();
+
+    invoices.next(invoice);
+    invoices.complete();
+  });
+
+  it('should show an error and retry loading the invoice', () => {
+    invoiceApi.findById
+      .mockReturnValueOnce(throwError(() => new Error('network')))
+      .mockReturnValueOnce(of(invoice));
+
+    createPage();
+
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar a fatura');
+
+    (fixture.nativeElement.querySelector('.error-state button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+    expect(component.state()).toBe('success');
+  });
+
+  it('should not close an open invoice when confirmation is cancelled', () => {
+    dialog.confirm.mockReturnValue(of(false));
+    createPage();
+
+    component.closeInvoice();
+
+    expect(invoiceApi.close).not.toHaveBeenCalled();
+  });
+
+  it('should close an open invoice with its current version and reload it', () => {
+    createPage();
+
+    component.closeInvoice();
+
+    expect(invoiceApi.close).toHaveBeenCalledWith(invoice.id, {
+      expectedVersion: invoice.version,
+    });
+    expect(toast.show).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Fatura fechada',
+      message: 'A fatura foi fechada e está pronta para pagamento.',
+    });
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+  });
+
+  it('should expose payment only for a closed invoice', () => {
+    invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
+
+    createPage();
+
+    const content = fixture.nativeElement.textContent as string;
+
+    expect(content).toContain('Pagar fatura');
+    expect(content).not.toContain('Fechar fatura');
+
+    component.openPaymentForm();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Conta de pagamento');
+    expect(component.paymentForm.controls.sourceAccountId.value).toBe(account.id);
+  });
+
+  it('should not pay a closed invoice when confirmation is cancelled', () => {
+    invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
+    dialog.confirm.mockReturnValue(of(false));
+    createPage();
+    component.openPaymentForm();
+
+    component.payInvoice();
+
+    expect(invoiceApi.pay).not.toHaveBeenCalled();
+  });
+
+  it('should pay a closed invoice with the selected active account and reload it', () => {
+    invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
+    createPage();
+    component.openPaymentForm();
+
+    component.payInvoice();
+
+    expect(invoiceApi.pay).toHaveBeenCalledWith(invoice.id, {
+      sourceAccountId: account.id,
+      expectedVersion: invoice.version,
+    });
+    expect(toast.show).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Fatura paga',
+      message: 'O pagamento foi registrado e o limite do cartão foi atualizado.',
+    });
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+  });
+
+  it('should allow a credit-only payment without requiring an account', () => {
+    invoiceApi.findById.mockReturnValue(of({ ...invoice, status: 'CLOSED' }));
+    accountApi.findAll.mockReturnValue(of([inactiveAccount]));
+    createPage();
+    component.openPaymentForm();
+
+    component.payInvoice();
+
+    expect(invoiceApi.pay).toHaveBeenCalledWith(invoice.id, {
+      sourceAccountId: null,
+      expectedVersion: invoice.version,
+    });
+  });
+
+  it('should show credit information and no financial actions for paid or cancelled invoices', () => {
+    invoiceApi.findById.mockReturnValue(
+      of({
+        ...invoice,
+        status: 'PAID',
+        paidAt: '2026-09-28T14:30:00Z',
+        creditAppliedAmount: 50,
+      }),
     );
+
+    createPage();
+
+    const paidContent = fixture.nativeElement.textContent as string;
+
+    expect(paidContent).toContain('Créditos aplicados');
+    expect(paidContent).toContain('Fatura quitada');
+    expect(paidContent).not.toContain('Fechar fatura');
+    expect(paidContent).not.toContain('Pagar fatura');
+
+    component.invoice.set({ ...invoice, status: 'CANCELLED' });
+    fixture.detectChanges();
+
+    const cancelledContent = fixture.nativeElement.textContent as string;
+
+    expect(cancelledContent).toContain('Fatura cancelada');
+    expect(cancelledContent).not.toContain('Fechar fatura');
+    expect(cancelledContent).not.toContain('Pagar fatura');
+  });
+
+  it('should show a reload action for a conflict without automatically repeating the request', () => {
+    const conflict = new ApiRequestError({
+      timestamp: '2026-09-16T10:00:00Z',
+      status: 409,
+      code: 'OPTIMISTIC_LOCK_CONFLICT',
+      message: 'A fatura foi alterada. Atualize os dados e tente novamente.',
+      path: `/api/v1/invoices/${invoice.id}/close`,
+      fieldErrors: [],
+    });
+    invoiceApi.close.mockReturnValue(throwError(() => conflict));
+    createPage();
+
+    component.closeInvoice();
+    fixture.detectChanges();
+
+    expect(invoiceApi.close).toHaveBeenCalledOnce();
+    expect(fixture.nativeElement.textContent).toContain(conflict.message);
+
+    component.reloadAfterConflict();
+
+    expect(invoiceApi.close).toHaveBeenCalledOnce();
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+  });
+
+  it('should navigate back to invoices and to the related credit card', () => {
+    createPage();
+
+    component.goBack();
+    component.goToCreditCard();
+
+    expect(router.navigate).toHaveBeenNthCalledWith(1, ['/invoices']);
+    expect(router.navigate).toHaveBeenNthCalledWith(2, ['/credit-cards', creditCard.id]);
   });
 });

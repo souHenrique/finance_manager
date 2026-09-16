@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, UrlTree, provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { AccountApiService } from '../../../accounts/data-access/account-api.service';
@@ -12,6 +12,7 @@ describe('CreditCardListPage', () => {
   let fixture: ComponentFixture<CreditCardListPage>;
   let creditCardApi: { findAll: ReturnType<typeof vi.fn> };
   let accountApi: { findAll: ReturnType<typeof vi.fn> };
+  let router: Router;
 
   const account: Account = {
     id: '0f6d7313-77f8-4b48-a63d-5338dd95461e',
@@ -68,6 +69,7 @@ describe('CreditCardListPage', () => {
   function createPage(): void {
     fixture = TestBed.createComponent(CreditCardListPage);
     fixture.detectChanges();
+    router = TestBed.inject(Router);
   }
 
   it('should show skeletons while cards and accounts are loading', () => {
@@ -105,6 +107,19 @@ describe('CreditCardListPage', () => {
     expect(content).toContain('Bloqueado');
     expect(content).toContain('Dia 10');
     expect(content).toContain('Dia 17');
+    expect(content).toContain('Ver faturas');
+
+    const navigateByUrl = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const invoiceButtons = Array.from(
+      fixture.nativeElement.querySelectorAll('app-button') as NodeListOf<HTMLElement>,
+    ).filter((button) => button.textContent?.includes('Ver faturas'));
+
+    expect(invoiceButtons).toHaveLength(creditCards.length);
+
+    (invoiceButtons[0].querySelector('button') as HTMLButtonElement).click();
+
+    const urlTree = navigateByUrl.mock.calls[0]?.[0] as UrlTree;
+    expect(router.serializeUrl(urlTree)).toBe(`/invoices?creditCardId=${creditCards[0].id}`);
   });
 
   it('should display an error state and retry the loading', () => {

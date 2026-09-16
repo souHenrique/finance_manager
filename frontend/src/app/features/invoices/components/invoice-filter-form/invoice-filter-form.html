@@ -1,0 +1,72 @@
+<form [formGroup]="form" (ngSubmit)="apply()" novalidate>
+  <div class="invoice-filter-form__grid">
+    <app-form-field label="Cartão" controlId="invoice-credit-card">
+      <select appSelect id="invoice-credit-card" formControlName="creditCardId">
+        <option value="">Todos os cartões</option>
+
+        @for (creditCard of creditCards(); track creditCard.id) {
+          <option [value]="creditCard.id">
+            {{ creditCard.name }}
+            {{
+              creditCard.status !== 'ACTIVE'
+                ? ' — ' + (creditCard.status === 'BLOCKED' ? 'Bloqueado' : 'Inativo')
+                : ''
+            }}
+          </option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field
+      label="Mês de referência"
+      controlId="invoice-reference-month"
+      [error]="monthError()"
+    >
+      <select appSelect id="invoice-reference-month" formControlName="referenceMonth">
+        <option [ngValue]="null">Todos os meses</option>
+
+        @for (month of months; track month.value) {
+          <option [ngValue]="month.value">{{ month.label }}</option>
+        }
+      </select>
+    </app-form-field>
+
+    <app-form-field
+      label="Ano de referência"
+      controlId="invoice-reference-year"
+      [error]="yearError()"
+    >
+      <input
+        appInput
+        id="invoice-reference-year"
+        type="number"
+        formControlName="referenceYear"
+        min="1"
+        max="9999"
+        step="1"
+        inputmode="numeric"
+        placeholder="Ex.: 2026"
+      />
+    </app-form-field>
+
+    <app-form-field label="Status" controlId="invoice-status">
+      <select appSelect id="invoice-status" formControlName="status">
+        <option [ngValue]="null">Todos os status</option>
+
+        @for (status of statuses; track status.value) {
+          <option [value]="status.value">{{ status.label }}</option>
+        }
+      </select>
+    </app-form-field>
+  </div>
+
+  <div class="invoice-filter-form__actions">
+    <app-button type="button" variant="secondary" [disabled]="submitting()" (pressed)="clear()">
+      Limpar filtros
+    </app-button>
+
+    <app-button type="submit" [loading]="submitting()" [disabled]="submitting()">
+      Aplicar filtros
+    </app-button>
+  </div>
+</form>

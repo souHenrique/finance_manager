@@ -11,6 +11,7 @@ import { AccountApiService } from './features/accounts/data-access/account-api.s
 import { AuthService } from './features/auth/services/auth.service';
 import { CategoryApiService } from './features/categories/data-access/category-api.service';
 import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
+import { InvoiceApiService } from './features/invoices/data-access/invoice-api.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
 import { TransactionExportApiService } from './features/transactions/data-access/transaction-export-api.service';
@@ -109,6 +110,40 @@ describe('Application routes', () => {
             create: vi.fn(),
             createPurchase: vi.fn(),
             update: vi.fn(),
+          },
+        },
+        {
+          provide: InvoiceApiService,
+          useValue: {
+            findAll: vi.fn().mockReturnValue(
+              of({
+                content: [],
+                page: 0,
+                size: 20,
+                totalElements: 0,
+                totalPages: 0,
+                first: true,
+                last: true,
+              }),
+            ),
+            findById: vi.fn().mockReturnValue(
+              of({
+                id: '123',
+                creditCardId: '123',
+                referenceMonth: 9,
+                referenceYear: 2026,
+                closingDate: '2026-09-20',
+                dueDate: '2026-09-28',
+                totalAmount: 850.75,
+                status: 'OPEN',
+                paidAt: null,
+                version: 0,
+                transactions: [],
+                creditAppliedAmount: 0,
+              }),
+            ),
+            close: vi.fn(),
+            pay: vi.fn(),
           },
         },
         {
