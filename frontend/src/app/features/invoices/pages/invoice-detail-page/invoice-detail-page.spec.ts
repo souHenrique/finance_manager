@@ -5,7 +5,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { AccountApiService } from '../../../accounts/data-access/account-api.service';
 import { Account } from '../../../accounts/models/account.models';
 import { CreditCardApiService } from '../../../credit-cards/data-access/credit-card-api.service';
-import { CreditCard } from '../../../credit-cards/models/credit-card.models';
+import { CreditCard, CreditCardRefund } from '../../../credit-cards/models/credit-card.models';
 import { Transaction } from '../../../transactions/models/transaction.models';
 import { AppDialogService } from '../../../../core/feedback/dialog/dialog.service';
 import { ToastService } from '../../../../core/feedback/toast/toast.service';
@@ -18,7 +18,10 @@ describe('InvoiceDetailPage', () => {
   let fixture: ComponentFixture<InvoiceDetailPage>;
   let component: InvoiceDetailPage;
   let accountApi: { findAll: ReturnType<typeof vi.fn> };
-  let creditCardApi: { findById: ReturnType<typeof vi.fn> };
+  let creditCardApi: {
+    findById: ReturnType<typeof vi.fn>;
+    refundPurchase: ReturnType<typeof vi.fn>;
+  };
   let dialog: { confirm: ReturnType<typeof vi.fn> };
   let invoiceApi: {
     findById: ReturnType<typeof vi.fn>;
@@ -97,12 +100,26 @@ describe('InvoiceDetailPage', () => {
     creditAppliedAmount: 0,
   };
 
+  const refund: CreditCardRefund = {
+    id: 'f2031850-66b4-4cd9-924d-340765bb0e76',
+    creditCardId: creditCard.id,
+    selectedTransactionId: purchase.id,
+    installmentGroupId: purchase.installmentGroupId,
+    reason: 'Produto devolvido ao estabelecimento',
+    totalAmount: purchase.amount,
+    limitRestoredAmount: purchase.amount,
+    paidCompensationAmount: 0,
+    createdAt: '2026-09-17T11:00:00Z',
+    items: [],
+  };
+
   beforeEach(async () => {
     accountApi = {
       findAll: vi.fn().mockReturnValue(of([account, inactiveAccount])),
     };
     creditCardApi = {
       findById: vi.fn().mockReturnValue(of(creditCard)),
+      refundPurchase: vi.fn().mockReturnValue(of(refund)),
     };
     dialog = { confirm: vi.fn().mockReturnValue(of(true)) };
     invoiceApi = {
@@ -163,6 +180,111 @@ describe('InvoiceDetailPage', () => {
     expect(content).toContain('Mercado do Jesse');
     expect(content).toContain('Parcela 2 de 3');
     expect(content).toContain('Fechar fatura');
+    expect(content).toContain('Estornar compra');
+  });
+
+  it('should only offer a refund for an eligible credit card purchase', () => {
+    createPage();
+
+    expect(component.isRefundEligible(purchase)).toBe(true);
+
+    component.invoice.set({
+      ...invoice,
+      transactions: [{ ...purchase, status: 'CANCELLED' }],
+    });
+    fixture.detectChanges();
+
+    expect(component.isRefundEligible({ ...purchase, status: 'CANCELLED' })).toBe(false);
+    expect(fixture.nativeElement.textContent).not.toContain('Estornar compra');
+  });
+
+  it('should require a non-blank reason with at most 500 characters before refund confirmation', () => {
+    createPage();
+    component.openRefundForm(purchase);
+    fixture.detectChanges();
+
+    const reasonField = fixture.nativeElement.querySelector(
+      '#refund-reason',
+    ) as HTMLTextAreaElement;
+
+    expect(reasonField.maxLength).toBe(500);
+
+    component.refundForm.controls.reason.setValue('   ');
+    component.submitRefund();
+    fixture.detectChanges();
+
+    expect(creditCardApi.refundPurchase).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('Informe o motivo do estorno.');
+
+    reasonField.value = 'a'.repeat(501);
+    reasonField.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(component.refundForm.controls.reason.value).toHaveLength(501);
+    expect(component.refundForm.controls.reason.hasError('required')).toBe(false);
+    expect(component.refundForm.controls.reason.hasError('maxlength')).toBe(true);
+
+    component.submitRefund();
+    fixture.detectChanges();
+
+    expect(creditCardApi.refundPurchase).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain(
+      'O motivo deve ter no máximo 500 caracteres.',
+    );
+  });
+
+  it('should not refund a purchase when confirmation is cancelled', () => {
+    dialog.confirm.mockReturnValue(of(false));
+    createPage();
+    component.openRefundForm(purchase);
+    component.refundForm.controls.reason.setValue('Produto devolvido ao estabelecimento');
+
+    component.submitRefund();
+
+    expect(dialog.confirm).toHaveBeenCalledOnce();
+    expect(creditCardApi.refundPurchase).not.toHaveBeenCalled();
+  });
+
+  it('should refund a purchase and reload the card, invoice and transactions', () => {
+    createPage();
+    component.openRefundForm(purchase);
+    component.refundForm.controls.reason.setValue('  Produto devolvido ao estabelecimento  ');
+
+    component.submitRefund();
+
+    expect(creditCardApi.refundPurchase).toHaveBeenCalledWith(creditCard.id, purchase.id, {
+      reason: refund.reason,
+    });
+    expect(toast.show).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Estorno registrado',
+      message:
+        'O backend atualizou o cartão, as faturas e as transações conforme as regras financeiras.',
+    });
+    expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
+    expect(creditCardApi.findById).toHaveBeenCalledTimes(2);
+    expect(accountApi.findAll).toHaveBeenCalledTimes(2);
+  });
+
+  it('should prevent a second refund while the confirmation or request is pending', () => {
+    const confirmation = new Subject<boolean>();
+    const refundResponse = new Subject<CreditCardRefund>();
+    dialog.confirm.mockReturnValue(confirmation.asObservable());
+    creditCardApi.refundPurchase.mockReturnValue(refundResponse.asObservable());
+    createPage();
+    component.openRefundForm(purchase);
+    component.refundForm.controls.reason.setValue(refund.reason);
+
+    component.submitRefund();
+    component.submitRefund();
+
+    expect(dialog.confirm).toHaveBeenCalledOnce();
+    expect(component.isProcessing()).toBe(true);
+
+    confirmation.next(true);
+    component.submitRefund();
+
+    expect(creditCardApi.refundPurchase).toHaveBeenCalledOnce();
   });
 
   it('should render loading while the invoice is pending', () => {

@@ -13,7 +13,8 @@
 app-alert,
 .invoice-detail__payment,
 .invoice-detail__credit,
-.invoice-detail__transactions {
+.invoice-detail__transactions,
+.invoice-detail__refund {
   margin-top: var(--space-5);
 }
 
@@ -41,7 +42,8 @@ app-alert,
 }
 
 .invoice-detail__actions,
-.invoice-detail__payment-actions {
+.invoice-detail__payment-actions,
+.invoice-detail__refund-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -51,7 +53,8 @@ app-alert,
 
 .invoice-detail__payment,
 .invoice-detail__credit,
-.invoice-detail__transactions {
+.invoice-detail__transactions,
+.invoice-detail__refund {
   padding: var(--space-5);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -63,27 +66,42 @@ app-alert,
   max-width: 44rem;
 }
 
+.invoice-detail__refund {
+  max-width: 44rem;
+}
+
 .invoice-detail__payment h2,
 .invoice-detail__credit h2,
-.invoice-detail__transactions h2 {
+.invoice-detail__transactions h2,
+.invoice-detail__refund h2 {
   margin: 0 0 var(--space-2);
   font-size: var(--font-size-xl);
 }
 
 .invoice-detail__payment p,
 .invoice-detail__credit p,
-.invoice-detail__transactions > p {
+.invoice-detail__transactions > p,
+.invoice-detail__refund > p {
   margin: 0;
   color: var(--color-text-muted);
 }
 
 .invoice-detail__payment form,
-.invoice-detail__payment fieldset {
+.invoice-detail__payment fieldset,
+.invoice-detail__refund form,
+.invoice-detail__refund fieldset {
   display: grid;
   gap: var(--space-4);
 }
 
 .invoice-detail__payment fieldset {
+  min-width: 0;
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.invoice-detail__refund fieldset {
   min-width: 0;
   margin: var(--space-5) 0 0;
   padding: 0;
@@ -128,18 +146,21 @@ tbody tr:last-child td {
   }
 
   .invoice-detail__actions,
-  .invoice-detail__payment-actions {
+  .invoice-detail__payment-actions,
+  .invoice-detail__refund-actions {
     flex-direction: column-reverse;
   }
 
   .invoice-detail__actions app-button,
-  .invoice-detail__payment-actions app-button {
+  .invoice-detail__payment-actions app-button,
+  .invoice-detail__refund-actions app-button {
     width: 100%;
   }
 
   .invoice-detail__payment,
   .invoice-detail__credit,
-  .invoice-detail__transactions {
+  .invoice-detail__transactions,
+  .invoice-detail__refund {
     padding: var(--space-4);
   }
 }

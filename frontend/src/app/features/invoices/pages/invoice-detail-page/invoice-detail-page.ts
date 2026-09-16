@@ -1,7 +1,14 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EMPTY, forkJoin, map, switchMap, take } from 'rxjs';
 
@@ -19,6 +26,7 @@ import { Button } from '../../../../shared/ui/button/button';
 import { Card } from '../../../../shared/ui/card/card';
 import { ErrorState } from '../../../../shared/ui/error-state/error-state';
 import { SelectDirective } from '../../../../shared/ui/form-control/select';
+import { TextareaDirective } from '../../../../shared/ui/form-control/textarea';
 import { FormField } from '../../../../shared/ui/form-field/form-field';
 import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
 import type { FeedbackTone } from '../../../../shared/ui/types/feedback-tone';
@@ -26,7 +34,20 @@ import { InvoiceApiService } from '../../data-access/invoice-api.service';
 import { InvoiceDetail, InvoiceStatus } from '../../models/invoice.models';
 
 type InvoiceDetailState = 'loading' | 'success' | 'error';
-type InvoiceOperation = 'confirming-close' | 'closing' | 'confirming-payment' | 'paying' | null;
+type InvoiceOperation =
+  | 'confirming-close'
+  | 'closing'
+  | 'confirming-payment'
+  | 'paying'
+  | 'confirming-refund'
+  | 'refunding'
+  | null;
+
+const nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  return typeof control.value === 'string' && control.value.trim().length > 0
+    ? null
+    : { required: true };
+};
 
 @Component({
   selector: 'app-invoice-detail-page',
@@ -41,6 +62,7 @@ type InvoiceOperation = 'confirming-close' | 'closing' | 'confirming-payment' | 
     FormField,
     SelectDirective,
     Skeleton,
+    TextareaDirective,
   ],
   templateUrl: './invoice-detail-page.html',
   styleUrl: './invoice-detail-page.scss',
@@ -65,6 +87,8 @@ export class InvoiceDetailPage implements OnInit {
   readonly operation = signal<InvoiceOperation>(null);
   readonly isPaymentFormOpen = signal(false);
   readonly conflictMessage = signal('');
+  readonly refundTransaction = signal<Transaction | null>(null);
+  readonly isRefundFormSubmitted = signal(false);
 
   readonly activeAccounts = computed(() =>
     this.accounts()
@@ -76,6 +100,10 @@ export class InvoiceDetailPage implements OnInit {
 
   readonly paymentForm = this.formBuilder.nonNullable.group({
     sourceAccountId: [''],
+  });
+
+  readonly refundForm = this.formBuilder.nonNullable.group({
+    reason: ['', [nonBlankValidator, Validators.maxLength(500)]],
   });
 
   ngOnInit(): void {
@@ -150,7 +178,7 @@ export class InvoiceDetailPage implements OnInit {
       .confirm({
         title: 'Fechar fatura?',
         message:
-          'Depois de fechada, a fatura não aceitará novas compras. O backend confirmará se a data de fechamento já foi atingida.',
+          'Depois de fechada, a fatura não aceitará novas compras.',
         confirmLabel: 'Fechar fatura',
         cancelLabel: 'Cancelar',
       })
@@ -207,7 +235,7 @@ export class InvoiceDetailPage implements OnInit {
     this.dialog
       .confirm({
         title: 'Pagar fatura?',
-        message: `A fatura de ${this.formatAmount(invoice.totalAmount)} será quitada ${paymentSource}. Créditos aplicáveis e eventual valor a debitar serão definidos pelo backend.`,
+        message: `A fatura de ${this.formatAmount(invoice.totalAmount)} será quitada ${paymentSource}.`,
         confirmLabel: 'Pagar fatura',
         cancelLabel: 'Revisar dados',
         danger: true,
@@ -244,6 +272,91 @@ export class InvoiceDetailPage implements OnInit {
         error: (error: unknown) => {
           this.operation.set(null);
           this.handleMutationError(error);
+        },
+      });
+  }
+
+  openRefundForm(transaction: Transaction): void {
+    if (!this.isRefundEligible(transaction) || this.isProcessing()) {
+      return;
+    }
+
+    this.refundTransaction.set(transaction);
+    this.isRefundFormSubmitted.set(false);
+    this.refundForm.reset({ reason: '' });
+    this.refundForm.markAsPristine();
+    this.refundForm.markAsUntouched();
+  }
+
+  cancelRefund(): void {
+    if (this.isProcessing()) {
+      return;
+    }
+
+    this.refundTransaction.set(null);
+    this.isRefundFormSubmitted.set(false);
+    this.refundForm.reset({ reason: '' });
+  }
+
+  submitRefund(): void {
+    const creditCard = this.creditCard();
+    const transaction = this.refundTransaction();
+
+    if (!creditCard || !transaction || !this.isRefundEligible(transaction) || this.isProcessing()) {
+      return;
+    }
+
+    this.isRefundFormSubmitted.set(true);
+
+    if (this.refundForm.invalid) {
+      this.refundForm.markAllAsTouched();
+      return;
+    }
+
+    const reason = this.refundForm.controls.reason.value.trim();
+
+    this.operation.set('confirming-refund');
+
+    this.dialog
+      .confirm({
+        title: 'Estornar compra?',
+        message: `A compra “${transaction.description}” de ${this.formatAmount(transaction.amount)} será estornada integralmente.`,
+        confirmLabel: 'Confirmar estorno',
+        cancelLabel: 'Voltar',
+        danger: true,
+      })
+      .pipe(
+        take(1),
+        switchMap((confirmed) => {
+          if (!confirmed) {
+            this.operation.set(null);
+            return EMPTY;
+          }
+
+          this.operation.set('refunding');
+
+          return this.creditCardApi.refundPurchase(creditCard.id, transaction.id, { reason });
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe({
+        next: () => {
+          this.operation.set(null);
+          this.refundTransaction.set(null);
+          this.isRefundFormSubmitted.set(false);
+          this.refundForm.reset({ reason: '' });
+
+          this.toast.show({
+            tone: 'success',
+            title: 'Estorno registrado',
+            message:
+              'O cartão, as faturas e as transações foram atualizados.',
+          });
+
+          this.loadInvoice();
+        },
+        error: () => {
+          this.operation.set(null);
         },
       });
   }
@@ -335,6 +448,36 @@ export class InvoiceDetailPage implements OnInit {
     }
 
     return `Parcela ${transaction.installmentNumber} de ${transaction.installmentCount}`;
+  }
+
+  isRefundEligible(transaction: Transaction): boolean {
+    const creditCard = this.creditCard();
+
+    return (
+      transaction.type === 'CREDIT_CARD_PURCHASE' &&
+      transaction.paymentMethod === 'CREDIT_CARD' &&
+      transaction.status === 'COMPLETED' &&
+      transaction.creditCardId === creditCard?.id &&
+      transaction.invoiceId !== null
+    );
+  }
+
+  refundReasonError(): string | undefined {
+    const control = this.refundForm.controls.reason;
+
+    if (!this.isRefundFormSubmitted() && !control.touched) {
+      return undefined;
+    }
+
+    if (control.hasError('required')) {
+      return 'Informe o motivo do estorno.';
+    }
+
+    if (control.hasError('maxlength')) {
+      return 'O motivo deve ter no máximo 500 caracteres.';
+    }
+
+    return undefined;
   }
 
   private selectDefaultPaymentAccount(creditCard: CreditCard, accounts: Account[]): void {

@@ -108,17 +108,11 @@
         <section class="invoice-detail__payment" aria-labelledby="invoice-payment-title">
           <h2 id="invoice-payment-title">Pagar fatura</h2>
 
-          <p>
-            O backend aplicará automaticamente créditos elegíveis e definirá o valor efetivamente
-            debitado da conta.
-          </p>
-
           <form [formGroup]="paymentForm" (ngSubmit)="payInvoice()" novalidate>
             <fieldset [disabled]="isProcessing()">
               <app-form-field
                 label="Conta de pagamento"
                 controlId="payment-account"
-                hint="Opcional quando créditos elegíveis quitarem todo o valor da fatura."
               >
                 <select appSelect id="payment-account" formControlName="sourceAccountId">
                   <option value="">Usar créditos disponíveis</option>
@@ -177,7 +171,7 @@
           <p>
             R$
             {{ currentInvoice.creditAppliedAmount | number: '1.2-2' }}
-            foram aplicados pelo backend nesta fatura.
+            foram aplicados nesta fatura.
           </p>
         </section>
       }
@@ -198,6 +192,7 @@
                   <th scope="col">Parcela</th>
                   <th scope="col">Status</th>
                   <th scope="col">Valor</th>
+                  <th scope="col">Ações</th>
                 </tr>
               </thead>
 
@@ -215,6 +210,20 @@
                       />
                     </td>
                     <td>R$ {{ transaction.amount | number: '1.2-2' }}</td>
+                    <td>
+                      @if (isRefundEligible(transaction)) {
+                        <app-button
+                          size="sm"
+                          variant="danger"
+                          [disabled]="isProcessing()"
+                          (pressed)="openRefundForm(transaction)"
+                        >
+                          Estornar compra
+                        </app-button>
+                      } @else {
+                        <span>—</span>
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -222,6 +231,57 @@
           </div>
         }
       </section>
+
+      @if (refundTransaction(); as transactionToRefund) {
+        <section class="invoice-detail__refund" aria-labelledby="invoice-refund-title">
+          <h2 id="invoice-refund-title">Estornar compra</h2>
+          <p>
+            Informe o motivo do estorno da compra:
+          <form [formGroup]="refundForm" (ngSubmit)="submitRefund()" novalidate>
+            <fieldset [disabled]="isProcessing()">
+              <app-form-field
+                label="Motivo"
+                controlId="refund-reason"
+                hint="Máximo de 500 caracteres."
+                [required]="true"
+                [error]="refundReasonError()"
+              >
+                <textarea
+                  appTextarea
+                  id="refund-reason"
+                  formControlName="reason"
+                  rows="4"
+                  maxlength="500"
+                  [attr.aria-invalid]="refundReasonError() ? 'true' : null"
+                  [attr.aria-describedby]="
+                    refundReasonError() ? 'refund-reason-error' : 'refund-reason-hint'
+                  "
+                ></textarea>
+              </app-form-field>
+            </fieldset>
+
+            <div class="invoice-detail__refund-actions">
+              <app-button
+                type="button"
+                variant="secondary"
+                [disabled]="isProcessing()"
+                (pressed)="cancelRefund()"
+              >
+                Cancelar
+              </app-button>
+
+              <app-button
+                type="submit"
+                variant="danger"
+                [loading]="operation() === 'refunding'"
+                [disabled]="isProcessing()"
+              >
+                Confirmar estorno
+              </app-button>
+            </div>
+          </form>
+        </section>
+      }
     }
   }
 </section>
