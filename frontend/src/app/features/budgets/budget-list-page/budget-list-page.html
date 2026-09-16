@@ -1,6 +1,123 @@
 <section class="page" aria-labelledby="budgets-title">
   <header class="page__header">
-    <h1 id="budgets-title">Orçamentos</h1>
-    <p>Defina e acompanhe limites mensais por categoria.</p>
+    <div>
+      <h1 id="budgets-title">Orçamentos</h1>
+      <p>Defina e acompanhe limites mensais por categoria de despesa.</p>
+    </div>
+
+    <app-button (pressed)="startCreate()"> Novo orçamento </app-button>
   </header>
+
+  <div class="budget-list__period">
+    <label for="budget-period">Período exibido</label>
+    <input
+      appInput
+      id="budget-period"
+      type="month"
+      [value]="periodValue()"
+      (change)="selectPeriod($any($event.target).value)"
+    />
+    <p>{{ periodLabel() }}</p>
+  </div>
+
+  @if (formMode(); as mode) {
+    <section
+      class="budget-list__form"
+      [attr.aria-label]="mode === 'create' ? 'Novo orçamento' : 'Editar orçamento'"
+    >
+      <h2>{{ mode === 'create' ? 'Novo orçamento' : 'Editar orçamento' }}</h2>
+
+      <app-budget-form
+        [mode]="mode"
+        [budget]="selectedBudget()"
+        [categories]="expenseCategories()"
+        [defaultMonth]="selectedMonth()"
+        [defaultYear]="selectedYear()"
+        [submitting]="isSubmitting()"
+        (created)="createBudget($event)"
+        (updated)="updateBudget($event)"
+        (cancelled)="closeForm()"
+      />
+    </section>
+  }
+
+  @if (state() === 'loading') {
+    <div class="budget-list__skeletons" aria-label="Carregando orçamentos">
+      <app-skeleton height="13rem" />
+      <app-skeleton height="13rem" />
+      <app-skeleton height="13rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar os orçamentos"
+      message="Tente novamente em instantes."
+      (retry)="loadData()"
+    />
+  } @else if (visibleBudgets().length === 0) {
+    <app-empty-state
+      title="Nenhum orçamento neste período"
+      [description]="'Crie um limite para ' + periodLabel().toLowerCase() + '.'"
+    >
+      <app-button empty-state-actions (pressed)="startCreate()"> Criar orçamento </app-button>
+    </app-empty-state>
+  } @else {
+    <div class="budget-list__grid">
+      @for (budget of visibleBudgets(); track budget.id) {
+        <app-card
+          [title]="categoryName(budget.categoryId)"
+          [subtitle]="periodLabel(budget.month, budget.year)"
+        >
+          <div card-actions>
+            <app-badge [label]="alertLabel(budget)" [tone]="alertTone(budget.alertStatus)" />
+          </div>
+
+          <dl class="budget-list__data">
+            <div>
+              <dt>Limite mensal</dt>
+              <dd>R$ {{ budget.amountLimit | number: '1.2-2' }}</dd>
+            </div>
+
+            <div>
+              <dt>Consumido</dt>
+              <dd>R$ {{ budget.spentAmount | number: '1.2-2' }}</dd>
+            </div>
+
+            <div>
+              <dt>Percentual consumido</dt>
+              <dd>{{ budget.usagePercentage | number: '1.0-2' }}%</dd>
+            </div>
+          </dl>
+
+          <div class="budget-list__consumption">
+            <progress
+              [value]="progressValue(budget)"
+              max="100"
+              [attr.aria-label]="alertMessage(budget)"
+            >
+              {{ budget.usagePercentage | number: '1.0-2' }}%
+            </progress>
+            <p>{{ alertMessage(budget) }}</p>
+          </div>
+
+          <div class="budget-list__actions">
+            <app-button
+              variant="secondary"
+              [disabled]="deletingBudgetId() !== null"
+              (pressed)="startEdit(budget)"
+            >
+              Editar
+            </app-button>
+            <app-button
+              variant="danger"
+              [loading]="isDeleting(budget)"
+              [disabled]="deletingBudgetId() !== null"
+              (pressed)="confirmDelete(budget)"
+            >
+              Excluir
+            </app-button>
+          </div>
+        </app-card>
+      }
+    </div>
+  }
 </section>

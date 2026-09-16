@@ -1,0 +1,35 @@
+:host {
+  display: block;
+}
+
+form,
+.budget-form__period {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.budget-form__period {
+  grid-template-columns: minmax(0, 1fr) minmax(8rem, 0.5fr);
+}
+
+.budget-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 640px) {
+  .budget-form__period {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-form__actions {
+    flex-direction: column-reverse;
+  }
+
+  .budget-form__actions app-button {
+    width: 100%;
+  }
+}

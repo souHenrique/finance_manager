@@ -10,6 +10,7 @@ import { ToastService } from './core/feedback/toast/toast.service';
 import { AccountApiService } from './features/accounts/data-access/account-api.service';
 import { AuthService } from './features/auth/services/auth.service';
 import { CategoryApiService } from './features/categories/data-access/category-api.service';
+import { BudgetApiService } from './features/budgets/data-access/budget-api.service';
 import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
 import { InvoiceApiService } from './features/invoices/data-access/invoice-api.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
@@ -88,6 +89,15 @@ describe('Application routes', () => {
           provide: CategoryApiService,
           useValue: {
             findAll: vi.fn().mockReturnValue(of([])),
+          },
+        },
+        {
+          provide: BudgetApiService,
+          useValue: {
+            create: vi.fn(),
+            delete: vi.fn(),
+            findAll: vi.fn().mockReturnValue(of([])),
+            update: vi.fn(),
           },
         },
         {

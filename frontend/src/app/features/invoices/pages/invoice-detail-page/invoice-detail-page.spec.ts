@@ -258,8 +258,7 @@ describe('InvoiceDetailPage', () => {
     expect(toast.show).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Estorno registrado',
-      message:
-        'O backend atualizou o cartão, as faturas e as transações conforme as regras financeiras.',
+      message: 'O cartão, as faturas e as transações foram atualizados.',
     });
     expect(invoiceApi.findById).toHaveBeenCalledTimes(2);
     expect(creditCardApi.findById).toHaveBeenCalledTimes(2);
