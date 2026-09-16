@@ -14,25 +14,13 @@ import { ErrorState } from '../../../../shared/ui/error-state/error-state';
 import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
 import type { FeedbackTone } from '../../../../shared/ui/types/feedback-tone';
 import { CreditCardApiService } from '../../data-access/credit-card-api.service';
-import {
-  CreditCard,
-  CreditCardStatus,
-} from '../../models/credit-card.models';
+import { CreditCard, CreditCardStatus } from '../../models/credit-card.models';
 
 type CreditCardListState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-credit-card-list-page',
-  imports: [
-    DecimalPipe,
-    RouterLink,
-    Badge,
-    Button,
-    Card,
-    EmptyState,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [DecimalPipe, RouterLink, Badge, Button, Card, EmptyState, ErrorState, Skeleton],
   templateUrl: './credit-card-list-page.html',
   styleUrl: './credit-card-list-page.scss',
 })
@@ -70,7 +58,9 @@ export class CreditCardListPage implements OnInit {
   }
 
   accountName(accountId: string): string {
-    return this.accounts().find((account) => account.id === accountId)?.name ?? 'Conta não encontrada';
+    return (
+      this.accounts().find((account) => account.id === accountId)?.name ?? 'Conta não encontrada'
+    );
   }
 
   statusLabel(status: CreditCardStatus): string {

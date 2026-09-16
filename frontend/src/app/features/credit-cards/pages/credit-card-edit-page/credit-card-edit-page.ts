@@ -14,21 +14,11 @@ import { ErrorState } from '../../../../shared/ui/error-state/error-state';
 import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
 import { CreditCardFormComponent } from '../../components/credit-card-form/credit-card-form';
 import { CreditCardApiService } from '../../data-access/credit-card-api.service';
-import {
-  CreditCard,
-  UpdateCreditCardRequest,
-} from '../../models/credit-card.models';
+import { CreditCard, UpdateCreditCardRequest } from '../../models/credit-card.models';
 
 @Component({
   selector: 'app-credit-card-edit-page',
-  imports: [
-    DecimalPipe,
-    Alert,
-    Button,
-    CreditCardFormComponent,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [DecimalPipe, Alert, Button, CreditCardFormComponent, ErrorState, Skeleton],
   templateUrl: './credit-card-edit-page.html',
   styleUrl: './credit-card-edit-page.scss',
 })
@@ -141,9 +131,7 @@ export class CreditCardEditPage implements OnInit {
   goBack(): void {
     const creditCard = this.creditCard();
 
-    void this.router.navigate(
-      creditCard ? ['/credit-cards', creditCard.id] : ['/credit-cards'],
-    );
+    void this.router.navigate(creditCard ? ['/credit-cards', creditCard.id] : ['/credit-cards']);
   }
 
   private getChanges(

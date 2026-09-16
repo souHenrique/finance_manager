@@ -1,2 +1,113 @@
-<h2>Dashboard</h2>
-<p>Frontend configurado com sucesso.</p>
+<section class="dashboard" aria-labelledby="dashboard-title">
+  <header class="dashboard__header">
+    <div>
+      <h1 id="dashboard-title">Dashboard financeiro</h1>
+      @if (dashboard(); as data) {
+        <p>Visão consolidada de {{ periodLabel() }}. Referência: {{ data.referenceDate }}.</p>
+      } @else {
+        <p>Acompanhe os principais indicadores financeiros em um só lugar.</p>
+      }
+    </div>
+
+    <app-button variant="secondary" (pressed)="loadDashboard()"> Atualizar </app-button>
+  </header>
+
+  <aside class="dashboard__basis" aria-label="Regimes contábeis">
+    <strong>Como interpretar os indicadores</strong>
+    <p><b>CASH</b> considera valores efetivamente movimentados.</p>
+    <p><b>COMPETENCE</b> considera valores reconhecidos no período financeiro.</p>
+  </aside>
+
+  @if (state() === 'loading') {
+    <div class="dashboard__skeletons" aria-label="Carregando indicadores do dashboard">
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
+      <app-skeleton height="14rem" />
+    </div>
+  } @else if (state() === 'error') {
+    <app-error-state
+      title="Não foi possível carregar o dashboard"
+      message="Tente novamente em instantes."
+      (retry)="loadDashboard()"
+    />
+  } @else if (dashboard(); as data) {
+    <section class="dashboard__indicators" aria-label="Indicadores financeiros">
+      @for (card of indicatorCards(); track card.title) {
+        <app-card [title]="card.title" [subtitle]="card.description">
+          <div card-actions>
+            <app-badge
+              [label]="card.indicator.basis"
+              [tone]="card.indicator.basis === 'CASH' ? 'info' : 'neutral'"
+            />
+          </div>
+
+          <p class="dashboard__amount">{{ card.indicator.amount | currency: 'BRL' }}</p>
+          <p class="dashboard__basis-label">Base: {{ basisDescription(card.indicator.basis) }}</p>
+        </app-card>
+      }
+    </section>
+
+    <section class="dashboard__budget" aria-label="Resumo de orçamento">
+      <app-card title="Orçamento" subtitle="Limites e despesas reconhecidas no período.">
+        <div card-actions>
+          <app-badge [label]="data.budget.basis" tone="neutral" />
+        </div>
+
+        <p class="dashboard__basis-label">Base: {{ basisDescription(data.budget.basis) }}</p>
+
+        <div class="dashboard__budget-summary">
+          <div>
+            <span>Limite total</span>
+            <strong>{{ data.budget.totalLimit | currency: 'BRL' }}</strong>
+          </div>
+          <div>
+            <span>Consumido</span>
+            <strong>{{ data.budget.totalSpent | currency: 'BRL' }}</strong>
+          </div>
+          <div>
+            <span>Percentual consumido</span>
+            <strong>{{ data.budget.usagePercentage | number: '1.0-2' }}%</strong>
+          </div>
+        </div>
+
+        <progress
+          class="dashboard__progress"
+          [value]="progressValue(data.budget.usagePercentage)"
+          max="100"
+          aria-label="Percentual total de orçamento consumido"
+        >
+          {{ data.budget.usagePercentage | number: '1.0-2' }}%
+        </progress>
+
+        @if (data.budget.items.length > 0) {
+          <div class="dashboard__budget-items">
+            <h2>Limites por categoria</h2>
+
+            @for (item of data.budget.items; track item.budgetId) {
+              <article class="dashboard__budget-item">
+                <div>
+                  <h3>{{ categoryName(item.categoryId) }}</h3>
+                  <p>{{ alertMessage(item) }}</p>
+                </div>
+
+                <div class="dashboard__budget-item-status">
+                  <app-badge [label]="alertLabel(item)" [tone]="alertTone(item.alertStatus)" />
+                  <strong
+                    >{{ item.spentAmount | currency: 'BRL' }} de
+                    {{ item.amountLimit | currency: 'BRL' }}</strong
+                  >
+                </div>
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="dashboard__empty-budget">Não há orçamentos definidos para este período.</p>
+        }
+      </app-card>
+    </section>
+  }
+</section>

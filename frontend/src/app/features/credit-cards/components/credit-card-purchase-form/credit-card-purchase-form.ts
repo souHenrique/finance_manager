@@ -27,14 +27,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-credit-card-purchase-form',
-  imports: [
-    ReactiveFormsModule,
-    Alert,
-    Button,
-    FormField,
-    InputDirective,
-    SelectDirective,
-  ],
+  imports: [ReactiveFormsModule, Alert, Button, FormField, InputDirective, SelectDirective],
   templateUrl: './credit-card-purchase-form.html',
   styleUrl: './credit-card-purchase-form.scss',
 })
@@ -49,10 +42,7 @@ export class CreditCardPurchaseFormComponent {
 
   readonly activeExpenseCategories = computed(() =>
     this.categories()
-      .filter(
-        (category) =>
-          category.type === 'EXPENSE' && category.status === 'ACTIVE',
-      )
+      .filter((category) => category.type === 'EXPENSE' && category.status === 'ACTIVE')
       .sort((first, second) => first.name.localeCompare(second.name, 'pt-BR')),
   );
 
@@ -68,11 +58,7 @@ export class CreditCardPurchaseFormComponent {
   });
 
   submit(): void {
-    if (
-      this.form.invalid ||
-      this.submitting() ||
-      this.activeExpenseCategories().length === 0
-    ) {
+    if (this.form.invalid || this.submitting() || this.activeExpenseCategories().length === 0) {
       this.form.markAllAsTouched();
       return;
     }

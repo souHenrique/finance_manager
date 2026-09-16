@@ -18,14 +18,7 @@ type AccountLoadState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-credit-card-create-page',
-  imports: [
-    RouterLink,
-    Alert,
-    Button,
-    CreditCardFormComponent,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [RouterLink, Alert, Button, CreditCardFormComponent, ErrorState, Skeleton],
   templateUrl: './credit-card-create-page.html',
   styleUrl: './credit-card-create-page.scss',
 })

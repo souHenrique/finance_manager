@@ -177,8 +177,7 @@ export class InvoiceDetailPage implements OnInit {
     this.dialog
       .confirm({
         title: 'Fechar fatura?',
-        message:
-          'Depois de fechada, a fatura não aceitará novas compras.',
+        message: 'Depois de fechada, a fatura não aceitará novas compras.',
         confirmLabel: 'Fechar fatura',
         cancelLabel: 'Cancelar',
       })
@@ -349,8 +348,7 @@ export class InvoiceDetailPage implements OnInit {
           this.toast.show({
             tone: 'success',
             title: 'Estorno registrado',
-            message:
-              'O cartão, as faturas e as transações foram atualizados.',
+            message: 'O cartão, as faturas e as transações foram atualizados.',
           });
 
           this.loadInvoice();

@@ -12,6 +12,7 @@ import { AuthService } from './features/auth/services/auth.service';
 import { CategoryApiService } from './features/categories/data-access/category-api.service';
 import { BudgetApiService } from './features/budgets/data-access/budget-api.service';
 import { CreditCardApiService } from './features/credit-cards/data-access/credit-card-api.service';
+import { DashboardApiService } from './features/dashboard/data-access/dashboard-api.service';
 import { InvoiceApiService } from './features/invoices/data-access/invoice-api.service';
 import { ProfileApiService } from './features/profile/data-access/profile-api.service';
 import { TransactionApiService } from './features/transactions/data-access/transaction-api.service';
@@ -98,6 +99,33 @@ describe('Application routes', () => {
             delete: vi.fn(),
             findAll: vi.fn().mockReturnValue(of([])),
             update: vi.fn(),
+          },
+        },
+        {
+          provide: DashboardApiService,
+          useValue: {
+            get: vi.fn().mockReturnValue(
+              of({
+                referenceDate: '2026-09-16',
+                year: 2026,
+                month: 9,
+                periodStart: '2026-09-01',
+                periodEnd: '2026-09-30',
+                consolidatedBalance: { basis: 'CASH', amount: 0 },
+                monthlyInflows: { basis: 'CASH', amount: 0 },
+                cashOutflows: { basis: 'CASH', amount: 0 },
+                competenceExpenses: { basis: 'COMPETENCE', amount: 0 },
+                openInvoices: { basis: 'COMPETENCE', amount: 0 },
+                budget: {
+                  basis: 'COMPETENCE',
+                  totalLimit: 0,
+                  totalSpent: 0,
+                  usagePercentage: 0,
+                  items: [],
+                },
+                netWorth: { basis: 'COMPETENCE', amount: 0 },
+              }),
+            ),
           },
         },
         {

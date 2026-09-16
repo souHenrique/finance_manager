@@ -13,9 +13,9 @@ export const CREDIT_CARD_ROUTES: Routes = [
     path: ':id/purchases/new',
     title: 'Nova compra no cartão | Finance Manager',
     loadComponent: () =>
-      import(
-        './pages/credit-card-purchase-create-page/credit-card-purchase-create-page'
-        ).then(({ CreditCardPurchaseCreatePage }) => CreditCardPurchaseCreatePage),
+      import('./pages/credit-card-purchase-create-page/credit-card-purchase-create-page').then(
+        ({ CreditCardPurchaseCreatePage }) => CreditCardPurchaseCreatePage,
+      ),
   },
   {
     path: ':id/edit',

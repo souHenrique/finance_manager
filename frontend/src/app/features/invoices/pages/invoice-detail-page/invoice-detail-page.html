@@ -110,10 +110,7 @@
 
           <form [formGroup]="paymentForm" (ngSubmit)="payInvoice()" novalidate>
             <fieldset [disabled]="isProcessing()">
-              <app-form-field
-                label="Conta de pagamento"
-                controlId="payment-account"
-              >
+              <app-form-field label="Conta de pagamento" controlId="payment-account">
                 <select appSelect id="payment-account" formControlName="sourceAccountId">
                   <option value="">Usar créditos disponíveis</option>
 
@@ -235,8 +232,8 @@
       @if (refundTransaction(); as transactionToRefund) {
         <section class="invoice-detail__refund" aria-labelledby="invoice-refund-title">
           <h2 id="invoice-refund-title">Estornar compra</h2>
-          <p>
-            Informe o motivo do estorno da compra:
+          <p>Informe o motivo do estorno da compra:</p>
+
           <form [formGroup]="refundForm" (ngSubmit)="submitRefund()" novalidate>
             <fieldset [disabled]="isProcessing()">
               <app-form-field

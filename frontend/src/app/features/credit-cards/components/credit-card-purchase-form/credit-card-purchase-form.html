@@ -1,19 +1,11 @@
-<form
-  class="credit-card-purchase-form"
-  [formGroup]="form"
-  (ngSubmit)="submit()"
-  novalidate
->
+<form class="credit-card-purchase-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
   <app-alert
     tone="info"
     title="Impacto da compra"
     message="A compra reduz o limite disponível do cartão. Ela não reduz o saldo de nenhuma conta bancária."
   />
 
-  <fieldset
-    class="credit-card-purchase-form__fields"
-    [disabled]="submitting()"
-  >
+  <fieldset class="credit-card-purchase-form__fields" [disabled]="submitting()">
     <app-form-field
       label="Descrição"
       controlId="purchase-description"
@@ -53,12 +45,7 @@
       [required]="true"
       [error]="purchaseDateError()"
     >
-      <input
-        appInput
-        id="purchase-date"
-        type="date"
-        formControlName="purchaseDate"
-      />
+      <input appInput id="purchase-date" type="date" formControlName="purchaseDate" />
     </app-form-field>
 
     <app-form-field
@@ -67,11 +54,7 @@
       [required]="true"
       [error]="categoryError()"
     >
-      <select
-        appSelect
-        id="purchase-category"
-        formControlName="categoryId"
-      >
+      <select appSelect id="purchase-category" formControlName="categoryId">
         <option value="">Selecione uma categoria</option>
 
         @for (category of activeExpenseCategories(); track category.id) {
@@ -110,7 +93,7 @@
     form.controls.installmentCount.valid &&
     form.controls.amount.value &&
     form.controls.installmentCount.value
-    ) {
+  ) {
     <aside class="credit-card-purchase-form__summary" aria-live="polite">
       <strong>Resumo informado</strong>
       <span>
@@ -118,9 +101,7 @@
         {{ form.controls.installmentCount.value }}
         parcela(s).
       </span>
-      <small>
-        O backend calculará os valores finais das parcelas, competências e faturas.
-      </small>
+      <small> O backend calculará os valores finais das parcelas, competências e faturas. </small>
     </aside>
   }
 

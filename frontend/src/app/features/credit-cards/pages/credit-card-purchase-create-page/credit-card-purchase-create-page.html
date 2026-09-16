@@ -5,8 +5,8 @@
 
       @if (creditCard(); as currentCreditCard) {
         <p>
-          Registre uma compra no cartão {{ currentCreditCard.name }}.
-          O saldo da conta bancária não será alterado.
+          Registre uma compra no cartão {{ currentCreditCard.name }}. O saldo da conta bancária não
+          será alterado.
         </p>
       } @else {
         <p>Registre uma compra à vista ou parcelada no cartão.</p>
@@ -15,10 +15,7 @@
   </header>
 
   @if (state() === 'loading') {
-    <div
-      class="credit-card-purchase-create__skeletons"
-      aria-label="Carregando dados da compra"
-    >
+    <div class="credit-card-purchase-create__skeletons" aria-label="Carregando dados da compra">
       <app-skeleton height="2rem" />
       <app-skeleton height="2rem" />
       <app-skeleton height="2rem" />
@@ -39,9 +36,7 @@
           message="Ative o cartão antes de registrar uma nova compra."
         />
 
-        <app-button variant="secondary" (pressed)="goBack()">
-          Voltar para o cartão
-        </app-button>
+        <app-button variant="secondary" (pressed)="goBack()"> Voltar para o cartão </app-button>
       </div>
     } @else if (!hasActiveExpenseCategories()) {
       <div class="credit-card-purchase-create__blocked">
@@ -52,13 +47,9 @@
         />
 
         <div class="credit-card-purchase-create__actions">
-          <app-button variant="secondary" (pressed)="goBack()">
-            Voltar para o cartão
-          </app-button>
+          <app-button variant="secondary" (pressed)="goBack()"> Voltar para o cartão </app-button>
 
-          <app-button (pressed)="goToCategories()">
-            Ir para Categorias
-          </app-button>
+          <app-button (pressed)="goToCategories()"> Ir para Categorias </app-button>
         </div>
       </div>
     } @else {
@@ -70,11 +61,7 @@
             [message]="conflictMessage()"
           />
 
-          <app-button
-            variant="secondary"
-            [disabled]="isSubmitting()"
-            (pressed)="loadData()"
-          >
+          <app-button variant="secondary" [disabled]="isSubmitting()" (pressed)="loadData()">
             Recarregar dados do cartão
           </app-button>
         </div>

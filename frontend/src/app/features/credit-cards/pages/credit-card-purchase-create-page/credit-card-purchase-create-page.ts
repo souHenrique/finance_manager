@@ -13,22 +13,13 @@ import { CategoryApiService } from '../../../categories/data-access/category-api
 import { Category } from '../../../categories/models/category.models';
 import { CreditCardPurchaseFormComponent } from '../../components/credit-card-purchase-form/credit-card-purchase-form';
 import { CreditCardApiService } from '../../data-access/credit-card-api.service';
-import {
-  CreateCreditCardPurchaseRequest,
-  CreditCard,
-} from '../../models/credit-card.models';
+import { CreateCreditCardPurchaseRequest, CreditCard } from '../../models/credit-card.models';
 
 type PurchaseDataState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-credit-card-purchase-create-page',
-  imports: [
-    Alert,
-    Button,
-    CreditCardPurchaseFormComponent,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [Alert, Button, CreditCardPurchaseFormComponent, ErrorState, Skeleton],
   templateUrl: './credit-card-purchase-create-page.html',
   styleUrl: './credit-card-purchase-create-page.scss',
 })
@@ -50,8 +41,7 @@ export class CreditCardPurchaseCreatePage implements OnInit {
 
   readonly hasActiveExpenseCategories = computed(() =>
     this.categories().some(
-      (category) =>
-        category.type === 'EXPENSE' && category.status === 'ACTIVE',
+      (category) => category.type === 'EXPENSE' && category.status === 'ACTIVE',
     ),
   );
 
@@ -95,11 +85,7 @@ export class CreditCardPurchaseCreatePage implements OnInit {
   createPurchase(request: CreateCreditCardPurchaseRequest): void {
     const creditCard = this.creditCard();
 
-    if (
-      !creditCard ||
-      creditCard.status !== 'ACTIVE' ||
-      this.isSubmitting()
-    ) {
+    if (!creditCard || creditCard.status !== 'ACTIVE' || this.isSubmitting()) {
       return;
     }
 
@@ -138,9 +124,7 @@ export class CreditCardPurchaseCreatePage implements OnInit {
   goBack(): void {
     const creditCard = this.creditCard();
 
-    void this.router.navigate(
-      creditCard ? ['/credit-cards', creditCard.id] : ['/credit-cards'],
-    );
+    void this.router.navigate(creditCard ? ['/credit-cards', creditCard.id] : ['/credit-cards']);
   }
 
   goToCategories(): void {

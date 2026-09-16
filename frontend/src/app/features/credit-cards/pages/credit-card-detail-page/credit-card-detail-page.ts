@@ -15,10 +15,7 @@ import { ErrorState } from '../../../../shared/ui/error-state/error-state';
 import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
 import type { FeedbackTone } from '../../../../shared/ui/types/feedback-tone';
 import { CreditCardApiService } from '../../data-access/credit-card-api.service';
-import {
-  CreditCard,
-  CreditCardStatus,
-} from '../../models/credit-card.models';
+import { CreditCard, CreditCardStatus } from '../../models/credit-card.models';
 
 interface StatusChangeContent {
   title: string;
@@ -31,14 +28,7 @@ interface StatusChangeContent {
 
 @Component({
   selector: 'app-credit-card-detail-page',
-  imports: [
-    DecimalPipe,
-    Badge,
-    Button,
-    Card,
-    ErrorState,
-    Skeleton,
-  ],
+  imports: [DecimalPipe, Badge, Button, Card, ErrorState, Skeleton],
   templateUrl: './credit-card-detail-page.html',
   styleUrl: './credit-card-detail-page.scss',
 })
@@ -108,11 +98,7 @@ export class CreditCardDetailPage implements OnInit {
   confirmStatusChange(targetStatus: CreditCardStatus): void {
     const creditCard = this.creditCard();
 
-    if (
-      !creditCard ||
-      creditCard.status === targetStatus ||
-      this.isChangingStatus()
-    ) {
+    if (!creditCard || creditCard.status === targetStatus || this.isChangingStatus()) {
       return;
     }
 
@@ -151,7 +137,9 @@ export class CreditCardDetailPage implements OnInit {
   }
 
   accountName(accountId: string): string {
-    return this.accounts().find((account) => account.id === accountId)?.name ?? 'Conta não encontrada';
+    return (
+      this.accounts().find((account) => account.id === accountId)?.name ?? 'Conta não encontrada'
+    );
   }
 
   committedLimit(creditCard: CreditCard): number {
@@ -221,12 +209,7 @@ export class CreditCardDetailPage implements OnInit {
     const creditCard = this.creditCard();
 
     if (creditCard?.status === 'ACTIVE') {
-      void this.router.navigate([
-        '/credit-cards',
-        creditCard.id,
-        'purchases',
-        'new',
-      ]);
+      void this.router.navigate(['/credit-cards', creditCard.id, 'purchases', 'new']);
     }
   }
 }

@@ -31,7 +31,11 @@
           "
         />
 
-        <app-button variant="secondary" [disabled]="isSubmitting()" (pressed)="reloadAfterConflict()">
+        <app-button
+          variant="secondary"
+          [disabled]="isSubmitting()"
+          (pressed)="reloadAfterConflict()"
+        >
           Recarregar dados
         </app-button>
       </div>
@@ -39,8 +43,8 @@
 
     <p class="credit-card-edit__available-limit">
       Limite disponível atual:
-      <strong>R$ {{ currentCreditCard.availableLimit | number: '1.2-2' }}</strong>.
-      Esse valor é calculado automaticamente e não pode ser editado.
+      <strong>R$ {{ currentCreditCard.availableLimit | number: '1.2-2' }}</strong
+      >. Esse valor é calculado automaticamente e não pode ser editado.
     </p>
 
     <app-credit-card-form
