@@ -30,14 +30,20 @@ public record DashboardResponse(
         )
         LocalDate periodEnd,
 
-        @Schema(description = "Soma dos saldos atuais das contas")
-        DashboardIndicatorResponse consolidatedBalance,
+        @Schema(description = "Saldo mensal: entradas e saídas efetivas do mês, menos compras vinculadas às faturas de referência do mês")
+        DashboardIndicatorResponse monthlyBalance,
 
         @Schema(description = "Entradas efetivadas durante o mês")
         DashboardIndicatorResponse monthlyInflows,
 
+        @Schema(description = "Soma histórica das saídas de caixa efetivadas")
+        DashboardIndicatorResponse totalOutflows,
+
         @Schema(description = "Saídas de caixa efetivadas durante o mês")
-        DashboardIndicatorResponse cashOutflows,
+        DashboardIndicatorResponse monthlyOutflows,
+
+        @Schema(description = "Compras no cartão vinculadas às faturas de referência do mês")
+        DashboardIndicatorResponse creditCardPurchaseOutflows,
 
         @Schema(description = "Despesas reconhecidas por competência durante o mês")
         DashboardIndicatorResponse competenceExpenses,
@@ -48,7 +54,7 @@ public record DashboardResponse(
         @Schema(description = "Resumo dos orçamentos do mês atual")
         DashboardBudgetResponse budget,
 
-        @Schema(description = "Patrimônio atual")
-        DashboardIndicatorResponse netWorth
+        @Schema(description = "Soma dos saldos atuais das contas")
+        DashboardIndicatorResponse consolidatedBalance
 ) {
 }

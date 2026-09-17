@@ -3,11 +3,10 @@ package com.amorim.finance_manager.dashboard.service;
 import com.amorim.finance_manager.budget.dto.BudgetResponse;
 import com.amorim.finance_manager.budget.model.BudgetAlertStatus;
 import com.amorim.finance_manager.budget.service.BudgetService;
+import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.dashboard.model.AccountingBasis;
 import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
 import com.amorim.finance_manager.invoice.repository.InvoiceRepository;
-import com.amorim.finance_manager.networth.model.NetWorthSnapshot;
-import com.amorim.finance_manager.networth.service.NetWorthService;
 import com.amorim.finance_manager.report.dto.CashFlowSummaryResponse;
 import com.amorim.finance_manager.report.dto.CompetenceReportResponse;
 import com.amorim.finance_manager.report.dto.MonthlyCashFlowResponse;
@@ -56,7 +55,7 @@ class DashboardServiceTest {
     private BudgetService budgetService;
 
     @Mock
-    private NetWorthService netWorthService;
+    private AccountRepository accountRepository;
 
     @Mock
     private InvoiceRepository invoiceRepository;
@@ -77,7 +76,7 @@ class DashboardServiceTest {
                 cashFlowReportService,
                 competenceReportService,
                 budgetService,
-                netWorthService,
+                accountRepository,
                 invoiceRepository,
                 currentUserService,
                 clock
@@ -105,6 +104,9 @@ class DashboardServiceTest {
                         )
                 ));
 
+        when(cashFlowReportService.totalOutflows())
+                .thenReturn(money("9800.00"));
+
         when(competenceReportService.generate(START, END))
                 .thenReturn(new CompetenceReportResponse(
                         START,
@@ -116,12 +118,11 @@ class DashboardServiceTest {
                         List.of()
                 ));
 
-        when(netWorthService.calculateSnapshot())
-                .thenReturn(new NetWorthSnapshot(
-                        money("5000.00"),
-                        money("600.00"),
-                        money("4400.00")
-                ));
+        when(competenceReportService.creditCardPurchaseOutflows(2026, 9))
+                .thenReturn(money("700.00"));
+
+        when(accountRepository.sumCurrentBalanceByUserId(USER_ID))
+                .thenReturn(money("5000.00"));
 
         when(invoiceRepository
                 .sumTotalAmountOwnedByUserIdAndStatusIn(
@@ -153,20 +154,30 @@ class DashboardServiceTest {
         assertThat(response.periodStart()).isEqualTo(START);
         assertThat(response.periodEnd()).isEqualTo(END);
 
-        assertThat(response.consolidatedBalance().basis())
-                .isEqualTo(AccountingBasis.CASH);
-        assertThat(response.consolidatedBalance().amount())
-                .isEqualByComparingTo("5000.00");
+        assertThat(response.monthlyBalance().basis())
+                .isEqualTo(AccountingBasis.CASH_AND_INVOICE);
+        assertThat(response.monthlyBalance().amount())
+                .isEqualByComparingTo("1500.00");
 
         assertThat(response.monthlyInflows().basis())
                 .isEqualTo(AccountingBasis.CASH);
         assertThat(response.monthlyInflows().amount())
                 .isEqualByComparingTo("3000.00");
 
-        assertThat(response.cashOutflows().basis())
+        assertThat(response.totalOutflows().basis())
                 .isEqualTo(AccountingBasis.CASH);
-        assertThat(response.cashOutflows().amount())
+        assertThat(response.totalOutflows().amount())
+                .isEqualByComparingTo("9800.00");
+
+        assertThat(response.monthlyOutflows().basis())
+                .isEqualTo(AccountingBasis.CASH);
+        assertThat(response.monthlyOutflows().amount())
                 .isEqualByComparingTo("800.00");
+
+        assertThat(response.creditCardPurchaseOutflows().basis())
+                .isEqualTo(AccountingBasis.COMPETENCE);
+        assertThat(response.creditCardPurchaseOutflows().amount())
+                .isEqualByComparingTo("700.00");
 
         assertThat(response.competenceExpenses().basis())
                 .isEqualTo(AccountingBasis.COMPETENCE);
@@ -178,10 +189,10 @@ class DashboardServiceTest {
         assertThat(response.openInvoices().amount())
                 .isEqualByComparingTo("400.00");
 
-        assertThat(response.netWorth().basis())
-                .isEqualTo(AccountingBasis.COMPETENCE);
-        assertThat(response.netWorth().amount())
-                .isEqualByComparingTo("4400.00");
+        assertThat(response.consolidatedBalance().basis())
+                .isEqualTo(AccountingBasis.CASH);
+        assertThat(response.consolidatedBalance().amount())
+                .isEqualByComparingTo("5000.00");
 
         assertThat(response.budget().basis())
                 .isEqualTo(AccountingBasis.COMPETENCE);
@@ -199,9 +210,11 @@ class DashboardServiceTest {
                 });
 
         verify(cashFlowReportService).monthly(2026, 9);
+        verify(cashFlowReportService).totalOutflows();
         verify(competenceReportService).generate(START, END);
+        verify(competenceReportService).creditCardPurchaseOutflows(2026, 9);
         verify(budgetService).findByPeriod(2026, 9);
-        verify(netWorthService).calculateSnapshot();
+        verify(accountRepository).sumCurrentBalanceByUserId(USER_ID);
     }
 
     @Test
@@ -225,6 +238,9 @@ class DashboardServiceTest {
                         )
                 ));
 
+        when(cashFlowReportService.totalOutflows())
+                .thenReturn(money("0.00"));
+
         when(competenceReportService.generate(START, END))
                 .thenReturn(new CompetenceReportResponse(
                         START,
@@ -236,12 +252,11 @@ class DashboardServiceTest {
                         List.of()
                 ));
 
-        when(netWorthService.calculateSnapshot())
-                .thenReturn(new NetWorthSnapshot(
-                        money("0.00"),
-                        money("0.00"),
-                        money("0.00")
-                ));
+        when(competenceReportService.creditCardPurchaseOutflows(2026, 9))
+                .thenReturn(money("0.00"));
+
+        when(accountRepository.sumCurrentBalanceByUserId(USER_ID))
+                .thenReturn(money("0.00"));
 
         when(invoiceRepository
                 .sumTotalAmountOwnedByUserIdAndStatusIn(

@@ -111,17 +111,19 @@ class DashboardIntegrationTest {
     @Test
     void shouldReturnAllDashboardIndicatorsWithTheirAccountingBasis() throws Exception {
         TestUser owner = createUserWithFinancialStructure("owner", "5000.00");
+        UUID septemberInvoiceId = saveInvoice(owner.creditCardId(), 9, InvoiceStatus.OPEN, "700.00");
 
+        saveTransaction(owner, TransactionType.INCOME, "500.00",
+                LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 1));
         saveTransaction(owner, TransactionType.INCOME, "3000.00",
                 LocalDate.of(2026, 9, 5), LocalDate.of(2026, 9, 5));
         saveTransaction(owner, TransactionType.EXPENSE, "300.00",
                 LocalDate.of(2026, 9, 6), LocalDate.of(2026, 9, 6));
         saveTransaction(owner, TransactionType.CREDIT_CARD_PURCHASE, "700.00",
-                LocalDate.of(2026, 9, 8), null);
+                LocalDate.of(2026, 8, 15), null, septemberInvoiceId);
         saveTransaction(owner, TransactionType.CREDIT_CARD_PAYMENT, "500.00",
                 LocalDate.of(2026, 9, 15), LocalDate.of(2026, 9, 15));
 
-        saveInvoice(owner.creditCardId(), 9, InvoiceStatus.OPEN, "400.00");
         saveInvoice(owner.creditCardId(), 8, InvoiceStatus.CLOSED, "200.00");
         saveInvoice(owner.creditCardId(), 7, InvoiceStatus.PAID, "100.00");
 
@@ -146,8 +148,9 @@ class DashboardIntegrationTest {
         assertThat(response.properties().stream().map(java.util.Map.Entry::getKey).toList())
                 .containsExactlyInAnyOrder(
                         "referenceDate", "year", "month", "periodStart", "periodEnd",
-                        "consolidatedBalance", "monthlyInflows", "cashOutflows",
-                        "competenceExpenses", "openInvoices", "budget", "netWorth"
+                        "monthlyBalance", "monthlyInflows", "totalOutflows",
+                        "monthlyOutflows", "creditCardPurchaseOutflows",
+                        "competenceExpenses", "openInvoices", "budget", "consolidatedBalance"
                 );
         assertThat(response.path("referenceDate").asText()).isEqualTo("2026-09-15");
         assertThat(response.path("year").asInt()).isEqualTo(2026);
@@ -155,27 +158,29 @@ class DashboardIntegrationTest {
         assertThat(response.path("periodStart").asText()).isEqualTo("2026-09-01");
         assertThat(response.path("periodEnd").asText()).isEqualTo("2026-09-30");
 
+        assertIndicator(response, "monthlyBalance", "2000.00", "CASH_AND_INVOICE");
+        assertIndicator(response, "monthlyInflows", "3500.00", "CASH");
+        assertIndicator(response, "totalOutflows", "9800.00", "CASH");
+        assertIndicator(response, "monthlyOutflows", "800.00", "CASH");
+        assertIndicator(response, "creditCardPurchaseOutflows", "700.00", "COMPETENCE");
+        assertIndicator(response, "competenceExpenses", "300.00", "COMPETENCE");
+        assertIndicator(response, "openInvoices", "700.00", "COMPETENCE");
         assertIndicator(response, "consolidatedBalance", "5000.00", "CASH");
-        assertIndicator(response, "monthlyInflows", "3000.00", "CASH");
-        assertIndicator(response, "cashOutflows", "800.00", "CASH");
-        assertIndicator(response, "competenceExpenses", "1000.00", "COMPETENCE");
-        assertIndicator(response, "openInvoices", "400.00", "COMPETENCE");
-        assertIndicator(response, "netWorth", "4400.00", "COMPETENCE");
 
         JsonNode budget = response.path("budget");
         assertThat(budget.path("basis").asText()).isEqualTo("COMPETENCE");
         assertThat(budget.path("totalLimit").decimalValue()).isEqualByComparingTo("1000.00");
-        assertThat(budget.path("totalSpent").decimalValue()).isEqualByComparingTo("1000.00");
-        assertThat(budget.path("usagePercentage").decimalValue()).isEqualByComparingTo("100.00");
+        assertThat(budget.path("totalSpent").decimalValue()).isEqualByComparingTo("300.00");
+        assertThat(budget.path("usagePercentage").decimalValue()).isEqualByComparingTo("30.00");
         assertThat(budget.path("items")).hasSize(1);
 
         JsonNode item = budget.path("items").get(0);
         assertThat(item.path("budgetId").asText()).isNotBlank();
         assertThat(item.path("categoryId").asText()).isEqualTo(owner.expenseCategoryId().toString());
         assertThat(item.path("amountLimit").decimalValue()).isEqualByComparingTo("1000.00");
-        assertThat(item.path("spentAmount").decimalValue()).isEqualByComparingTo("1000.00");
-        assertThat(item.path("usagePercentage").decimalValue()).isEqualByComparingTo("100.00");
-        assertThat(item.path("alertStatus").asText()).isEqualTo("LIMIT_REACHED");
+        assertThat(item.path("spentAmount").decimalValue()).isEqualByComparingTo("300.00");
+        assertThat(item.path("usagePercentage").decimalValue()).isEqualByComparingTo("30.00");
+        assertThat(item.path("alertStatus").asText()).isEqualTo("NORMAL");
     }
 
     @Test
@@ -184,12 +189,14 @@ class DashboardIntegrationTest {
 
         JsonNode response = getDashboard(token);
 
-        assertIndicator(response, "consolidatedBalance", "0.00", "CASH");
+        assertIndicator(response, "monthlyBalance", "0.00", "CASH_AND_INVOICE");
         assertIndicator(response, "monthlyInflows", "0.00", "CASH");
-        assertIndicator(response, "cashOutflows", "0.00", "CASH");
+        assertIndicator(response, "totalOutflows", "0.00", "CASH");
+        assertIndicator(response, "monthlyOutflows", "0.00", "CASH");
+        assertIndicator(response, "creditCardPurchaseOutflows", "0.00", "COMPETENCE");
         assertIndicator(response, "competenceExpenses", "0.00", "COMPETENCE");
         assertIndicator(response, "openInvoices", "0.00", "COMPETENCE");
-        assertIndicator(response, "netWorth", "0.00", "COMPETENCE");
+        assertIndicator(response, "consolidatedBalance", "0.00", "CASH");
 
         JsonNode budget = response.path("budget");
         assertThat(budget.path("basis").asText()).isEqualTo("COMPETENCE");
@@ -278,6 +285,17 @@ class DashboardIntegrationTest {
             LocalDate competenceDate,
             LocalDate effectiveDate
     ) {
+        saveTransaction(owner, type, amount, competenceDate, effectiveDate, null);
+    }
+
+    private void saveTransaction(
+            TestUser owner,
+            TransactionType type,
+            String amount,
+            LocalDate competenceDate,
+            LocalDate effectiveDate,
+            UUID invoiceId
+    ) {
         Transaction transaction = new Transaction();
         transaction.setUserId(owner.id());
         transaction.setDescription(type.name().toLowerCase());
@@ -302,6 +320,7 @@ class DashboardIntegrationTest {
                 transaction.setPaymentMethod(PaymentMethod.CREDIT_CARD);
                 transaction.setCategoryId(owner.expenseCategoryId());
                 transaction.setCreditCardId(owner.creditCardId());
+                transaction.setInvoiceId(invoiceId);
             }
             case CREDIT_CARD_PAYMENT -> transaction.setSourceAccountId(owner.accountId());
             default -> throw new IllegalArgumentException("Unsupported transaction type: " + type);
@@ -310,7 +329,7 @@ class DashboardIntegrationTest {
         transactionRepository.saveAndFlush(transaction);
     }
 
-    private void saveInvoice(UUID creditCardId, int month, InvoiceStatus status, String totalAmount) {
+    private UUID saveInvoice(UUID creditCardId, int month, InvoiceStatus status, String totalAmount) {
         Invoice invoice = new Invoice();
         invoice.setCreditCardId(creditCardId);
         invoice.setReferenceMonth(month);
@@ -324,7 +343,7 @@ class DashboardIntegrationTest {
             invoice.setPaidAt(NOW);
         }
 
-        invoiceRepository.saveAndFlush(invoice);
+        return invoiceRepository.saveAndFlush(invoice).getId();
     }
 
     private void assertIndicator(JsonNode response, String field, String amount, String basis) {

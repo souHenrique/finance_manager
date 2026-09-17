@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,6 +55,18 @@ public class CompetenceReportService {
                 endDate,
                 rows,
                 categoryNames
+        );
+    }
+
+    public BigDecimal creditCardPurchaseOutflows(Integer referenceYear, Integer referenceMonth) {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        return reportRepository.sumCreditCardPurchasesByInvoicePeriod(
+                userId,
+                TransactionStatus.COMPLETED,
+                TransactionType.CREDIT_CARD_PURCHASE,
+                referenceYear,
+                referenceMonth
         );
     }
 

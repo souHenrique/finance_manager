@@ -21,28 +21,38 @@ public interface DashboardApiDocs {
                     Retorna os indicadores financeiros do usuário autenticado.
 
                     referenceDate utiliza o fuso horário configurado pela aplicação.
-                    Entradas, saídas, despesas por competência e orçamento
+                    Saldo, entradas e saídas mensais, despesas por competência e orçamento
                     representam o mês que contém referenceDate.
 
-                    consolidatedBalance soma os saldos atuais das contas.
+                    monthlyBalance corresponde às entradas mensais menos as
+                    saídas mensais e menos as compras no cartão vinculadas às
+                    faturas de referência do mês. Seu basis é CASH_AND_INVOICE,
+                    pois combina movimentos efetivados e compromissos da fatura.
 
-                    monthlyInflows e cashOutflows utilizam o regime CASH e
-                    selecionam transações pela effectiveDate. Pagamentos de
-                    fatura compõem cashOutflows; compras no cartão não.
+                    monthlyInflows e monthlyOutflows utilizam o regime CASH e
+                    selecionam transações pela effectiveDate entre o primeiro
+                    e o último dia do mês. Assim, monthlyInflows é acumulado
+                    durante todo o mês e só é reiniciado na mudança de período.
+                    Pagamentos de fatura compõem monthlyOutflows; compras no
+                    cartão não.
+
+                    totalOutflows soma todas as saídas de caixa efetivadas do
+                    usuário, também sem incluir compras no cartão.
+
+                    creditCardPurchaseOutflows utiliza o regime COMPETENCE e
+                    soma as compras e parcelas vinculadas às faturas de
+                    referência do mês, independentemente da competenceDate.
 
                     competenceExpenses utiliza o regime COMPETENCE e seleciona
                     transações pela competenceDate. Compras no cartão compõem
                     esse indicador; pagamentos de fatura não.
 
                     openInvoices soma exclusivamente faturas com status OPEN.
-                    Faturas CLOSED não aparecem nesse indicador, mas continuam
-                    sendo descontadas do patrimônio enquanto não forem pagas.
 
                     budget considera os orçamentos do mês atual e seu consumo
                     por competenceDate.
 
-                    netWorth corresponde ao saldo consolidado menos as faturas
-                    OPEN e CLOSED. Faturas PAID e CANCELLED não são descontadas.
+                    consolidatedBalance soma os saldos atuais das contas.
 
                     Cada indicador informa explicitamente seu regime por meio
                     do campo basis.

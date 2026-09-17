@@ -32,7 +32,6 @@ finance-manager/
 - orçamentos mensais por categoria, com cálculo de consumo e alertas;
 - relatórios de caixa diário, semanal, mensal e anual;
 - relatório financeiro por competência;
-- cálculo de patrimônio líquido;
 - dashboard financeiro com identificação explícita do regime de cada indicador;
 - exportação das transações filtradas em CSV;
 - documentação OpenAPI e Swagger UI;

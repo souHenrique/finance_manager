@@ -37,17 +37,25 @@ describe('DashboardApiService', () => {
       month: 9,
       periodStart: '2026-09-01',
       periodEnd: '2026-09-30',
-      consolidatedBalance: {
-        basis: 'CASH',
-        amount: 7000,
+      monthlyBalance: {
+        basis: 'CASH_AND_INVOICE',
+        amount: 2750,
       },
       monthlyInflows: {
         basis: 'CASH',
         amount: 5000,
       },
-      cashOutflows: {
+      totalOutflows: {
+        basis: 'CASH',
+        amount: 18000,
+      },
+      monthlyOutflows: {
         basis: 'CASH',
         amount: 1500,
+      },
+      creditCardPurchaseOutflows: {
+        basis: 'COMPETENCE',
+        amount: 750,
       },
       competenceExpenses: {
         basis: 'COMPETENCE',
@@ -73,9 +81,9 @@ describe('DashboardApiService', () => {
           },
         ],
       },
-      netWorth: {
+      consolidatedBalance: {
         basis: 'CASH',
-        amount: 6150,
+        amount: 7000,
       },
     };
 

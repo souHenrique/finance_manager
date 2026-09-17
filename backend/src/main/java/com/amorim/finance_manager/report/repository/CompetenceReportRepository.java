@@ -1,5 +1,6 @@
 package com.amorim.finance_manager.report.repository;
 
+import com.amorim.finance_manager.invoice.entity.Invoice;
 import com.amorim.finance_manager.report.projection.CompetenceAggregate;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
@@ -8,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -35,5 +37,24 @@ public interface CompetenceReportRepository extends Repository<Transaction, UUID
             @Param("endDate") LocalDate endDate,
             @Param("status") TransactionStatus status,
             @Param("includedTypes") Collection<TransactionType> includedTypes
+    );
+
+    @Query("""
+            select coalesce(sum(transaction.amount), 0)
+            from Transaction transaction
+            join Invoice invoice on invoice.id = transaction.invoiceId
+            where transaction.userId = :userId
+              and invoice.creditCardId = transaction.creditCardId
+              and transaction.status = :status
+              and transaction.type = :type
+              and invoice.referenceYear = :referenceYear
+              and invoice.referenceMonth = :referenceMonth
+            """)
+    BigDecimal sumCreditCardPurchasesByInvoicePeriod(
+            @Param("userId") UUID userId,
+            @Param("status") TransactionStatus status,
+            @Param("type") TransactionType type,
+            @Param("referenceYear") Integer referenceYear,
+            @Param("referenceMonth") Integer referenceMonth
     );
 }

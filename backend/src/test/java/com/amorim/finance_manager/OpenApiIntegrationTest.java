@@ -791,8 +791,7 @@ class OpenApiIntegrationTest {
                         "Compras no cartão",
                         "pagamentos de fatura",
                         "OPEN",
-                        "CLOSED",
-                        "PAID",
+                        "CASH_AND_INVOICE",
                         "basis"
                 );
 
@@ -813,13 +812,15 @@ class OpenApiIntegrationTest {
                 "month",
                 "periodStart",
                 "periodEnd",
-                "consolidatedBalance",
+                "monthlyBalance",
                 "monthlyInflows",
-                "cashOutflows",
+                "totalOutflows",
+                "monthlyOutflows",
+                "creditCardPurchaseOutflows",
                 "competenceExpenses",
                 "openInvoices",
                 "budget",
-                "netWorth"
+                "consolidatedBalance"
         );
     }
 

@@ -16,10 +16,13 @@
     <strong>Como interpretar os indicadores</strong>
     <p><b>CASH</b> considera valores efetivamente movimentados.</p>
     <p><b>COMPETENCE</b> considera valores reconhecidos no período financeiro.</p>
+    <p><b>CASH + FATURA</b> inclui os movimentos efetivos e as compras da fatura de referência.</p>
   </aside>
 
   @if (state() === 'loading') {
     <div class="dashboard__skeletons" aria-label="Carregando indicadores do dashboard">
+      <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
@@ -37,10 +40,14 @@
   } @else if (dashboard(); as data) {
     <section class="dashboard__indicators" aria-label="Indicadores financeiros">
       @for (card of indicatorCards(); track card.title) {
-        <app-card [title]="card.title" [subtitle]="card.description">
+        <app-card
+          class="dashboard__indicator-card"
+          [title]="card.title"
+          [subtitle]="card.description"
+        >
           <div card-actions>
             <app-badge
-              [label]="card.indicator.basis"
+              [label]="basisLabel(card.indicator.basis)"
               [tone]="card.indicator.basis === 'CASH' ? 'info' : 'neutral'"
             />
           </div>

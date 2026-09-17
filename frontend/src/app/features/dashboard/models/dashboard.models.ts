@@ -1,6 +1,6 @@
 import { BudgetAlertStatus } from '../../budgets/models/budget.models';
 
-export type AccountingBasis = 'CASH' | 'COMPETENCE';
+export type AccountingBasis = 'CASH' | 'COMPETENCE' | 'CASH_AND_INVOICE';
 
 export interface DashboardIndicator {
   basis: AccountingBasis;
@@ -30,11 +30,13 @@ export interface Dashboard {
   month: number;
   periodStart: string;
   periodEnd: string;
-  consolidatedBalance: DashboardIndicator;
+  monthlyBalance: DashboardIndicator;
   monthlyInflows: DashboardIndicator;
-  cashOutflows: DashboardIndicator;
+  totalOutflows: DashboardIndicator;
+  monthlyOutflows: DashboardIndicator;
+  creditCardPurchaseOutflows: DashboardIndicator;
   competenceExpenses: DashboardIndicator;
   openInvoices: DashboardIndicator;
   budget: DashboardBudget;
-  netWorth: DashboardIndicator;
+  consolidatedBalance: DashboardIndicator;
 }

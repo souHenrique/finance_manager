@@ -131,6 +131,30 @@ class CompetenceReportServiceTest {
         verifyNoInteractions(categoryRepository);
     }
 
+    @Test
+    void shouldSumOnlyCreditCardPurchasesFromTheReferencedInvoiceMonth() {
+        when(currentUserService.getCurrentUserId()).thenReturn(USER_ID);
+        when(reportRepository.sumCreditCardPurchasesByInvoicePeriod(
+                USER_ID,
+                TransactionStatus.COMPLETED,
+                TransactionType.CREDIT_CARD_PURCHASE,
+                2026,
+                9
+        )).thenReturn(new BigDecimal("1000.00"));
+
+        assertThat(service.creditCardPurchaseOutflows(2026, 9))
+                .isEqualByComparingTo("1000.00");
+        verify(reportRepository).sumCreditCardPurchasesByInvoicePeriod(
+                USER_ID,
+                TransactionStatus.COMPLETED,
+                TransactionType.CREDIT_CARD_PURCHASE,
+                2026,
+                9
+        );
+        verifyNoInteractions(categoryRepository);
+        verifyNoMoreInteractions(reportRepository);
+    }
+
     @ParameterizedTest
     @MethodSource("invalidPeriods")
     void shouldRejectInvalidPeriodsBeforeAccessingAuthenticationOrRepositories(

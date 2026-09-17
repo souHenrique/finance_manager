@@ -2,13 +2,13 @@ package com.amorim.finance_manager.dashboard.service;
 
 import com.amorim.finance_manager.budget.dto.BudgetResponse;
 import com.amorim.finance_manager.budget.service.BudgetService;
+import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.dashboard.dto.*;
 import com.amorim.finance_manager.dashboard.model.AccountingBasis;
 import com.amorim.finance_manager.invoice.entity.InvoiceStatus;
 import com.amorim.finance_manager.invoice.repository.InvoiceRepository;
-import com.amorim.finance_manager.networth.model.NetWorthSnapshot;
-import com.amorim.finance_manager.networth.service.NetWorthService;
 import com.amorim.finance_manager.report.dto.CompetenceReportResponse;
+import com.amorim.finance_manager.report.dto.CashFlowSummaryResponse;
 import com.amorim.finance_manager.report.dto.MonthlyCashFlowResponse;
 import com.amorim.finance_manager.report.service.CashFlowReportService;
 import com.amorim.finance_manager.report.service.CompetenceReportService;
@@ -38,7 +38,7 @@ public class DashboardService {
     private final CashFlowReportService cashFlowReportService;
     private final CompetenceReportService competenceReportService;
     private final BudgetService budgetService;
-    private final NetWorthService netWorthService;
+    private final AccountRepository accountRepository;
     private final InvoiceRepository invoiceRepository;
     private final CurrentUserService currentUserService;
     private final Clock financeClock;
@@ -53,10 +53,17 @@ public class DashboardService {
         UUID userId = currentUserService.getCurrentUserId();
 
         MonthlyCashFlowResponse cash = cashFlowReportService.monthly(period.getYear(), period.getMonthValue());
+        CashFlowSummaryResponse monthlyCash = cash.summary();
+        BigDecimal totalOutflows = cashFlowReportService.totalOutflows();
 
         CompetenceReportResponse competence = competenceReportService.generate(periodStart, periodEnd);
+        BigDecimal creditCardPurchaseOutflows = competenceReportService
+                .creditCardPurchaseOutflows(period.getYear(), period.getMonthValue());
 
-        NetWorthSnapshot netWorth = netWorthService.calculateSnapshot();
+        BigDecimal monthlyBalance = monthlyCash.net()
+                .subtract(creditCardPurchaseOutflows);
+
+        BigDecimal consolidatedBalance = accountRepository.sumCurrentBalanceByUserId(userId);
 
         BigDecimal openInvoices =
                 invoiceRepository
@@ -70,13 +77,15 @@ public class DashboardService {
                 period.getMonthValue(),
                 periodStart,
                 periodEnd,
-                cash(netWorth.consolidatedBalance()),
-                cash(cash.summary().inflows()),
-                cash(cash.summary().outflows()),
+                cashAndInvoice(monthlyBalance),
+                cash(monthlyCash.inflows()),
+                cash(totalOutflows),
+                cash(monthlyCash.outflows()),
+                competence(creditCardPurchaseOutflows),
                 competence(competence.totalExpenses()),
                 competence(openInvoices),
                 budgetSummary(budgets),
-                competence(netWorth.netWorth())
+                cash(consolidatedBalance)
         );
     }
 
@@ -86,6 +95,10 @@ public class DashboardService {
 
     private DashboardIndicatorResponse competence(BigDecimal amount) {
         return new DashboardIndicatorResponse(AccountingBasis.COMPETENCE, amount);
+    }
+
+    private DashboardIndicatorResponse cashAndInvoice(BigDecimal amount) {
+        return new DashboardIndicatorResponse(AccountingBasis.CASH_AND_INVOICE, amount);
     }
 
     private DashboardBudgetResponse budgetSummary(List<BudgetResponse> budgets) {

@@ -44,6 +44,8 @@ class CashFlowReportServiceTest {
     private static final LocalDate DATE = LocalDate.of(2026, 9, 3);
     private static final List<TransactionType> CASH_TYPES = List.of(
             TransactionType.INCOME, TransactionType.EXPENSE, TransactionType.CREDIT_CARD_PAYMENT);
+    private static final List<TransactionType> CASH_OUTFLOW_TYPES = List.of(
+            TransactionType.EXPENSE, TransactionType.CREDIT_CARD_PAYMENT);
 
     @Mock
     private CashFlowReportRepository reportRepository;
@@ -74,6 +76,25 @@ class CashFlowReportServiceTest {
         verify(reportRepository).aggregate(USER, DATE, DATE, TransactionStatus.COMPLETED, CASH_TYPES);
         verifyNoMoreInteractions(reportRepository);
         verifyNoInteractions(categoryRepository);
+    }
+
+    @Test
+    void shouldSumAllCompletedCashOutflowsWithoutCreditCardPurchases() {
+        when(currentUserService.getCurrentUserId()).thenReturn(USER);
+        when(reportRepository.sumAmountsByUserIdAndTypes(
+                USER,
+                TransactionStatus.COMPLETED,
+                CASH_OUTFLOW_TYPES
+        )).thenReturn(new BigDecimal("9800.00"));
+
+        assertThat(service.totalOutflows()).isEqualByComparingTo("9800.00");
+        verify(reportRepository).sumAmountsByUserIdAndTypes(
+                USER,
+                TransactionStatus.COMPLETED,
+                CASH_OUTFLOW_TYPES
+        );
+        verifyNoInteractions(categoryRepository);
+        verifyNoMoreInteractions(reportRepository);
     }
 
     @ParameterizedTest

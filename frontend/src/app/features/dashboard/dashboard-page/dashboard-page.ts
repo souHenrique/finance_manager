@@ -67,19 +67,29 @@ export class DashboardPage implements OnInit {
 
     return [
       {
-        title: 'Saldo consolidado',
-        description: 'Soma dos saldos atuais das contas.',
-        indicator: dashboard.consolidatedBalance,
+        title: 'Saldo',
+        description: 'Entradas menos todas as saídas do mês, incluindo a fatura de referência.',
+        indicator: dashboard.monthlyBalance,
       },
       {
         title: 'Entradas mensais',
-        description: 'Entradas efetivadas no período.',
+        description: 'Total acumulado de entradas efetivadas no mês de referência.',
         indicator: dashboard.monthlyInflows,
       },
       {
-        title: 'Saídas de caixa',
-        description: 'Saídas efetivadas no período.',
-        indicator: dashboard.cashOutflows,
+        title: 'Saídas mensais',
+        description: 'Saídas de caixa efetivadas no mês de referência.',
+        indicator: dashboard.monthlyOutflows,
+      },
+      {
+        title: 'Saídas totais',
+        description: 'Todas as saídas de caixa efetivadas no histórico.',
+        indicator: dashboard.totalOutflows,
+      },
+      {
+        title: 'Saídas de compras no crédito',
+        description: 'Compras e parcelas vinculadas à fatura do mês de referência.',
+        indicator: dashboard.creditCardPurchaseOutflows,
       },
       {
         title: 'Despesas por competência',
@@ -92,9 +102,9 @@ export class DashboardPage implements OnInit {
         indicator: dashboard.openInvoices,
       },
       {
-        title: 'Patrimônio',
-        description: 'Contas menos faturas ainda não pagas.',
-        indicator: dashboard.netWorth,
+        title: 'Saldo consolidado',
+        description: 'Soma dos saldos atuais das contas.',
+        indicator: dashboard.consolidatedBalance,
       },
     ];
   });
@@ -132,7 +142,19 @@ export class DashboardPage implements OnInit {
   }
 
   basisDescription(basis: AccountingBasis): string {
-    return basis === 'CASH' ? 'CASH · Regime de caixa' : 'COMPETENCE · Regime de competência';
+    if (basis === 'CASH') {
+      return 'CASH · Regime de caixa';
+    }
+
+    if (basis === 'COMPETENCE') {
+      return 'COMPETENCE · Regime de competência';
+    }
+
+    return 'CASH + FATURA · Movimentos efetivos e fatura do mês';
+  }
+
+  basisLabel(basis: AccountingBasis): string {
+    return basis === 'CASH_AND_INVOICE' ? 'CASH + FATURA' : basis;
   }
 
   categoryName(categoryId: string): string {

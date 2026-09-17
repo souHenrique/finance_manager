@@ -1396,17 +1396,25 @@ public final class OpenApiExamples {
           "month": 9,
           "periodStart": "2026-09-01",
           "periodEnd": "2026-09-30",
-          "consolidatedBalance": {
-            "basis": "CASH",
-            "amount": 5000.00
+          "monthlyBalance": {
+            "basis": "CASH_AND_INVOICE",
+            "amount": 1200.00
           },
           "monthlyInflows": {
             "basis": "CASH",
             "amount": 3000.00
           },
-          "cashOutflows": {
+          "totalOutflows": {
+            "basis": "CASH",
+            "amount": 5200.00
+          },
+          "monthlyOutflows": {
             "basis": "CASH",
             "amount": 1200.00
+          },
+          "creditCardPurchaseOutflows": {
+            "basis": "COMPETENCE",
+            "amount": 600.00
           },
           "competenceExpenses": {
             "basis": "COMPETENCE",
@@ -1432,9 +1440,9 @@ public final class OpenApiExamples {
               }
             ]
           },
-          "netWorth": {
-            "basis": "COMPETENCE",
-            "amount": 4400.00
+          "consolidatedBalance": {
+            "basis": "CASH",
+            "amount": 5000.00
           }
         }
         """;

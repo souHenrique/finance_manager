@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
@@ -60,6 +61,20 @@ public interface CashFlowReportRepository extends Repository<Transaction, UUID> 
             @Param("userId") UUID userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate,
+            @Param("status") TransactionStatus status,
+            @Param("types") Collection<TransactionType> types
+    );
+
+    @Query("""
+        select coalesce(sum(t.amount), 0)
+        from Transaction t
+        where t.userId = :userId
+          and t.status = :status
+          and t.effectiveDate is not null
+          and t.type in :types
+        """)
+    BigDecimal sumAmountsByUserIdAndTypes(
+            @Param("userId") UUID userId,
             @Param("status") TransactionStatus status,
             @Param("types") Collection<TransactionType> types
     );

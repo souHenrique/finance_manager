@@ -40,9 +40,11 @@ describe('DashboardPage', () => {
     month: 9,
     periodStart: '2026-09-01',
     periodEnd: '2026-09-30',
-    consolidatedBalance: { basis: 'CASH', amount: 7000 },
+    monthlyBalance: { basis: 'CASH_AND_INVOICE', amount: 2750 },
     monthlyInflows: { basis: 'CASH', amount: 5000 },
-    cashOutflows: { basis: 'CASH', amount: 1500 },
+    totalOutflows: { basis: 'CASH', amount: 18000 },
+    monthlyOutflows: { basis: 'CASH', amount: 1500 },
+    creditCardPurchaseOutflows: { basis: 'COMPETENCE', amount: 750 },
     competenceExpenses: { basis: 'COMPETENCE', amount: 1800 },
     openInvoices: { basis: 'COMPETENCE', amount: 850 },
     budget: {
@@ -69,7 +71,7 @@ describe('DashboardPage', () => {
         },
       ],
     },
-    netWorth: { basis: 'COMPETENCE', amount: 6150 },
+    consolidatedBalance: { basis: 'CASH', amount: 7000 },
   };
 
   beforeEach(async () => {
@@ -97,23 +99,52 @@ describe('DashboardPage', () => {
     expect(element.textContent).toContain('Setembro de 2026');
 
     for (const title of [
-      'Saldo consolidado',
+      'Saldo',
       'Entradas mensais',
-      'Saídas de caixa',
+      'Saídas mensais',
+      'Saídas totais',
+      'Saídas de compras no crédito',
       'Despesas por competência',
       'Faturas abertas',
-      'Patrimônio',
       'Orçamento',
+      'Saldo consolidado',
     ]) {
       expect(element.textContent).toContain(title);
     }
 
     expect(element.textContent).toContain('Base: CASH · Regime de caixa');
     expect(element.textContent).toContain('Base: COMPETENCE · Regime de competência');
+    expect(element.textContent).toContain(
+      'Base: CASH + FATURA · Movimentos efetivos e fatura do mês',
+    );
     expect(element.textContent).toContain('CASH considera valores efetivamente movimentados.');
     expect(element.textContent).toContain(
       'COMPETENCE considera valores reconhecidos no período financeiro.',
     );
+    expect(element.textContent).toContain(
+      'CASH + FATURA inclui os movimentos efetivos e as compras da fatura de referência.',
+    );
+    expect(element.textContent).toContain(
+      'Total acumulado de entradas efetivadas no mês de referência.',
+    );
+  });
+
+  it('should place the consolidated balance after the other indicators', () => {
+    const element = fixture.nativeElement as HTMLElement;
+    const titles = Array.from(
+      element.querySelectorAll<HTMLElement>('.dashboard__indicators app-card h2'),
+    ).map((title) => title.textContent?.trim());
+
+    expect(titles).toEqual([
+      'Saldo',
+      'Entradas mensais',
+      'Saídas mensais',
+      'Saídas totais',
+      'Saídas de compras no crédito',
+      'Despesas por competência',
+      'Faturas abertas',
+      'Saldo consolidado',
+    ]);
   });
 
   it('should render the budget summary and explicit alert labels for each category', () => {

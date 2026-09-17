@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
@@ -32,6 +33,11 @@ public class CashFlowReportService {
 
     private static final List<TransactionType> CASH_TYPES = List.of(
             TransactionType.INCOME,
+            TransactionType.EXPENSE,
+            TransactionType.CREDIT_CARD_PAYMENT
+    );
+
+    private static final List<TransactionType> CASH_OUTFLOW_TYPES = List.of(
             TransactionType.EXPENSE,
             TransactionType.CREDIT_CARD_PAYMENT
     );
@@ -161,6 +167,16 @@ public class CashFlowReportService {
                 start,
                 end,
                 evolution
+        );
+    }
+
+    public BigDecimal totalOutflows() {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        return reportRepository.sumAmountsByUserIdAndTypes(
+                userId,
+                TransactionStatus.COMPLETED,
+                CASH_OUTFLOW_TYPES
         );
     }
 
