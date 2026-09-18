@@ -2,6 +2,7 @@ services:
   - type: web
     name: finance-manager-api
     runtime: docker
+    plan: free
     rootDir: backend
     dockerfilePath: backend/Dockerfile
     dockerContext: backend
