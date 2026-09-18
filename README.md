@@ -8,7 +8,6 @@ O projeto aplica isolamento dos dados por usuário, autenticação JWT, validaç
 de negócio, controle transacional, concorrência otimista, auditoria de entidades
 financeiras e migrações versionadas do banco de dados.
 
-
 ## Estrutura do repositório
 
 ```text
@@ -16,6 +15,8 @@ finance-manager/
 ├── backend/       API Spring Boot
 ├── frontend/      Aplicação web Angular
 ├── compose.yaml   Infraestrutura local
+├── render.yaml    Configuração do serviço de API no Render
+├── DEPLOYMENT.md  Guia de publicação em Vercel, Render e Supabase
 └── README.md
 ```
 
@@ -96,7 +97,6 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-
 No perfil padrão `dev`, a integração do Spring Boot com Docker Compose inicia o
 PostgreSQL definido em `compose.yaml`. A API fica disponível em
 `http://localhost:8080`.
@@ -140,66 +140,65 @@ curl --request POST http://localhost:8080/api/v1/auth/login \
 
 ### Usuário, contas e categorias
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `POST` | `/api/v1/auth/register` | Cadastrar usuário |
-| `POST` | `/api/v1/auth/login` | Autenticar e obter JWT |
-| `GET` | `/api/v1/users/me` | Consultar o perfil autenticado |
-| `PATCH` | `/api/v1/users/me` | Atualizar o perfil autenticado |
-| `POST` | `/api/v1/accounts` | Criar conta |
-| `GET` | `/api/v1/accounts` | Listar contas |
-| `GET` | `/api/v1/accounts/{id}` | Consultar conta |
-| `PATCH` | `/api/v1/accounts/{id}` | Atualizar conta |
-| `PATCH` | `/api/v1/accounts/{id}/status` | Alterar o status da conta |
-| `POST` | `/api/v1/categories` | Criar categoria |
-| `GET` | `/api/v1/categories` | Listar categorias |
-| `GET` | `/api/v1/categories/{id}` | Consultar categoria |
-| `PATCH` | `/api/v1/categories/{id}` | Atualizar categoria |
+| Método  | Endpoint                       | Descrição                      |
+| ------- | ------------------------------ | ------------------------------ |
+| `POST`  | `/api/v1/auth/register`        | Cadastrar usuário              |
+| `POST`  | `/api/v1/auth/login`           | Autenticar e obter JWT         |
+| `GET`   | `/api/v1/users/me`             | Consultar o perfil autenticado |
+| `PATCH` | `/api/v1/users/me`             | Atualizar o perfil autenticado |
+| `POST`  | `/api/v1/accounts`             | Criar conta                    |
+| `GET`   | `/api/v1/accounts`             | Listar contas                  |
+| `GET`   | `/api/v1/accounts/{id}`        | Consultar conta                |
+| `PATCH` | `/api/v1/accounts/{id}`        | Atualizar conta                |
+| `PATCH` | `/api/v1/accounts/{id}/status` | Alterar o status da conta      |
+| `POST`  | `/api/v1/categories`           | Criar categoria                |
+| `GET`   | `/api/v1/categories`           | Listar categorias              |
+| `GET`   | `/api/v1/categories/{id}`      | Consultar categoria            |
+| `PATCH` | `/api/v1/categories/{id}`      | Atualizar categoria            |
 
 ### Transações e transferências
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `POST` | `/api/v1/transactions` | Criar receita ou despesa |
-| `GET` | `/api/v1/transactions` | Pesquisar transações |
-| `GET` | `/api/v1/transactions/{id}` | Consultar transação |
-| `PATCH` | `/api/v1/transactions/{id}` | Atualizar transação |
-| `POST` | `/api/v1/transactions/{id}/cancel` | Cancelar transação |
-| `POST` | `/api/v1/transfers` | Transferir valores entre contas |
+| Método  | Endpoint                           | Descrição                       |
+| ------- | ---------------------------------- | ------------------------------- |
+| `POST`  | `/api/v1/transactions`             | Criar receita ou despesa        |
+| `GET`   | `/api/v1/transactions`             | Pesquisar transações            |
+| `GET`   | `/api/v1/transactions/{id}`        | Consultar transação             |
+| `PATCH` | `/api/v1/transactions/{id}`        | Atualizar transação             |
+| `POST`  | `/api/v1/transactions/{id}/cancel` | Cancelar transação              |
+| `POST`  | `/api/v1/transfers`                | Transferir valores entre contas |
 
 ### Cartões e faturas
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `POST` | `/api/v1/credit-cards` | Criar cartão de crédito |
-| `GET` | `/api/v1/credit-cards` | Listar cartões |
-| `GET` | `/api/v1/credit-cards/{id}` | Consultar cartão |
-| `PATCH` | `/api/v1/credit-cards/{id}` | Atualizar cartão |
-| `POST` | `/api/v1/credit-cards/{id}/purchases` | Registrar compra à vista ou parcelada |
-| `POST` | `/api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund` | Estornar compra no cartão |
-| `GET` | `/api/v1/invoices` | Pesquisar faturas |
-| `GET` | `/api/v1/invoices/{id}` | Consultar fatura e transações |
-| `GET` | `/api/v1/credit-cards/{id}/invoices` | Listar faturas de um cartão |
-| `POST` | `/api/v1/invoices/{id}/close` | Fechar fatura |
-| `POST` | `/api/v1/invoices/{id}/pay` | Pagar fatura |
+| Método  | Endpoint                                                              | Descrição                             |
+| ------- | --------------------------------------------------------------------- | ------------------------------------- |
+| `POST`  | `/api/v1/credit-cards`                                                | Criar cartão de crédito               |
+| `GET`   | `/api/v1/credit-cards`                                                | Listar cartões                        |
+| `GET`   | `/api/v1/credit-cards/{id}`                                           | Consultar cartão                      |
+| `PATCH` | `/api/v1/credit-cards/{id}`                                           | Atualizar cartão                      |
+| `POST`  | `/api/v1/credit-cards/{id}/purchases`                                 | Registrar compra à vista ou parcelada |
+| `POST`  | `/api/v1/credit-cards/{creditCardId}/purchase/{transactionId}/refund` | Estornar compra no cartão             |
+| `GET`   | `/api/v1/invoices`                                                    | Pesquisar faturas                     |
+| `GET`   | `/api/v1/invoices/{id}`                                               | Consultar fatura e transações         |
+| `GET`   | `/api/v1/credit-cards/{id}/invoices`                                  | Listar faturas de um cartão           |
+| `POST`  | `/api/v1/invoices/{id}/close`                                         | Fechar fatura                         |
+| `POST`  | `/api/v1/invoices/{id}/pay`                                           | Pagar fatura                          |
 
 ### Orçamentos, relatórios e dashboard
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `POST` | `/api/v1/budgets` | Criar orçamento mensal |
-| `GET` | `/api/v1/budgets` | Listar orçamentos |
-| `GET` | `/api/v1/budgets/{id}` | Consultar orçamento |
-| `PATCH` | `/api/v1/budgets/{id}` | Atualizar orçamento |
-| `DELETE` | `/api/v1/budgets/{id}` | Excluir definitivamente orçamento |
-| `GET` | `/api/v1/reports/cash/daily?date=YYYY-MM-DD` | Relatório de caixa diário |
-| `GET` | `/api/v1/reports/cash/weekly?date=YYYY-MM-DD` | Relatório e comparação semanal |
-| `GET` | `/api/v1/reports/cash/monthly?year=YYYY&month=M` | Relatório de caixa mensal |
-| `GET` | `/api/v1/reports/cash/annual?year=YYYY` | Evolução anual do caixa |
-| `GET` | `/api/v1/reports/competence?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | Relatório por competência |
-| `GET` | `/api/v1/dashboard` | Dashboard financeiro consolidado |
-| `GET` | `/api/v1/exports/transactions.csv` | Exportar transações filtradas em CSV |
-
+| Método   | Endpoint                                                             | Descrição                            |
+| -------- | -------------------------------------------------------------------- | ------------------------------------ |
+| `POST`   | `/api/v1/budgets`                                                    | Criar orçamento mensal               |
+| `GET`    | `/api/v1/budgets`                                                    | Listar orçamentos                    |
+| `GET`    | `/api/v1/budgets/{id}`                                               | Consultar orçamento                  |
+| `PATCH`  | `/api/v1/budgets/{id}`                                               | Atualizar orçamento                  |
+| `DELETE` | `/api/v1/budgets/{id}`                                               | Excluir definitivamente orçamento    |
+| `GET`    | `/api/v1/reports/cash/daily?date=YYYY-MM-DD`                         | Relatório de caixa diário            |
+| `GET`    | `/api/v1/reports/cash/weekly?date=YYYY-MM-DD`                        | Relatório e comparação semanal       |
+| `GET`    | `/api/v1/reports/cash/monthly?year=YYYY&month=M`                     | Relatório de caixa mensal            |
+| `GET`    | `/api/v1/reports/cash/annual?year=YYYY`                              | Evolução anual do caixa              |
+| `GET`    | `/api/v1/reports/competence?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` | Relatório por competência            |
+| `GET`    | `/api/v1/dashboard`                                                  | Dashboard financeiro consolidado     |
+| `GET`    | `/api/v1/exports/transactions.csv`                                   | Exportar transações filtradas em CSV |
 
 ## Exportação CSV
 
@@ -287,3 +286,9 @@ cd backend
 A suíte cobre regras de domínio, autenticação e isolamento por usuário,
 persistência, concorrência, relatórios, documentação OpenAPI, dashboard e o
 contrato completo da exportação CSV.
+
+## Produção
+
+O frontend é publicado no Vercel, a API Spring Boot no Render e o PostgreSQL é
+fornecido pelo Supabase. O guia completo de variáveis, HTTPS, CORS, Flyway,
+health check e publicação está em [DEPLOYMENT.md](DEPLOYMENT.md).

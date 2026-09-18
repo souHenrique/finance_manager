@@ -48,6 +48,8 @@ pnpm start
 pnpm build
 pnpm test
 pnpm test:ci
+pnpm e2e
+pnpm e2e:ui
 pnpm lint
 pnpm lint:fix
 pnpm format
@@ -56,6 +58,45 @@ pnpm format:check
 
 ## Configuração da API
 
-A URL base da API está definida nos arquivos de src/environments.
+A aplicação carrega `runtime-config.json` antes do bootstrap. Em desenvolvimento,
+o arquivo público usa `/api/v1` e o proxy encaminha as chamadas para o backend
+local. No build de produção, o script `scripts/write-runtime-config.mjs` gera
+esse mesmo arquivo no artefato final a partir de `API_BASE_URL`.
 
-Não coloque senhas, tokens ou outros segredos nesses arquivos, pois os valores do frontend são incorporados ao bundle e ficam visíveis no navegador.
+Não coloque senhas, tokens ou outros segredos nesse arquivo, em
+`src/environments` ou em qualquer variável usada pelo frontend: valores do
+navegador ficam visíveis no bundle ou na rede. A configuração aceita apenas a URL
+pública da API.
+
+## Deploy no Vercel
+
+O projeto Vercel deve usar `frontend/` como **Root Directory**. O
+`vercel.json` já contém os comandos de instalação e build, a pasta de saída e o
+fallback de rotas da SPA.
+
+No ambiente Production, configure somente a variável pública:
+
+```text
+API_BASE_URL=https://<sua-api>.onrender.com/api/v1
+```
+
+Nunca coloque senha, token JWT, URL de banco ou qualquer service key no Vercel.
+Consulte o guia completo em [../DEPLOYMENT.md](../DEPLOYMENT.md).
+
+## Testes E2E
+
+Os testes E2E cobrem os fluxos financeiros críticos em um navegador real, incluindo cadastro e login, contas, categorias, transações, transferências, compras no cartão, faturas, orçamentos e exportação CSV. Eles simulam as respostas da API no navegador, por isso não criam, alteram nem removem dados do ambiente de desenvolvimento.
+
+Antes da primeira execução, instale o navegador do Playwright:
+
+```bash
+pnpm exec playwright install chromium
+```
+
+Para executar a suíte, use:
+
+```bash
+pnpm e2e
+```
+
+O comando inicia temporariamente a aplicação em `http://127.0.0.1:4200`. Para depurar os fluxos visualmente, use `pnpm e2e:ui`.

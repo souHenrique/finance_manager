@@ -42,6 +42,17 @@ describe('Header', () => {
     expect(emitSpy).toHaveBeenCalledOnce();
   });
 
+  it('should emit skipToContent without changing the navigation target', () => {
+    const emitSpy = vi.spyOn(fixture.componentInstance.skipToContent, 'emit');
+    const skipLink = fixture.nativeElement.querySelector('.header__skip-link') as HTMLAnchorElement;
+    const event = new MouseEvent('click', { cancelable: true });
+
+    skipLink.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(emitSpy).toHaveBeenCalledOnce();
+  });
+
   it('should expose the open menu state', () => {
     fixture.componentRef.setInput('menuOpen', true);
     fixture.detectChanges();

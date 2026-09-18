@@ -38,11 +38,14 @@ pnpm-debug.log*
 .sass-cache/
 /connect.lock
 /coverage
+/playwright-report
+/test-results
 /libpeerconnection.log
 testem.log
 /typings
 __screenshots__/
 /.angular
+.vercel/
 
 # System files
 .DS_Store

@@ -1,5 +1,10 @@
 <div class="shell" [class.shell--sidebar-open]="sidebarOpen()">
-  <app-header class="shell__header" [menuOpen]="sidebarOpen()" (menuToggle)="toggleSidebar()" />
+  <app-header
+    class="shell__header"
+    [menuOpen]="sidebarOpen()"
+    (menuToggle)="toggleSidebar()"
+    (skipToContent)="focusMainContent()"
+  />
 
   <aside id="app-sidebar" class="shell__sidebar" aria-label="Menu da aplicação">
     <app-sidebar (navigated)="closeSidebar()" />

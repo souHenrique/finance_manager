@@ -12,15 +12,17 @@ import { routes } from './app.routes';
 import { apiErrorInterceptor } from './core/interceptors/api-error.interceptor';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor, apiErrorInterceptor])),
-    importProvidersFrom(DialogModule),
-    {
-      provide: API_BASE_URL,
-      useValue: environment.apiBaseUrl,
-    },
-  ],
-};
+export function createAppConfig(apiBaseUrl: string = environment.apiBaseUrl): ApplicationConfig {
+  return {
+    providers: [
+      provideBrowserGlobalErrorListeners(),
+      provideRouter(routes),
+      provideHttpClient(withInterceptors([authInterceptor, apiErrorInterceptor])),
+      importProvidersFrom(DialogModule),
+      {
+        provide: API_BASE_URL,
+        useValue: apiBaseUrl,
+      },
+    ],
+  };
+}

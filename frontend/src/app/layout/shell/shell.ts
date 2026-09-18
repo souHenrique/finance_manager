@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, HostListener, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Header } from '../header/header';
 import { Sidebar } from '../sidebar/sidebar';
@@ -11,6 +18,8 @@ import { Sidebar } from '../sidebar/sidebar';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Shell {
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
+
   protected readonly sidebarOpen = signal(false);
 
   protected toggleSidebar(): void {
@@ -19,6 +28,14 @@ export class Shell {
 
   protected closeSidebar(): void {
     this.sidebarOpen.set(false);
+  }
+
+  protected focusMainContent(): void {
+    const mainContent = this.elementRef.nativeElement.querySelector(
+      '#main-content',
+    ) as HTMLElement | null;
+
+    mainContent?.focus();
   }
 
   @HostListener('document:keydown.escape')

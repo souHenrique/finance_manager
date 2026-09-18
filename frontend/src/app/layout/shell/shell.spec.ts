@@ -34,4 +34,15 @@ describe('Shell', () => {
     expect(element.querySelector('.header__brand')?.textContent).toContain('Finance Manager');
     expect(element.querySelector('main router-outlet')).not.toBeNull();
   });
+
+  it('should focus the main content when the skip link is used', () => {
+    fixture.detectChanges();
+
+    const skipLink = fixture.nativeElement.querySelector('.header__skip-link') as HTMLAnchorElement;
+    const mainContent = fixture.nativeElement.querySelector('#main-content') as HTMLElement;
+
+    skipLink.click();
+
+    expect(document.activeElement).toBe(mainContent);
+  });
 });
