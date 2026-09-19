@@ -13,6 +13,7 @@ import { Button } from '../../../../shared/ui/button/button';
 })
 export class CategoryTreeComponent {
   readonly nodes = input.required<CategoryTreeNode[]>();
+  readonly level = input(0);
 
   readonly createChild = output<Category>();
   readonly edit = output<Category>();

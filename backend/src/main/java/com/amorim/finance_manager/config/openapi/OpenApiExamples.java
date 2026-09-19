@@ -187,6 +187,13 @@ public final class OpenApiExamples {
         }
         """;
 
+    public static final String CHANGE_PASSWORD_REQUEST = """
+        {
+          "currentPassword": "SenhaSegura123",
+          "newPassword": "NovaSenhaSegura456"
+        }
+        """;
+
     public static final String UPDATE_ACCOUNT_REQUEST = """
         {
           "name": "Conta principal atualizada",

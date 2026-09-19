@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.repository.UserRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -26,6 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -49,8 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getAuthentication() == null) {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                User user = userRepository.findByEmail(username)
+                        .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
-                if (jwtService.isValid(token, userDetails)) {
+                if (jwtService.isValid(token, userDetails, user.getAuthenticationVersion())) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     userDetails,

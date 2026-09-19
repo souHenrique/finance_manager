@@ -1,10 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, map } from 'rxjs';
 
-import { Badge } from '../../../shared/ui/badge/badge';
 import { Button } from '../../../shared/ui/button/button';
 import { Card } from '../../../shared/ui/card/card';
 import { ErrorState } from '../../../shared/ui/error-state/error-state';
@@ -30,7 +29,6 @@ type ReportState = 'loading' | 'success' | 'error';
 interface ReportTab {
   id: ReportMode;
   label: string;
-  basis: ReportBasis;
 }
 
 interface SummaryReportView {
@@ -72,7 +70,6 @@ const MONTHS = [
 @Component({
   selector: 'app-reports-page',
   imports: [
-    Badge,
     Button,
     Card,
     CurrencyPipe,
@@ -98,11 +95,11 @@ export class ReportsPage implements OnInit {
   readonly validationMessage = signal<string | null>(null);
 
   readonly tabs: readonly ReportTab[] = [
-    { id: 'daily', label: 'Diário', basis: 'CASH' },
-    { id: 'weekly', label: 'Semanal', basis: 'CASH' },
-    { id: 'monthly', label: 'Mensal', basis: 'CASH' },
-    { id: 'annual', label: 'Anual', basis: 'CASH' },
-    { id: 'competence', label: 'Competência', basis: 'COMPETENCE' },
+    { id: 'daily', label: 'Diário' },
+    { id: 'weekly', label: 'Semanal' },
+    { id: 'monthly', label: 'Mensal' },
+    { id: 'annual', label: 'Anual' },
+    { id: 'competence', label: 'Data da despesa' },
   ];
 
   readonly filters = this.formBuilder.nonNullable.group({
@@ -118,10 +115,6 @@ export class ReportsPage implements OnInit {
     ],
     endDate: [this.toIsoDate(this.currentDate), Validators.required],
   });
-
-  readonly activeTab = computed(
-    () => this.tabs.find((tab) => tab.id === this.activeMode()) ?? this.tabs[0],
-  );
 
   ngOnInit(): void {
     this.loadReport();
@@ -154,10 +147,6 @@ export class ReportsPage implements OnInit {
       },
       error: () => this.state.set('error'),
     });
-  }
-
-  basisDescription(basis: ReportBasis): string {
-    return basis === 'CASH' ? 'CASH · Regime de caixa' : 'COMPETENCE · Regime de competência';
   }
 
   incomeLabel(report: SummaryReportView): string {
@@ -326,7 +315,7 @@ export class ReportsPage implements OnInit {
   private competenceView(data: CompetenceReport): SummaryReportView {
     return {
       mode: 'competence',
-      title: 'Relatório por competência',
+      title: 'Relatório por data da despesa',
       basis: 'COMPETENCE',
       period: `${data.startDate} a ${data.endDate}`,
       summary: {

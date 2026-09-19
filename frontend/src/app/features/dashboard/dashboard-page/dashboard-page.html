@@ -9,15 +9,11 @@
       }
     </div>
 
-    <app-button variant="secondary" (pressed)="loadDashboard()"> Atualizar </app-button>
+    <div class="dashboard__header-actions">
+      <app-button variant="secondary" (pressed)="goToReports()"> Ver relatórios </app-button>
+      <app-button variant="secondary" (pressed)="loadDashboard()"> Atualizar </app-button>
+    </div>
   </header>
-
-  <aside class="dashboard__basis" aria-label="Regimes contábeis">
-    <strong>Como interpretar os indicadores</strong>
-    <p><b>CASH</b> considera valores efetivamente movimentados.</p>
-    <p><b>COMPETENCE</b> considera valores reconhecidos no período financeiro.</p>
-    <p><b>CASH + FATURA</b> inclui os movimentos efetivos e as compras da fatura de referência.</p>
-  </aside>
 
   @if (state() === 'loading') {
     <div class="dashboard__skeletons" aria-label="Carregando indicadores do dashboard">
@@ -26,10 +22,8 @@
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
-      <app-skeleton height="10rem" />
-      <app-skeleton height="10rem" />
-      <app-skeleton height="10rem" />
       <app-skeleton height="14rem" />
+      <app-skeleton height="10rem" />
     </div>
   } @else if (state() === 'error') {
     <app-error-state
@@ -45,27 +39,13 @@
           [title]="card.title"
           [subtitle]="card.description"
         >
-          <div card-actions>
-            <app-badge
-              [label]="basisLabel(card.indicator.basis)"
-              [tone]="card.indicator.basis === 'CASH' ? 'info' : 'neutral'"
-            />
-          </div>
-
           <p class="dashboard__amount">{{ card.indicator.amount | currency: 'BRL' }}</p>
-          <p class="dashboard__basis-label">Base: {{ basisDescription(card.indicator.basis) }}</p>
         </app-card>
       }
     </section>
 
     <section class="dashboard__budget" aria-label="Resumo de orçamento">
       <app-card title="Orçamento" subtitle="Limites e despesas reconhecidas no período.">
-        <div card-actions>
-          <app-badge [label]="data.budget.basis" tone="neutral" />
-        </div>
-
-        <p class="dashboard__basis-label">Base: {{ basisDescription(data.budget.basis) }}</p>
-
         <div class="dashboard__budget-summary">
           <div>
             <span>Limite total</span>
@@ -114,6 +94,12 @@
         } @else {
           <p class="dashboard__empty-budget">Não há orçamentos definidos para este período.</p>
         }
+      </app-card>
+    </section>
+
+    <section class="dashboard__consolidated" aria-label="Saldo consolidado">
+      <app-card title="Saldo consolidado" subtitle="Soma dos saldos atuais das contas.">
+        <p class="dashboard__amount">{{ data.consolidatedBalance.amount | currency: 'BRL' }}</p>
       </app-card>
     </section>
   }

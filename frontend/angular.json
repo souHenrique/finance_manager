@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "finance-manager-web": {
+    "nummo-web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -66,10 +66,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "finance-manager-web:build:production"
+              "buildTarget": "nummo-web:build:production"
             },
             "development": {
-              "buildTarget": "finance-manager-web:build:development"
+              "buildTarget": "nummo-web:build:development"
             }
           },
           "defaultConfiguration": "development"

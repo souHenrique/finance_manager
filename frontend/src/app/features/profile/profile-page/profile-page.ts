@@ -20,8 +20,9 @@ import { ErrorState } from '../../../shared/ui/error-state/error-state';
 import { InputDirective } from '../../../shared/ui/form-control/input';
 import { FormField } from '../../../shared/ui/form-field/form-field';
 import { Skeleton } from '../../../shared/ui/skeleton/skeleton';
+import { AuthService } from '../../auth/services/auth.service';
 import { ProfileApiService } from '../data-access/profile-api.service';
-import { UpdateProfileRequest } from '../models/profile.models';
+import { ChangePasswordRequest, UpdateProfileRequest } from '../models/profile.models';
 
 const nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
@@ -29,7 +30,17 @@ const nonBlankValidator: ValidatorFn = (control: AbstractControl): ValidationErr
   return typeof value === 'string' && value.trim().length > 0 ? null : { required: true };
 };
 
+const passwordsMatchValidator: ValidatorFn = (
+  control: AbstractControl,
+): ValidationErrors | null => {
+  const newPassword = control.get('newPassword')?.value;
+  const confirmation = control.get('confirmation')?.value;
+
+  return newPassword === confirmation ? null : { passwordMismatch: true };
+};
+
 type ProfileField = 'name' | 'email';
+type PasswordField = 'currentPassword' | 'newPassword' | 'confirmation';
 
 @Component({
   selector: 'app-profile-page',
@@ -50,13 +61,17 @@ type ProfileField = 'name' | 'email';
 export class ProfilePage implements OnInit {
   private readonly profileApi = inject(ProfileApiService);
   private readonly toast = inject(ToastService);
+  private readonly auth = inject(AuthService);
 
   protected readonly profile = signal<User | null>(null);
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
+  protected readonly passwordSaving = signal(false);
   protected readonly submitted = signal(false);
+  protected readonly passwordSubmitted = signal(false);
   protected readonly loadError = signal<string | undefined>(undefined);
   protected readonly submissionError = signal<string | undefined>(undefined);
+  protected readonly passwordSubmissionError = signal<string | undefined>(undefined);
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
@@ -68,6 +83,24 @@ export class ProfilePage implements OnInit {
       validators: [nonBlankValidator, Validators.email, Validators.maxLength(320)],
     }),
   });
+
+  protected readonly passwordForm = new FormGroup(
+    {
+      currentPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      newPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8), Validators.maxLength(72)],
+      }),
+      confirmation: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordsMatchValidator },
+  );
 
   ngOnInit(): void {
     this.loadProfile();
@@ -168,6 +201,73 @@ export class ProfilePage implements OnInit {
     return typeof serverError === 'string' ? serverError : undefined;
   }
 
+  protected changePassword(): void {
+    this.passwordSubmitted.set(true);
+    this.passwordSubmissionError.set(undefined);
+
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+
+    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+    const request: ChangePasswordRequest = { currentPassword, newPassword };
+
+    this.passwordSaving.set(true);
+
+    this.profileApi
+      .changePassword(request)
+      .pipe(
+        finalize(() => {
+          this.passwordSaving.set(false);
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.passwordForm.reset();
+          this.passwordSubmitted.set(false);
+
+          this.toast.show({
+            tone: 'success',
+            title: 'Senha alterada',
+            message: 'Entre novamente usando sua nova senha.',
+          });
+          this.auth.logout();
+        },
+        error: (error: unknown) => {
+          this.handlePasswordError(error);
+        },
+      });
+  }
+
+  protected passwordFieldError(fieldName: PasswordField): string | undefined {
+    const control = this.passwordForm.controls[fieldName];
+
+    if (!this.passwordSubmitted() && !control.touched) {
+      return undefined;
+    }
+
+    if (control.hasError('required')) {
+      return 'Campo obrigatório.';
+    }
+
+    if (fieldName === 'newPassword' && control.hasError('minlength')) {
+      return 'A nova senha deve possuir ao menos 8 caracteres.';
+    }
+
+    if (fieldName === 'newPassword' && control.hasError('maxlength')) {
+      return 'A nova senha deve possuir no máximo 72 caracteres.';
+    }
+
+    if (fieldName === 'confirmation' && this.passwordForm.hasError('passwordMismatch')) {
+      return 'As senhas não coincidem.';
+    }
+
+    const serverError = control.getError('server');
+
+    return typeof serverError === 'string' ? serverError : undefined;
+  }
+
   private setProfile(profile: User): void {
     this.profile.set(profile);
 
@@ -221,6 +321,17 @@ export class ProfilePage implements OnInit {
         });
       }
     }
+  }
+
+  private handlePasswordError(error: unknown): void {
+    this.passwordForm.reset();
+    this.passwordSubmitted.set(false);
+
+    this.passwordSubmissionError.set(
+      error instanceof ApiRequestError
+        ? error.message
+        : 'Não foi possível alterar a senha. Tente novamente.',
+    );
   }
 
   private errorMessage(error: unknown): string {

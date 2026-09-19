@@ -1,18 +1,32 @@
 <ul class="category-tree" role="tree">
   @for (node of nodes(); track node.id) {
-    <li role="treeitem" [attr.aria-expanded]="node.children.length > 0" aria-selected="false">
+    <li
+      role="treeitem"
+      [attr.aria-expanded]="node.children.length > 0"
+      [attr.aria-level]="level() + 1"
+      aria-selected="false"
+    >
       <div class="category-tree__item">
-        <div>
-          <strong>{{ node.name }}</strong>
+        <div class="category-tree__identity">
+          <span class="category-tree__marker" aria-hidden="true"></span>
 
-          @if (node.status === 'INACTIVE') {
-            <app-badge label="Inativa" tone="neutral" />
-          }
+          <div>
+            <div class="category-tree__name-row">
+              <strong>{{ node.name }}</strong>
+              <app-badge
+                [label]="node.status === 'ACTIVE' ? 'Ativa' : 'Inativa'"
+                [tone]="node.status === 'ACTIVE' ? 'success' : 'neutral'"
+              />
+            </div>
+            <span class="category-tree__kind">
+              {{ node.parentCategoryId ? 'Subcategoria' : 'Categoria principal' }}
+            </span>
+          </div>
         </div>
 
         <div class="category-tree__actions">
           <app-button variant="ghost" size="sm" (pressed)="createChild.emit(node)">
-            Adicionar subcategoria
+            Nova subcategoria
           </app-button>
 
           <app-button variant="ghost" size="sm" (pressed)="edit.emit(node)"> Editar </app-button>
@@ -22,6 +36,7 @@
       @if (node.children.length > 0) {
         <app-category-tree
           [nodes]="node.children"
+          [level]="level() + 1"
           (createChild)="createChild.emit($event)"
           (edit)="edit.emit($event)"
         />

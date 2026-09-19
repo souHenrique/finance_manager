@@ -1,18 +1,102 @@
+@use '../../../../styles/mixins' as mixins;
+
+.page__header {
+  align-items: start;
+}
+
+.category-list__switcher {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.category-list__switcher strong {
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+}
+
+.category-list__eyebrow {
+  margin: 0 0 var(--space-1);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .category-list__tabs {
   display: flex;
   gap: var(--space-3);
-  margin-bottom: var(--space-5);
+}
+
+.category-list__tabs app-button {
+  flex: 1;
 }
 
 .category-list__form {
-  margin-bottom: var(--space-6);
   padding: var(--space-5);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
-@media (max-width: 640px) {
+.category-list__form-header {
+  padding-bottom: var(--space-5);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.category-list__form-header h2,
+.category-list__form-header p:not(.category-list__eyebrow) {
+  margin: 0;
+}
+
+.category-list__form-header h2 {
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+}
+
+.category-list__form-header p:not(.category-list__eyebrow) {
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+}
+
+.category-list__skeletons {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.category-list__catalog-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-surface-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+}
+
+@include mixins.up(sm) {
+  .page__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .category-list__switcher {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+@media (max-width: 40rem) {
   .category-list__tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;

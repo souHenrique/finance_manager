@@ -4,7 +4,7 @@ export const CATEGORY_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Categorias | Finance Manager',
+    title: 'Categorias | Nummo',
     loadComponent: () =>
       import('./category-list-page/category-list-page').then(
         ({ CategoryListPage }) => CategoryListPage,

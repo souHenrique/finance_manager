@@ -24,7 +24,11 @@ describe('Header', () => {
     const element = fixture.nativeElement as HTMLElement;
     const menuButton = element.querySelector('.header__menu-button') as HTMLButtonElement;
 
-    expect(element.querySelector('.header__brand')?.textContent).toContain('Finance Manager');
+    expect(element.querySelector('.header__brand')?.textContent).toContain('Nummo');
+    expect(element.querySelector<HTMLImageElement>('.header__brand-logo img')?.src).toContain(
+      'logo-nummo.png',
+    );
+    expect(element.querySelector('.header__brand-logo img')?.getAttribute('alt')).toBe('');
     expect(element.querySelector('.header__profile')?.textContent).toContain('Perfil');
     expect(element.querySelector('.header__skip-link')).not.toBeNull();
     expect(menuButton.getAttribute('aria-controls')).toBe('app-sidebar');
@@ -66,7 +70,7 @@ describe('Header', () => {
 
   it('should logout when the user clicks the logout button', () => {
     const logoutButton = fixture.nativeElement.querySelector(
-      '.header__logout',
+      '.header__logout .button',
     ) as HTMLButtonElement;
 
     logoutButton.click();

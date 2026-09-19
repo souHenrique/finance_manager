@@ -14,9 +14,18 @@
     <span aria-hidden="true">☰</span>
   </button>
 
-  <a class="header__brand" routerLink="/dashboard"> Finance Manager </a>
+  <a class="header__brand" routerLink="/dashboard">
+    <span class="header__brand-logo" aria-hidden="true">
+      <img src="logo-nummo.png" alt="" />
+    </span>
+    <span>Nummo</span>
+  </a>
 
-  <a class="header__profile" routerLink="/profile"> Perfil </a>
+  <div class="header__actions">
+    <a class="header__profile" routerLink="/profile">Perfil</a>
 
-  <button class="header__logout" type="button" (click)="logout()">Sair</button>
+    <app-button class="header__logout" variant="secondary" size="sm" (pressed)="logout()">
+      Sair
+    </app-button>
+  </div>
 </header>

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: finance-manager-api
+    name: nummo-api
     runtime: docker
     plan: free
     rootDir: backend

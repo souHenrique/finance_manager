@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 
 import { CategoryApiService } from '../../categories/data-access/category-api.service';
@@ -12,6 +13,7 @@ describe('DashboardPage', () => {
   let component: DashboardPage;
   let dashboardApi: { get: ReturnType<typeof vi.fn> };
   let categoryApi: { findAll: ReturnType<typeof vi.fn> };
+  let router: { navigate: ReturnType<typeof vi.fn> };
 
   const categories: Category[] = [
     {
@@ -77,12 +79,14 @@ describe('DashboardPage', () => {
   beforeEach(async () => {
     dashboardApi = { get: vi.fn().mockReturnValue(of(dashboard)) };
     categoryApi = { findAll: vi.fn().mockReturnValue(of(categories)) };
+    router = { navigate: vi.fn().mockResolvedValue(true) };
 
     await TestBed.configureTestingModule({
       imports: [DashboardPage],
       providers: [
         { provide: DashboardApiService, useValue: dashboardApi },
         { provide: CategoryApiService, useValue: categoryApi },
+        { provide: Router, useValue: router },
       ],
     }).compileComponents();
 
@@ -91,7 +95,7 @@ describe('DashboardPage', () => {
     fixture.detectChanges();
   });
 
-  it('should render every dashboard indicator with its accounting basis', () => {
+  it('should render only the daily-decision indicators without exposing accounting bases', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(dashboardApi.get).toHaveBeenCalledOnce();
@@ -102,9 +106,6 @@ describe('DashboardPage', () => {
       'Saldo',
       'Entradas mensais',
       'Saídas mensais',
-      'Saídas totais',
-      'Saídas de compras no crédito',
-      'Despesas por competência',
       'Faturas abertas',
       'Orçamento',
       'Saldo consolidado',
@@ -112,39 +113,39 @@ describe('DashboardPage', () => {
       expect(element.textContent).toContain(title);
     }
 
-    expect(element.textContent).toContain('Base: CASH · Regime de caixa');
-    expect(element.textContent).toContain('Base: COMPETENCE · Regime de competência');
-    expect(element.textContent).toContain(
-      'Base: CASH + FATURA · Movimentos efetivos e fatura do mês',
-    );
-    expect(element.textContent).toContain('CASH considera valores efetivamente movimentados.');
-    expect(element.textContent).toContain(
-      'COMPETENCE considera valores reconhecidos no período financeiro.',
-    );
-    expect(element.textContent).toContain(
-      'CASH + FATURA inclui os movimentos efetivos e as compras da fatura de referência.',
-    );
+    expect(element.textContent).not.toContain('CASH + FATURA');
+    expect(element.textContent).not.toContain('DATA DA DESPESA');
+    expect(element.textContent).not.toContain('Regime de caixa');
     expect(element.textContent).toContain(
       'Total acumulado de entradas efetivadas no mês de referência.',
     );
   });
 
-  it('should place the consolidated balance after the other indicators', () => {
+  it('should leave analytical indicators to reports and place the consolidated balance last', () => {
     const element = fixture.nativeElement as HTMLElement;
     const titles = Array.from(
       element.querySelectorAll<HTMLElement>('.dashboard__indicators app-card h2'),
     ).map((title) => title.textContent?.trim());
 
-    expect(titles).toEqual([
-      'Saldo',
-      'Entradas mensais',
-      'Saídas mensais',
-      'Saídas totais',
-      'Saídas de compras no crédito',
-      'Despesas por competência',
-      'Faturas abertas',
-      'Saldo consolidado',
-    ]);
+    expect(titles).toEqual(['Saldo', 'Entradas mensais', 'Saídas mensais', 'Faturas abertas']);
+    expect(element.querySelectorAll('.dashboard__indicator-card')).toHaveLength(4);
+
+    expect(element.textContent).not.toContain('Saídas totais');
+    expect(element.textContent).not.toContain('Saídas de compras no crédito');
+    expect(element.textContent).not.toContain('Despesas por competência');
+
+    const sections = Array.from(element.querySelectorAll<HTMLElement>('.dashboard > section'));
+    expect(sections.at(-1)?.textContent).toContain('Saldo consolidado');
+  });
+
+  it('should navigate to reports for the detailed analysis', () => {
+    const reportsButton = Array.from<HTMLButtonElement>(
+      fixture.nativeElement.querySelectorAll('button'),
+    ).find((button) => button.textContent?.includes('Ver relatórios')) as HTMLButtonElement;
+
+    reportsButton.click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/reports']);
   });
 
   it('should render the budget summary and explicit alert labels for each category', () => {

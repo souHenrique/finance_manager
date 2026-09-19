@@ -2,37 +2,62 @@
   <header class="page__header">
     <div>
       <h1 id="categories-title">Categorias</h1>
-      <p>Organize receitas e despesas por categoria.</p>
+      <p>Organize seus lançamentos em categorias e subcategorias.</p>
     </div>
 
     <app-button (pressed)="startCreateRoot()"> Nova categoria </app-button>
   </header>
 
-  <div class="category-list__tabs" role="tablist" aria-label="Tipo de categoria">
-    <app-button
-      role="tab"
-      [attr.aria-selected]="activeType() === 'EXPENSE'"
-      [variant]="activeType() === 'EXPENSE' ? 'primary' : 'secondary'"
-      (pressed)="selectType('EXPENSE')"
-    >
-      Despesas
-    </app-button>
+  <section class="category-list__switcher" aria-label="Categorias exibidas">
+    <div>
+      <p class="category-list__eyebrow">Exibindo categorias de {{ activeTypeLabel() }}</p>
+      <strong>{{ activeCategoryCount() }} categorias cadastradas</strong>
+    </div>
 
-    <app-button
-      role="tab"
-      [attr.aria-selected]="activeType() === 'INCOME'"
-      [variant]="activeType() === 'INCOME' ? 'primary' : 'secondary'"
-      (pressed)="selectType('INCOME')"
-    >
-      Receitas
-    </app-button>
-  </div>
+    <div class="category-list__tabs" role="tablist" aria-label="Tipo de categoria">
+      <app-button
+        role="tab"
+        [attr.aria-selected]="activeType() === 'EXPENSE'"
+        [variant]="activeType() === 'EXPENSE' ? 'primary' : 'secondary'"
+        (pressed)="selectType('EXPENSE')"
+      >
+        Despesas
+      </app-button>
+
+      <app-button
+        role="tab"
+        [attr.aria-selected]="activeType() === 'INCOME'"
+        [variant]="activeType() === 'INCOME' ? 'primary' : 'secondary'"
+        (pressed)="selectType('INCOME')"
+      >
+        Receitas
+      </app-button>
+    </div>
+  </section>
 
   @if (formMode(); as mode) {
     <section
       class="category-list__form"
       aria-label="{{ mode === 'create' ? 'Nova categoria' : 'Editar categoria' }}"
     >
+      <header class="category-list__form-header">
+        <div>
+          <p class="category-list__eyebrow">
+            {{ mode === 'create' ? 'Nova organização' : 'Atualizar organização' }}
+          </p>
+          <h2>{{ mode === 'create' ? 'Criar categoria' : 'Editar categoria' }}</h2>
+          <p>
+            @if (selectedParent(); as parent) {
+              Esta será uma subcategoria de {{ parent.name }}.
+            } @else if (mode === 'create') {
+              Crie uma categoria principal para agrupar seus lançamentos.
+            } @else {
+              Ajuste o nome ou o status desta categoria.
+            }
+          </p>
+        </div>
+      </header>
+
       <app-category-form
         [mode]="mode"
         [category]="selectedCategory()"
@@ -47,10 +72,10 @@
   }
 
   @if (state() === 'loading') {
-    <div aria-label="Carregando categorias">
-      <app-skeleton />
-      <app-skeleton />
-      <app-skeleton />
+    <div class="category-list__skeletons" aria-label="Carregando categorias">
+      <app-skeleton height="7rem" />
+      <app-skeleton height="7rem" />
+      <app-skeleton height="7rem" />
     </div>
   } @else if (state() === 'error') {
     <app-error-state
@@ -68,10 +93,20 @@
       <app-button empty-state-actions (pressed)="startCreateRoot()"> Nova categoria </app-button>
     </app-empty-state>
   } @else {
-    <app-category-tree
-      [nodes]="activeTree()"
-      (createChild)="startCreateChild($event)"
-      (edit)="startEdit($event)"
-    />
+    <app-card
+      class="category-list__catalog"
+      [title]="'Categorias de ' + activeTypeLabel()"
+      subtitle="Categorias principais e subcategorias organizadas em níveis."
+    >
+      <span card-actions class="category-list__catalog-count">
+        {{ activeTree().length }} principais
+      </span>
+
+      <app-category-tree
+        [nodes]="activeTree()"
+        (createChild)="startCreateChild($event)"
+        (edit)="startEdit($event)"
+      />
+    </app-card>
   }
 </section>

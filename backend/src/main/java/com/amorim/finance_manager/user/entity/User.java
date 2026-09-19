@@ -36,6 +36,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 60)
     private String passwordHash;
 
+    @Column(name = "authentication_version", nullable = false)
+    private int authenticationVersion;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

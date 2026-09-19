@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -46,6 +47,9 @@ class UserProfileIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void cleanDatabase() {
@@ -257,6 +261,18 @@ class UserProfileIntegrationTest {
                                 .content(body)
                 )
                 .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaSegura123",
+                                          "newPassword": "NovaSenhaSegura456"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -378,6 +394,126 @@ class UserProfileIntegrationTest {
                                 .content(body)
                 )
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldChangePasswordWhenCurrentPasswordIsValid() throws Exception {
+        registerUser(
+                "Walter White",
+                USER_A_EMAIL,
+                PASSWORD
+        );
+
+        String token = login(USER_A_EMAIL, PASSWORD);
+        String newPassword = "NovaSenhaSegura456";
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaSegura123",
+                                          "newPassword": "NovaSenhaSegura456"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isNoContent());
+
+        User updatedUser = userRepository.findByEmail(USER_A_EMAIL).orElseThrow();
+
+        assertThat(passwordEncoder.matches(newPassword, updatedUser.getPasswordHash())).isTrue();
+        assertThat(passwordEncoder.matches(PASSWORD, updatedUser.getPasswordHash())).isFalse();
+
+        mockMvc.perform(
+                        get("/api/v1/users/me")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                )
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                        post("/api/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "email": "user-a@example.com",
+                                          "password": "SenhaSegura123"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isUnauthorized());
+
+        String newToken = login(USER_A_EMAIL, newPassword);
+
+        assertThat(newToken).isNotBlank();
+    }
+
+    @Test
+    void shouldRejectPasswordChangeWhenCurrentPasswordIsInvalid() throws Exception {
+        registerUser(
+                "Skyler White",
+                USER_A_EMAIL,
+                PASSWORD
+        );
+
+        String token = login(USER_A_EMAIL, PASSWORD);
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaIncorreta999",
+                                          "newPassword": "NovaSenhaSegura456"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_PASSWORD_CHANGE"));
+
+        User unchangedUser = userRepository.findByEmail(USER_A_EMAIL).orElseThrow();
+
+        assertThat(passwordEncoder.matches(PASSWORD, unchangedUser.getPasswordHash())).isTrue();
+    }
+
+    @Test
+    void shouldRejectInvalidOrUnchangedNewPassword() throws Exception {
+        registerUser(
+                "Gustavo Fring",
+                USER_A_EMAIL,
+                PASSWORD
+        );
+
+        String token = login(USER_A_EMAIL, PASSWORD);
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaSegura123",
+                                          "newPassword": "curta"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"));
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaSegura123",
+                                          "newPassword": "SenhaSegura123"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_PASSWORD_CHANGE"));
     }
 
     private void registerUser(

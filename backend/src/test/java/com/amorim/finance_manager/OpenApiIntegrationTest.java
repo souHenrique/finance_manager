@@ -42,6 +42,7 @@ class OpenApiIntegrationTest {
             "post /api/v1/auth/login",
             "get /api/v1/users/me",
             "patch /api/v1/users/me",
+            "patch /api/v1/users/me/password",
             "post /api/v1/accounts",
             "get /api/v1/accounts",
             "get /api/v1/accounts/{id}",
@@ -86,6 +87,7 @@ class OpenApiIntegrationTest {
             "post /api/v1/auth/register",
             "post /api/v1/auth/login",
             "patch /api/v1/users/me",
+            "patch /api/v1/users/me/password",
             "post /api/v1/accounts",
             "patch /api/v1/accounts/{id}",
             "patch /api/v1/accounts/{id}/status",
@@ -114,6 +116,7 @@ class OpenApiIntegrationTest {
             "LoginRequest",
             "AuthResponse",
             "UpdateProfileRequest",
+            "ChangePasswordRequest",
             "UserResponse",
             "CreateAccountRequest",
             "UpdateAccountRequest",
@@ -174,7 +177,7 @@ class OpenApiIntegrationTest {
 
         assertThat(document.path("openapi").asString()).startsWith("3.1");
         assertThat(document.path("info").path("title").asString())
-                .isEqualTo("Finance Manager API");
+                .isEqualTo("Nummo API");
 
         JsonNode bearerAuth = document.path("components")
                 .path("securitySchemes")

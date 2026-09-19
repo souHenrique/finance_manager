@@ -7,7 +7,7 @@
 .dashboard {
   display: grid;
   gap: var(--space-6);
-  color: var(--color-text, #0f172a);
+  color: var(--color-text);
 }
 
 .dashboard__header {
@@ -29,17 +29,10 @@
   color: var(--color-text-muted);
 }
 
-.dashboard__basis {
-  padding: var(--space-4);
-  color: var(--color-text);
-  background: var(--color-surface-muted);
-  border-left: 4px solid var(--color-info-border);
-  border-radius: var(--radius-md);
-}
-
-.dashboard__basis p {
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-muted);
+.dashboard__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
 }
 
 .dashboard__skeletons,
@@ -50,24 +43,20 @@
 }
 
 .dashboard__indicator-card {
-  --card-surface: var(--color-info-surface, #eff6ff);
-  --card-border: var(--color-info-border, #93c5fd);
-  --card-text: var(--color-text, #0f172a);
-  --card-text-muted: var(--color-text-muted, #475569);
+  --card-height: 100%;
+  --card-surface: var(--color-info-surface);
+  --card-border: var(--color-info-border);
+  --card-text: var(--color-text);
+  --card-text-muted: var(--color-text-muted);
+  min-height: 12rem;
 }
 
 .dashboard__amount {
   margin: 0;
-  color: var(--color-text, #0f172a);
+  color: var(--color-text);
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-semibold);
   line-height: var(--line-height-tight);
-}
-
-.dashboard__basis-label {
-  margin: var(--space-3) 0 0;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted, #475569);
 }
 
 .dashboard__budget-summary {
@@ -75,6 +64,10 @@
   grid-template-columns: 1fr;
   gap: var(--space-3);
   margin-top: var(--space-5);
+}
+
+.dashboard__consolidated {
+  max-width: 32rem;
 }
 
 .dashboard__budget-summary div {
@@ -91,7 +84,7 @@
 }
 
 .dashboard__budget-summary strong {
-  color: var(--color-text, #0f172a);
+  color: var(--color-text);
   font-size: var(--font-size-lg);
 }
 
@@ -128,7 +121,7 @@
 }
 
 .dashboard__budget-item h3 {
-  color: var(--color-text, #0f172a);
+  color: var(--color-text);
   font-size: var(--font-size-base);
 }
 
@@ -145,7 +138,7 @@
 }
 
 .dashboard__budget-item-status strong {
-  color: var(--color-text, #0f172a);
+  color: var(--color-text);
   font-size: var(--font-size-sm);
 }
 
@@ -180,5 +173,6 @@
   .dashboard__skeletons,
   .dashboard__indicators {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
   }
 }

@@ -5,6 +5,8 @@ import com.amorim.finance_manager.shared.exception.InvalidCredentialsException;
 import com.amorim.finance_manager.testsupport.LogCapture;
 import com.amorim.finance_manager.user.dto.AuthResponse;
 import com.amorim.finance_manager.user.dto.LoginRequest;
+import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +44,12 @@ class AuthServiceLoggingTest {
     @Mock
     private UserDetails userDetails;
 
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private User user;
+
     @InjectMocks
     private AuthService authService;
 
@@ -52,7 +61,13 @@ class AuthServiceLoggingTest {
                 .thenReturn(authentication);
         when(authentication.getPrincipal())
                 .thenReturn(userDetails);
-        when(jwtService.generateToken(userDetails))
+        when(userDetails.getUsername())
+                .thenReturn(EMAIL);
+        when(userRepository.findByEmail(EMAIL))
+                .thenReturn(Optional.of(user));
+        when(user.getAuthenticationVersion())
+                .thenReturn(0);
+        when(jwtService.generateToken(userDetails, 0))
                 .thenReturn(JWT);
         when(jwtService.getExpirationSeconds())
                 .thenReturn(3600L);

@@ -45,7 +45,11 @@ describe('CategoryTreeComponent', () => {
 
     expect(content).toContain('Walter White');
     expect(content).toContain('Jesse Pinkman');
+    expect(content).toContain('Categoria principal');
+    expect(content).toContain('Subcategoria');
     expect(fixture.nativeElement.querySelectorAll('[role="treeitem"]')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('[aria-level="1"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[aria-level="2"]')).not.toBeNull();
   });
 
   it('should identify inactive categories with text', () => {

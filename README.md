@@ -1,4 +1,4 @@
-# Gestão financeira
+# Nummo
 
 API REST para gestão financeira pessoal, com controle de contas, categorias,
 transações, transferências, cartões de crédito, faturas, orçamentos, relatórios,
@@ -11,32 +11,30 @@ financeiras e migrações versionadas do banco de dados.
 ## Estrutura do repositório
 
 ```text
-finance-manager/
+nummo/
 ├── backend/       API Spring Boot
 ├── frontend/      Aplicação web Angular
 ├── compose.yaml   Infraestrutura local
-├── render.yaml    Configuração do serviço de API no Render
-├── DEPLOYMENT.md  Guia de publicação em Vercel, Render e Supabase
 └── README.md
 ```
 
 ## Funcionalidades implementadas
 
-- cadastro, autenticação e atualização do perfil do usuário;
-- contas financeiras com saldo atual e ativação/inativação;
-- categorias de receita e despesa, incluindo relacionamento hierárquico;
-- receitas, despesas, PIX e transferências entre contas;
-- pesquisa paginada de transações com filtros combináveis;
-- cartões de crédito e compras à vista ou parceladas;
-- geração, consulta, fechamento e pagamento de faturas;
-- estorno de compras no cartão e aplicação de créditos em faturas;
-- orçamentos mensais por categoria, com cálculo de consumo e alertas;
-- relatórios de caixa diário, semanal, mensal e anual;
-- relatório financeiro por competência;
-- dashboard financeiro com identificação explícita do regime de cada indicador;
-- exportação das transações filtradas em CSV;
-- documentação OpenAPI e Swagger UI;
-- auditoria de contas, transações, cartões e faturas com Hibernate Envers.
+- Cadastro, autenticação e atualização do perfil do usuário;
+- Contas financeiras com saldo atual e ativação/inativação;
+- Categorias de receita e despesa, incluindo relacionamento hierárquico;
+- Receitas, despesas, PIX e transferências entre contas;
+- Pesquisa paginada de transações com filtros combináveis;
+- Cartões de crédito e compras à vista ou parceladas;
+- Geração, consulta, fechamento e pagamento de faturas;
+- Estorno de compras no cartão e aplicação de créditos em faturas;
+- Orçamentos mensais por categoria, com cálculo de consumo e alertas;
+- Relatórios de caixa diário, semanal, mensal e anual;
+- Relatório financeiro por competência;
+- Dashboard financeiro com identificação explícita do regime de cada indicador;
+- Exportação das transações filtradas em CSV;
+- Documentação OpenAPI e Swagger UI;
+- Auditoria de contas, transações, cartões e faturas com Hibernate Envers.
 
 ## Tecnologias
 
@@ -57,7 +55,7 @@ finance-manager/
 
 - JDK 25;
 - Docker com Docker Compose;
-- nenhuma instalação global do Maven é necessária, pois o projeto inclui o
+- Nenhuma instalação global do Maven é necessária, pois o projeto inclui o
   Maven Wrapper.
 
 ## Configuração
@@ -67,8 +65,8 @@ Use `.env.example` como referência:
 ```properties
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=finance_manager
-DB_USERNAME=finance_manager
+DB_NAME=nummo
+DB_USERNAME=nummo
 DB_PASSWORD=change-me-locally
 JWT_SECRET=replace-with-a-base64-secret-of-at-least-32-bytes
 JWT_EXPIRATION=3600000
@@ -219,18 +217,18 @@ curl --get http://localhost:8080/api/v1/exports/transactions.csv \
 
 Contrato do arquivo:
 
-- codificação UTF-8, sem BOM;
-- mídia `text/csv;charset=UTF-8`;
-- download com o nome `transactions.csv`;
-- separador por vírgula e linhas terminadas por `CRLF`;
-- campos com vírgula, aspas ou quebras de linha são envolvidos por aspas;
-- aspas internas são duplicadas;
-- datas seguem ISO-8601 (`YYYY-MM-DD`);
-- datas ausentes são exportadas como campo vazio;
-- valores monetários usam representação decimal simples, como `1234.56`;
-- ordenação por `competenceDate` decrescente e `id` crescente;
-- categorias e contas são resolvidas somente dentro do usuário autenticado;
-- para transferências, `account` é representado como `Origem -> Destino`.
+- Codificação UTF-8, sem BOM;
+- Mídia `text/csv;charset=UTF-8`;
+- Download com o nome `transactions.csv`;
+- Separador por vírgula e linhas terminadas por `CRLF`;
+- Campos com vírgula, aspas ou quebras de linha são envolvidos por aspas;
+- Aspas internas são duplicadas;
+- Datas seguem ISO-8601 (`YYYY-MM-DD`);
+- Datas ausentes são exportadas como campo vazio;
+- Valores monetários usam representação decimal simples, como `1234.56`;
+- Ordenação por `competenceDate` decrescente e `id` crescente;
+- Categorias e contas são resolvidas somente dentro do usuário autenticado;
+- Para transferências, `account` é representado como `Origem -> Destino`.
 
 Cabeçalho estável:
 
@@ -260,7 +258,7 @@ O PostgreSQL é versionado pelo Flyway. As migrações estão em
 inicialização.
 
 O Hibernate utiliza `ddl-auto: validate`: a aplicação valida o schema, mas não o
-modifica automaticamente. Atualmente existem migrações de `V1` a `V11`,
+modifica automaticamente. Atualmente existem migrações de `V1` a `V12`,
 incluindo usuários, contas, categorias, transações, auditoria, cartões, faturas,
 estornos, créditos e orçamentos.
 
@@ -290,5 +288,4 @@ contrato completo da exportação CSV.
 ## Produção
 
 O frontend é publicado no Vercel, a API Spring Boot no Render e o PostgreSQL é
-fornecido pelo Supabase. O guia completo de variáveis, HTTPS, CORS, Flyway,
-health check e publicação está em [DEPLOYMENT.md](DEPLOYMENT.md).
+fornecido pelo Supabase.

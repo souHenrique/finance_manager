@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SessionService } from './session.service';
 
-const SESSION_STORAGE_KEY = 'finance-manager.session';
+const SESSION_STORAGE_KEY = 'nummo.session';
 
 describe('SessionService', () => {
   let service: SessionService | undefined;

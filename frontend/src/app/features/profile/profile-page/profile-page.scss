@@ -13,23 +13,27 @@
 }
 
 .profile-page__loading,
-.profile-form {
+.profile-form,
+.password-form {
   display: grid;
   gap: var(--space-4);
 }
 
-.profile-form__actions {
+.profile-form__actions,
+.password-form__actions {
   display: flex;
   justify-content: flex-end;
   padding-top: var(--space-2);
 }
 
 @media (max-width: 40rem) {
-  .profile-form__actions {
+  .profile-form__actions,
+  .password-form__actions {
     justify-content: stretch;
   }
 
-  .profile-form__actions app-button {
+  .profile-form__actions app-button,
+  .password-form__actions app-button {
     width: 100%;
   }
 }

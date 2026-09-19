@@ -1,10 +1,10 @@
 <form [formGroup]="form" (ngSubmit)="apply()" novalidate>
   <div class="transaction-filter-form__grid">
-    <app-form-field label="Competência inicial" controlId="start-date">
+    <app-form-field label="Data inicial" controlId="start-date">
       <input appInput id="start-date" type="date" formControlName="startDate" />
     </app-form-field>
 
-    <app-form-field label="Competência final" controlId="end-date">
+    <app-form-field label="Data final" controlId="end-date">
       <input appInput id="end-date" type="date" formControlName="endDate" />
     </app-form-field>
 

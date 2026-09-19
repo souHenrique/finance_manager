@@ -3,7 +3,7 @@ import { expect, Page, Route, test } from '@playwright/test';
 type JsonObject = Record<string, unknown>;
 
 const NOW = '2026-09-17T12:00:00Z';
-const SESSION_STORAGE_KEY = 'finance-manager.session';
+const SESSION_STORAGE_KEY = 'nummo.session';
 
 const primaryAccount = {
   id: 'account-primary',

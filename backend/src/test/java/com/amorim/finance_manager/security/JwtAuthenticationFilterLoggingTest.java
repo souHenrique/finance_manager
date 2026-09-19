@@ -15,6 +15,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import com.amorim.finance_manager.user.repository.UserRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -30,6 +31,9 @@ class JwtAuthenticationFilterLoggingTest {
 
     @Mock
     private UserDetailsService userDetailsService;
+
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private FilterChain filterChain;

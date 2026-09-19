@@ -4,13 +4,13 @@ import { authChildGuard, authGuard } from './core/guards/auth.guards';
 export const routes: Routes = [
   {
     path: 'login',
-    title: 'Entrar | Finance Manager',
+    title: 'Entrar | Nummo',
     loadComponent: () =>
       import('./features/auth/login-page/login-page').then(({ LoginPage }) => LoginPage),
   },
   {
     path: 'register',
-    title: 'Criar conta | Finance Manager',
+    title: 'Criar conta | Nummo',
     loadComponent: () =>
       import('./features/auth/register-page/register-page').then(
         ({ RegisterPage }) => RegisterPage,
@@ -93,7 +93,7 @@ export const routes: Routes = [
       },
       {
         path: '**',
-        title: 'Página não encontrada | Finance Manager',
+        title: 'Página não encontrada | Nummo',
         loadComponent: () =>
           import('./features/not-found/not-found-page/not-found-page').then(
             ({ NotFoundPage }) => NotFoundPage,

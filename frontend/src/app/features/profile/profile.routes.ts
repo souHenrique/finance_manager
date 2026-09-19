@@ -4,7 +4,7 @@ export const PROFILE_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Perfil | Finance Manager',
+    title: 'Perfil | Nummo',
     loadComponent: () =>
       import('./profile-page/profile-page').then(({ ProfilePage }) => ProfilePage),
   },

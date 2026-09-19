@@ -29,7 +29,9 @@ describe('CategoryListPage', () => {
 
     expect(element.querySelector('h1')?.textContent).toContain('Categorias');
     expect(element.querySelector('p')?.textContent).toContain(
-      'Organize receitas e despesas por categoria.',
+      'Organize seus lançamentos em categorias e subcategorias.',
     );
+    expect(element.textContent).toContain('Exibindo categorias de despesas');
+    expect(element.textContent).toContain('0 categorias cadastradas');
   });
 });

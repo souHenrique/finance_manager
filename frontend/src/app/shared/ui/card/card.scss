@@ -2,14 +2,16 @@
 
 :host {
   display: block;
+  height: var(--card-height, auto);
   min-width: 0;
 }
 
 .card {
+  height: 100%;
   padding: var(--space-4);
-  color: var(--card-text, var(--color-text, #0f172a));
-  background: var(--card-surface, var(--color-surface, #ffffff));
-  border: 1px solid var(--card-border, var(--color-border, #cbd5e1));
+  color: var(--card-text, var(--color-text));
+  background: var(--card-surface, var(--color-surface));
+  border: 1px solid var(--card-border, var(--color-border));
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
@@ -24,7 +26,7 @@
 
 .card__header h2 {
   margin: 0;
-  color: var(--card-text, var(--color-text, #0f172a));
+  color: var(--card-text, var(--color-text));
   font-size: var(--font-size-lg);
   line-height: var(--line-height-tight);
 }
@@ -32,7 +34,7 @@
 .card__header p {
   margin: var(--space-1) 0 0;
   font-size: var(--font-size-sm);
-  color: var(--card-text-muted, var(--color-text-muted, #475569));
+  color: var(--card-text-muted, var(--color-text-muted));
 }
 
 .card__content {

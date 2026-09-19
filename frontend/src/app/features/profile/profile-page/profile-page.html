@@ -67,5 +67,85 @@
         </div>
       </form>
     </app-card>
+
+    <app-card title="Segurança" subtitle="Confirme sua senha atual para definir uma nova.">
+      @if (passwordSubmissionError()) {
+        <app-alert
+          tone="danger"
+          title="Não foi possível alterar a senha"
+          [message]="passwordSubmissionError()!"
+        />
+      }
+
+      <form
+        class="password-form"
+        [formGroup]="passwordForm"
+        (ngSubmit)="changePassword()"
+        novalidate
+      >
+        <app-form-field
+          label="Senha atual"
+          controlId="profile-current-password"
+          [error]="passwordFieldError('currentPassword')"
+          [required]="true"
+        >
+          <input
+            appInput
+            id="profile-current-password"
+            type="password"
+            formControlName="currentPassword"
+            autocomplete="current-password"
+            [attr.aria-invalid]="passwordFieldError('currentPassword') ? 'true' : null"
+            [attr.aria-describedby]="
+              passwordFieldError('currentPassword') ? 'profile-current-password-error' : null
+            "
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Nova senha"
+          controlId="profile-new-password"
+          [error]="passwordFieldError('newPassword')"
+          [required]="true"
+        >
+          <input
+            appInput
+            id="profile-new-password"
+            type="password"
+            formControlName="newPassword"
+            autocomplete="new-password"
+            [attr.aria-invalid]="passwordFieldError('newPassword') ? 'true' : null"
+            [attr.aria-describedby]="
+              passwordFieldError('newPassword') ? 'profile-new-password-error' : null
+            "
+          />
+        </app-form-field>
+
+        <app-form-field
+          label="Confirmar nova senha"
+          controlId="profile-confirm-password"
+          [error]="passwordFieldError('confirmation')"
+          [required]="true"
+        >
+          <input
+            appInput
+            id="profile-confirm-password"
+            type="password"
+            formControlName="confirmation"
+            autocomplete="new-password"
+            [attr.aria-invalid]="passwordFieldError('confirmation') ? 'true' : null"
+            [attr.aria-describedby]="
+              passwordFieldError('confirmation') ? 'profile-confirm-password-error' : null
+            "
+          />
+        </app-form-field>
+
+        <div class="password-form__actions">
+          <app-button type="submit" [loading]="passwordSaving()" [disabled]="passwordSaving()">
+            Alterar senha
+          </app-button>
+        </div>
+      </form>
+    </app-card>
   }
 </section>

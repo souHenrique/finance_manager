@@ -1,7 +1,9 @@
 package com.amorim.finance_manager.user.service;
 
 import com.amorim.finance_manager.shared.exception.DuplicateEmailException;
+import com.amorim.finance_manager.shared.exception.InvalidPasswordChangeException;
 import com.amorim.finance_manager.shared.exception.InvalidProfileUpdateException;
+import com.amorim.finance_manager.user.dto.ChangePasswordRequest;
 import com.amorim.finance_manager.user.dto.UpdateProfileRequest;
 import com.amorim.finance_manager.user.dto.UserResponse;
 import com.amorim.finance_manager.user.entity.User;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 @AllArgsConstructor
@@ -19,6 +22,7 @@ public class UserProfileService {
     private final CurrentUserService currentUserService;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public UserResponse getCurrentProfile() {
@@ -47,6 +51,23 @@ public class UserProfileService {
         } catch (DataIntegrityViolationException exception) {
             throw new DuplicateEmailException();
         }
+    }
+
+    @Transactional
+    public void changeCurrentPassword(ChangePasswordRequest request) {
+        User user = currentUserService.getCurrentUser();
+
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new InvalidPasswordChangeException("A senha atual está incorreta.");
+        }
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPasswordHash())) {
+            throw new InvalidPasswordChangeException("A nova senha deve ser diferente da senha atual");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setAuthenticationVersion(user.getAuthenticationVersion() + 1);
+        userRepository.saveAndFlush(user);
     }
 
     private void validate(UpdateProfileRequest request) {

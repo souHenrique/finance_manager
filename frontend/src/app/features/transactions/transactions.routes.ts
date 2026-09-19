@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const TRANSACTION_ROUTES: Routes = [
   {
     path: 'new',
-    title: 'Nova transação | Finance Manager',
+    title: 'Nova transação | Nummo',
     loadComponent: () =>
       import('./pages/transaction-create-page/transaction-create-page').then(
         ({ TransactionCreatePage }) => TransactionCreatePage,
@@ -11,7 +11,7 @@ export const TRANSACTION_ROUTES: Routes = [
   },
   {
     path: ':id/edit',
-    title: 'Editar transação | Finance Manager',
+    title: 'Editar transação | Nummo',
     loadComponent: () =>
       import('./pages/transaction-edit-page/transaction-edit-page').then(
         ({ TransactionEditPage }) => TransactionEditPage,
@@ -19,7 +19,7 @@ export const TRANSACTION_ROUTES: Routes = [
   },
   {
     path: ':id',
-    title: 'Detalhes da transação | Finance Manager',
+    title: 'Detalhes da transação | Nummo',
     loadComponent: () =>
       import('./pages/transaction-detail-page/transaction-detail-page').then(
         ({ TransactionDetailPage }) => TransactionDetailPage,
@@ -28,7 +28,7 @@ export const TRANSACTION_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Transações | Finance Manager',
+    title: 'Transações | Nummo',
     loadComponent: () =>
       import('./pages/transaction-list-page/transaction-list-page').then(
         ({ TransactionListPage }) => TransactionListPage,

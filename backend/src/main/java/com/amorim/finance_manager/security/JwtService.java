@@ -27,10 +27,15 @@ public class JwtService {
     }
 
     public String generateToken(UserDetails userDetails) {
+        return generateToken(userDetails, 0);
+    }
+
+    public String generateToken(UserDetails userDetails, int authenticationVersion) {
         Instant now = Instant.now();
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("authenticationVersion", authenticationVersion)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(
                         now.plusMillis(expirationMillis)
@@ -40,13 +45,20 @@ public class JwtService {
     }
 
     public boolean isValid(String token, UserDetails userDetails) {
+        return isValid(token, userDetails, 0);
+    }
+
+    public boolean isValid(String token, UserDetails userDetails, int authenticationVersion) {
         try {
             Claims claims = parse(token).getPayload();
+            Number tokenAuthenticationVersion = claims.get("authenticationVersion", Number.class);
 
             return Objects.equals(
                     claims.getSubject(),
                     userDetails.getUsername()
-            );
+            ) && (tokenAuthenticationVersion == null
+                    ? authenticationVersion == 0
+                    : tokenAuthenticationVersion.intValue() == authenticationVersion);
         } catch (JwtException | IllegalArgumentException exception) {
             return false;
         }

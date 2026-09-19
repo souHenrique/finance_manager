@@ -2,18 +2,9 @@
   <header class="reports__header">
     <div>
       <h1 id="reports-title">Relatórios financeiros</h1>
-      <p>Analise movimentações por caixa e competência sem misturar os dois regimes.</p>
+      <p>Analise movimentações pela data de pagamento ou pela data em que aconteceram.</p>
     </div>
   </header>
-
-  <aside class="reports__basis" aria-label="Regimes contábeis dos relatórios">
-    <strong>Base dos relatórios</strong>
-    <p><b>CASH</b> usa a data de efetivação das movimentações.</p>
-    <p>
-      <b>COMPETENCE</b> usa a data de competência; compras no cartão entram aqui, mas o pagamento da
-      fatura não cria uma nova despesa.
-    </p>
-  </aside>
 
   <nav class="reports__tabs" aria-label="Tipo de relatório">
     @for (tab of tabs; track tab.id) {
@@ -22,12 +13,12 @@
         [attr.aria-current]="activeMode() === tab.id ? 'page' : null"
         (pressed)="selectMode(tab.id)"
       >
-        {{ tab.label }} · {{ tab.basis }}
+        {{ tab.label }}
       </app-button>
     }
   </nav>
 
-  <app-card title="Período do relatório" [subtitle]="basisDescription(activeTab().basis)">
+  <app-card title="Período do relatório" subtitle="Escolha o período que deseja analisar.">
     <form class="reports__filters" [formGroup]="filters" (ngSubmit)="loadReport()">
       @switch (activeMode()) {
         @case ('daily') {
@@ -58,10 +49,18 @@
           </app-form-field>
         }
         @case ('competence') {
-          <app-form-field label="Data inicial" controlId="report-start-date" [required]="true">
+          <app-form-field
+            label="Data inicial da despesa"
+            controlId="report-start-date"
+            [required]="true"
+          >
             <input appInput id="report-start-date" type="date" formControlName="startDate" />
           </app-form-field>
-          <app-form-field label="Data final" controlId="report-end-date" [required]="true">
+          <app-form-field
+            label="Data final da despesa"
+            controlId="report-end-date"
+            [required]="true"
+          >
             <input appInput id="report-end-date" type="date" formControlName="endDate" />
           </app-form-field>
         }
@@ -90,11 +89,6 @@
     @if (report.mode === 'annual') {
       <section class="reports__result" aria-label="Relatório anual de caixa">
         <app-card [title]="report.title" [subtitle]="'Ano de ' + report.period">
-          <div card-actions>
-            <app-badge [label]="report.basis" tone="info" />
-          </div>
-
-          <p class="reports__basis-label">Base: {{ basisDescription(report.basis) }}</p>
           <p class="reports__chart-description">
             Gráfico da evolução mensal. A tabela equivalente está disponível logo abaixo.
           </p>
@@ -140,6 +134,12 @@
 
           <div class="reports__table-wrapper">
             <table>
+              <colgroup>
+                <col class="reports__month-column" />
+                <col class="reports__amount-column" />
+                <col class="reports__amount-column" />
+                <col class="reports__amount-column" />
+              </colgroup>
               <caption>
                 Tabela alternativa ao gráfico anual de fluxo de caixa.
               </caption>
@@ -168,15 +168,6 @@
     } @else {
       <section class="reports__result" aria-label="Resumo do relatório">
         <app-card [title]="report.title" [subtitle]="report.period">
-          <div card-actions>
-            <app-badge
-              [label]="report.basis"
-              [tone]="report.basis === 'CASH' ? 'info' : 'neutral'"
-            />
-          </div>
-
-          <p class="reports__basis-label">Base: {{ basisDescription(report.basis) }}</p>
-
           <dl class="reports__summary">
             <div>
               <dt>{{ incomeLabel(report) }}</dt>

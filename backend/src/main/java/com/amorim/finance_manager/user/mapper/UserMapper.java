@@ -11,6 +11,7 @@ public interface UserMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "authenticationVersion", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     User toEntity(RegisterRequest request);
@@ -20,6 +21,7 @@ public interface UserMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "passwordHash", ignore = true)
+    @Mapping(target = "authenticationVersion", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     void updateEntity(UpdateProfileRequest request, @MappingTarget User user);

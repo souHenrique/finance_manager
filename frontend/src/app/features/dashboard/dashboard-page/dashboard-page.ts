@@ -1,6 +1,7 @@
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { catchError, forkJoin, of } from 'rxjs';
 
 import { Badge } from '../../../shared/ui/badge/badge';
@@ -13,12 +14,7 @@ import { BudgetAlertStatus } from '../../budgets/models/budget.models';
 import { CategoryApiService } from '../../categories/data-access/category-api.service';
 import { Category } from '../../categories/models/category.models';
 import { DashboardApiService } from '../data-access/dashboard-api.service';
-import {
-  AccountingBasis,
-  Dashboard,
-  DashboardBudgetItem,
-  DashboardIndicator,
-} from '../models/dashboard.models';
+import { Dashboard, DashboardBudgetItem, DashboardIndicator } from '../models/dashboard.models';
 
 type DashboardState = 'loading' | 'success' | 'error';
 
@@ -52,6 +48,7 @@ const MONTHS = [
 export class DashboardPage implements OnInit {
   private readonly dashboardApi = inject(DashboardApiService);
   private readonly categoryApi = inject(CategoryApiService);
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly state = signal<DashboardState>('loading');
@@ -82,29 +79,9 @@ export class DashboardPage implements OnInit {
         indicator: dashboard.monthlyOutflows,
       },
       {
-        title: 'Saídas totais',
-        description: 'Todas as saídas de caixa efetivadas no histórico.',
-        indicator: dashboard.totalOutflows,
-      },
-      {
-        title: 'Saídas de compras no crédito',
-        description: 'Compras e parcelas vinculadas à fatura do mês de referência.',
-        indicator: dashboard.creditCardPurchaseOutflows,
-      },
-      {
-        title: 'Despesas por competência',
-        description: 'Despesas reconhecidas no período.',
-        indicator: dashboard.competenceExpenses,
-      },
-      {
         title: 'Faturas abertas',
         description: 'Total atual das faturas em aberto.',
         indicator: dashboard.openInvoices,
-      },
-      {
-        title: 'Saldo consolidado',
-        description: 'Soma dos saldos atuais das contas.',
-        indicator: dashboard.consolidatedBalance,
       },
     ];
   });
@@ -131,6 +108,10 @@ export class DashboardPage implements OnInit {
       });
   }
 
+  goToReports(): void {
+    void this.router.navigate(['/reports']);
+  }
+
   periodLabel(): string {
     const dashboard = this.dashboard();
 
@@ -139,22 +120,6 @@ export class DashboardPage implements OnInit {
     }
 
     return `${MONTHS[dashboard.month - 1]} de ${dashboard.year}`;
-  }
-
-  basisDescription(basis: AccountingBasis): string {
-    if (basis === 'CASH') {
-      return 'CASH · Regime de caixa';
-    }
-
-    if (basis === 'COMPETENCE') {
-      return 'COMPETENCE · Regime de competência';
-    }
-
-    return 'CASH + FATURA · Movimentos efetivos e fatura do mês';
-  }
-
-  basisLabel(basis: AccountingBasis): string {
-    return basis === 'CASH_AND_INVOICE' ? 'CASH + FATURA' : basis;
   }
 
   categoryName(categoryId: string): string {

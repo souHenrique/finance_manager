@@ -6,7 +6,7 @@ interface StoredSession {
   expiresAt: number;
 }
 
-const SESSION_STORAGE_KEY = 'finance-manager.session';
+const SESSION_STORAGE_KEY = 'nummo.session';
 
 @Injectable({
   providedIn: 'root',

@@ -4,6 +4,8 @@ import com.amorim.finance_manager.security.JwtService;
 import com.amorim.finance_manager.shared.exception.InvalidCredentialsException;
 import com.amorim.finance_manager.user.dto.AuthResponse;
 import com.amorim.finance_manager.user.dto.LoginRequest;
+import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,6 +22,7 @@ public class AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
     public AuthResponse login(LoginRequest request) {
         try {
@@ -29,8 +32,10 @@ public class AuthService {
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new InvalidCredentialsException("Credenciais inválidas"));
 
-            String token = jwtService.generateToken(userDetails);
+            String token = jwtService.generateToken(userDetails, user.getAuthenticationVersion());
 
             log.info("event=auth.login.success");
 

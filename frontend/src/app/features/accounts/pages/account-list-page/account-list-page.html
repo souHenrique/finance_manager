@@ -10,9 +10,9 @@
 
   @if (state() === 'loading') {
     <div class="account-list__skeletons" aria-label="Carregando contas">
-      <app-skeleton />
-      <app-skeleton />
-      <app-skeleton />
+      <app-skeleton height="12rem" />
+      <app-skeleton height="12rem" />
+      <app-skeleton height="12rem" />
     </div>
   } @else if (state() === 'error') {
     <app-error-state
@@ -31,16 +31,43 @@
     <div class="account-list">
       @for (account of accounts(); track account.id) {
         <app-card>
-          <a [routerLink]="['/accounts', account.id]">
-            <strong>{{ account.name }}</strong>
-            <span>{{ account.institution || 'Instituição não informada' }}</span>
-            <span>{{ account.currentBalance }}</span>
-          </a>
+          <article class="account-list__item">
+            <header class="account-list__item-header">
+              <div class="account-list__identity">
+                <span class="account-list__monogram" aria-hidden="true">
+                  {{ accountMonogram(account.type) }}
+                </span>
 
-          <app-badge
-            [label]="account.status === 'ACTIVE' ? 'Ativa' : 'Inativa'"
-            [tone]="account.status === 'ACTIVE' ? 'success' : 'neutral'"
-          />
+                <div>
+                  <h2>{{ account.name }}</h2>
+                  <p>{{ account.institution || 'Instituição não informada' }}</p>
+                </div>
+              </div>
+
+              <app-badge
+                [label]="account.status === 'ACTIVE' ? 'Ativa' : 'Inativa'"
+                [tone]="account.status === 'ACTIVE' ? 'success' : 'neutral'"
+              />
+            </header>
+
+            <dl class="account-list__details">
+              <div>
+                <dt>Tipo de conta</dt>
+                <dd>{{ accountTypeLabel(account.type) }}</dd>
+              </div>
+
+              <div class="account-list__balance">
+                <dt>Saldo atual</dt>
+                <dd [class.account-list__balance--negative]="account.currentBalance < 0">
+                  {{ formatCurrency(account.currentBalance) }}
+                </dd>
+              </div>
+            </dl>
+
+            <a class="account-list__details-link" [routerLink]="['/accounts', account.id]">
+              Ver detalhes <span aria-hidden="true">→</span>
+            </a>
+          </article>
         </app-card>
       }
     </div>

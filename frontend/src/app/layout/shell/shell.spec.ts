@@ -31,7 +31,7 @@ describe('Shell', () => {
 
     expect(element.querySelector('app-header')).not.toBeNull();
     expect(element.querySelector('app-sidebar')).not.toBeNull();
-    expect(element.querySelector('.header__brand')?.textContent).toContain('Finance Manager');
+    expect(element.querySelector('.header__brand')?.textContent).toContain('Nummo');
     expect(element.querySelector('main router-outlet')).not.toBeNull();
   });
 

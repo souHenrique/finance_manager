@@ -12,7 +12,7 @@ if (!apiBaseUrl) {
 }
 
 const outputPath = fileURLToPath(
-  new URL('../dist/finance-manager-web/browser/runtime-config.json', import.meta.url),
+  new URL('../dist/nummo-web/browser/runtime-config.json', import.meta.url),
 );
 
 await writeFile(outputPath, `${JSON.stringify({ apiBaseUrl }, null, 2)}\n`, 'utf8');

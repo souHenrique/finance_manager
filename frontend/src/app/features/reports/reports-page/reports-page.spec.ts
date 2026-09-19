@@ -98,20 +98,21 @@ describe('ReportsPage', () => {
     fixture.detectChanges();
   });
 
-  it('should load the monthly cash report with an explicit CASH basis', () => {
+  it('should load the monthly report without exposing its technical calculation basis', () => {
     const [year, month] = component.filters.controls.month.value.split('-').map(Number);
     const element = fixture.nativeElement as HTMLElement;
 
     expect(reportApi.getMonthly).toHaveBeenCalledWith(year, month);
     expect(element.textContent).toContain('Relatório mensal');
-    expect(element.textContent).toContain('Base: CASH · Regime de caixa');
+    expect(element.textContent).not.toContain('CASH');
+    expect(element.textContent).not.toContain('COMPETENCE');
     expect(element.textContent).toContain('Pagamentos de fatura');
     expect(element.textContent).toContain('Já incluídos nas saídas.');
     expect(element.querySelector('[role="img"]')).not.toBeNull();
     expect(element.querySelector('table')).not.toBeNull();
   });
 
-  it('should call the selected daily, weekly, annual and competence report endpoints', () => {
+  it('should call the selected daily, weekly, annual and expense-date report endpoints', () => {
     component.filters.controls.date.setValue('2026-09-03');
     component.selectMode('daily');
     expect(reportApi.getDaily).toHaveBeenCalledWith('2026-09-03');
@@ -128,15 +129,15 @@ describe('ReportsPage', () => {
     expect(reportApi.getCompetence).toHaveBeenCalledWith('2026-09-01', '2026-09-30');
   });
 
-  it('should render competence figures without treating invoice payments as new expenses', () => {
+  it('should render expense-date figures without treating invoice payments as new expenses', () => {
     component.filters.patchValue({ startDate: '2026-09-01', endDate: '2026-09-30' });
     component.selectMode('competence');
     fixture.detectChanges();
 
     const element = fixture.nativeElement as HTMLElement;
 
-    expect(element.textContent).toContain('Relatório por competência');
-    expect(element.textContent).toContain('Base: COMPETENCE · Regime de competência');
+    expect(element.textContent).toContain('Relatório por data da despesa');
+    expect(element.textContent).not.toContain('COMPETENCE');
     expect(element.textContent).toContain('Compra no cartão');
     expect(element.textContent).not.toContain('Pagamentos de fatura');
   });

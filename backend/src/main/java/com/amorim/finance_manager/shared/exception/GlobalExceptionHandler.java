@@ -167,6 +167,19 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(InvalidPasswordChangeException.class)
+    public ResponseEntity<ApiError> handleInvalidPasswordChange(
+            InvalidPasswordChangeException exception,
+            HttpServletRequest request
+    ) {
+        return response(
+                HttpStatus.BAD_REQUEST,
+                ApiErrorCode.INVALID_PASSWORD_CHANGE,
+                exception.getMessage(),
+                request
+        );
+    }
+
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<ApiError> handleAccountNotFound(
             AccountNotFoundException exception,

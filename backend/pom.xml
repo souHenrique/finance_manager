@@ -12,10 +12,10 @@
 	</parent>
 
 	<groupId>com.amorim</groupId>
-	<artifactId>finance-manager</artifactId>
+	<artifactId>nummo-api</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>finance-manager</name>
-	<description>Sistema de Gestao Financeira Pessoal</description>
+	<name>Nummo API</name>
+	<description>API do Nummo, sistema de gestão financeira pessoal</description>
 
 	<properties>
 		<java.version>25</java.version>

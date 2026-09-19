@@ -13,10 +13,10 @@ public class OpenApiConfig {
     public static final String SECURITY_SCHEME_NAME = "bearerAuth";
 
     @Bean
-    OpenAPI financeManagerOpenApi() {
+    OpenAPI nummoOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Finance Manager API")
+                        .title("Nummo API")
                         .description("""
                                 API REST para gerenciamento financeiro pessoal.
                                 

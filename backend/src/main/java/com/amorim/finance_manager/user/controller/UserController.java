@@ -2,6 +2,7 @@ package com.amorim.finance_manager.user.controller;
 
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.user.api.UserApiDocs;
+import com.amorim.finance_manager.user.dto.ChangePasswordRequest;
 import com.amorim.finance_manager.user.dto.UpdateProfileRequest;
 import com.amorim.finance_manager.user.dto.UserResponse;
 import com.amorim.finance_manager.user.service.UserProfileService;
@@ -31,5 +32,14 @@ public class UserController implements UserApiDocs {
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateCurrentUser(@Valid @RequestBody UpdateProfileRequest request) {
         return ResponseEntity.ok(userProfileService.updateCurrentProfile(request));
+    }
+
+    @Override
+    @PatchMapping("/me/password")
+    public ResponseEntity<Void> changeCurrentUserPassword(
+            @Valid @RequestBody ChangePasswordRequest request
+    ) {
+        userProfileService.changeCurrentPassword(request);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { API_BASE_URL } from '../../../core/config/api-base-url';
 import { User } from '../../../shared/models/user.models';
-import { UpdateProfileRequest } from '../models/profile.models';
+import { ChangePasswordRequest, UpdateProfileRequest } from '../models/profile.models';
 import { ProfileApiService } from './profile-api.service';
 
 describe('ProfileApiService', () => {
@@ -92,5 +92,21 @@ describe('ProfileApiService', () => {
       ...user,
       name: 'Skyler White',
     });
+  });
+
+  it('deve enviar a troca de senha para o endpoint dedicado', () => {
+    const payload: ChangePasswordRequest = {
+      currentPassword: 'SenhaSegura123',
+      newPassword: 'NovaSenhaSegura456',
+    };
+
+    service.changePassword(payload).subscribe();
+
+    const request = httpMock.expectOne('/api/v1/users/me/password');
+
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual(payload);
+
+    request.flush(null, { status: 204, statusText: 'No Content' });
   });
 });

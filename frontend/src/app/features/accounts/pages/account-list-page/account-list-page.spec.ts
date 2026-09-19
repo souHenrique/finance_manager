@@ -81,6 +81,10 @@ describe('AccountListPage', () => {
     expect(content).toContain('Ativa');
     expect(content).toContain('Inativa');
     expect(content).toContain('Instituição não informada');
+    expect(content).toContain('Conta corrente');
+    expect(content).toContain('Poupança');
+    expect(content).toContain('Saldo atual');
+    expect(content).toContain('R$');
   });
 
   it('should display an error state and retry loading', () => {

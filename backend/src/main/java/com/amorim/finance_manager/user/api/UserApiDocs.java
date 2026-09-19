@@ -1,6 +1,7 @@
 package com.amorim.finance_manager.user.api;
 
 import com.amorim.finance_manager.shared.exception.ApiError;
+import com.amorim.finance_manager.user.dto.ChangePasswordRequest;
 import com.amorim.finance_manager.user.dto.UpdateProfileRequest;
 import com.amorim.finance_manager.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -124,5 +125,34 @@ public interface UserApiDocs {
     })
     ResponseEntity<UserResponse> updateCurrentUser(
             UpdateProfileRequest request
+    );
+
+    @Operation(
+            summary = "Alterar senha",
+            description = "Exige a senha atual, invalida os tokens anteriores e solicita um novo login."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Senha alterada"),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Nova senha inválida ou igual à atual",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            )
+    })
+    ResponseEntity<Void> changeCurrentUserPassword(
+            @RequestBody(
+                    required = true,
+                    content = @Content(
+                            mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ChangePasswordRequest.class),
+                            examples = @ExampleObject(value = CHANGE_PASSWORD_REQUEST)
+                    )
+            )
+            ChangePasswordRequest request
     );
 }

@@ -12,8 +12,9 @@
   align-items: center;
   height: 100%;
   padding-inline: var(--space-4);
-  background: var(--color-surface);
-  border-block-end: 1px solid var(--color-border);
+  color: var(--color-on-primary);
+  background: linear-gradient(120deg, var(--color-brand-950), var(--color-brand-800));
+  box-shadow: var(--shadow-sm);
 }
 
 .header__skip-link {
@@ -38,23 +39,73 @@
   height: var(--control-height-md);
   padding: 0;
   cursor: pointer;
-  background: transparent;
-  border: 1px solid var(--color-border);
+  color: var(--color-on-primary);
+  background: rgb(242 245 248 / 10%);
+  border: 1px solid rgb(201 214 229 / 45%);
   border-radius: var(--radius-md);
   place-items: center;
 }
 
+.header__menu-button:hover {
+  background: rgb(242 245 248 / 18%);
+}
+
+.header__menu-button:focus-visible,
+.header__brand:focus-visible,
+.header__profile:focus-visible {
+  @include mixins.focus-ring;
+}
+
 .header__brand {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--color-text);
+  color: var(--color-on-primary);
   text-decoration: none;
 }
 
-.header__profile {
+.header__brand-logo {
+  position: relative;
+  display: block;
+  width: 2.25rem;
+  height: 2.25rem;
+  overflow: hidden;
+  background: var(--color-brand-50);
+  border: 1px solid rgb(242 245 248 / 35%);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0.25rem 0.75rem rgb(11 31 59 / 25%);
+}
+
+.header__brand-logo img {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 167%;
+  max-width: none;
+  height: 167%;
+  transform: translate(-20%, -20%);
+}
+
+.header__actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
   margin-inline-start: auto;
-  color: var(--color-primary);
+}
+
+.header__profile {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--control-height-sm);
+  padding-inline: var(--space-3);
+  color: var(--color-on-primary);
   text-decoration: none;
+  border-radius: var(--radius-md);
+}
+
+.header__profile:hover {
+  background: rgb(242 245 248 / 10%);
 }
 
 @include mixins.up(md) {
@@ -63,6 +114,12 @@
   }
 
   .header__menu-button {
+    display: none;
+  }
+}
+
+@media (max-width: 22rem) {
+  .header__brand > span:last-child {
     display: none;
   }
 }

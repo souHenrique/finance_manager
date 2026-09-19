@@ -1,6 +1,6 @@
-# Finance Manager Frontend
+# Nummo Web
 
-Frontend do Finance Manager desenvolvido com Angular 22, TypeScript, SCSS e arquitetura baseada em features.
+Frontend do Nummo desenvolvido com Angular 22, TypeScript, SCSS e arquitetura baseada em features.
 
 ## Requisitos
 
@@ -67,21 +67,6 @@ Não coloque senhas, tokens ou outros segredos nesse arquivo, em
 `src/environments` ou em qualquer variável usada pelo frontend: valores do
 navegador ficam visíveis no bundle ou na rede. A configuração aceita apenas a URL
 pública da API.
-
-## Deploy no Vercel
-
-O projeto Vercel deve usar `frontend/` como **Root Directory**. O
-`vercel.json` já contém os comandos de instalação e build, a pasta de saída e o
-fallback de rotas da SPA.
-
-No ambiente Production, configure somente a variável pública:
-
-```text
-API_BASE_URL=https://<sua-api>.onrender.com/api/v1
-```
-
-Nunca coloque senha, token JWT, URL de banco ou qualquer service key no Vercel.
-Consulte o guia completo em [../DEPLOYMENT.md](../DEPLOYMENT.md).
 
 ## Testes E2E
 

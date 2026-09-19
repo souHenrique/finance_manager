@@ -4,6 +4,7 @@ import { finalize } from 'rxjs';
 
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { Button } from '../../../shared/ui/button/button';
+import { Card } from '../../../shared/ui/card/card';
 import { EmptyState } from '../../../shared/ui/empty-state/empty-state';
 import { ErrorState } from '../../../shared/ui/error-state/error-state';
 import { Skeleton } from '../../../shared/ui/skeleton/skeleton';
@@ -22,7 +23,15 @@ type LoadingState = 'loading' | 'success' | 'error';
 
 @Component({
   selector: 'app-category-list-page',
-  imports: [Button, CategoryFormComponent, CategoryTreeComponent, EmptyState, ErrorState, Skeleton],
+  imports: [
+    Button,
+    Card,
+    CategoryFormComponent,
+    CategoryTreeComponent,
+    EmptyState,
+    ErrorState,
+    Skeleton,
+  ],
   templateUrl: './category-list-page.html',
   styleUrl: './category-list-page.scss',
 })
@@ -41,6 +50,13 @@ export class CategoryListPage implements OnInit {
   readonly isSubmitting = signal(false);
 
   readonly activeTree = computed(() => buildCategoryTree(this.categories(), this.activeType()));
+  readonly activeCategoryCount = computed(
+    () => this.categories().filter((category) => category.type === this.activeType()).length,
+  );
+
+  readonly activeTypeLabel = computed(() =>
+    this.activeType() === 'EXPENSE' ? 'despesas' : 'receitas',
+  );
 
   ngOnInit(): void {
     this.loadCategories();

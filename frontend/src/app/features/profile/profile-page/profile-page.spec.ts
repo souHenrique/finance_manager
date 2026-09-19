@@ -4,6 +4,7 @@ import { of, Subject, throwError } from 'rxjs';
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { ApiRequestError } from '../../../core/http/api-request-error';
 import { User } from '../../../shared/models/user.models';
+import { AuthService } from '../../auth/services/auth.service';
 import { ProfileApiService } from '../data-access/profile-api.service';
 import { ProfilePage } from './profile-page';
 
@@ -12,9 +13,13 @@ describe('ProfilePage', () => {
   let profileApi: {
     getCurrentUser: ReturnType<typeof vi.fn>;
     updateCurrentUser: ReturnType<typeof vi.fn>;
+    changePassword: ReturnType<typeof vi.fn>;
   };
   let toast: {
     show: ReturnType<typeof vi.fn>;
+  };
+  let auth: {
+    logout: ReturnType<typeof vi.fn>;
   };
 
   const user: User = {
@@ -29,10 +34,15 @@ describe('ProfilePage', () => {
     profileApi = {
       getCurrentUser: vi.fn().mockReturnValue(of(user)),
       updateCurrentUser: vi.fn(),
+      changePassword: vi.fn(),
     };
 
     toast = {
       show: vi.fn(),
+    };
+
+    auth = {
+      logout: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -45,6 +55,10 @@ describe('ProfilePage', () => {
         {
           provide: ToastService,
           useValue: toast,
+        },
+        {
+          provide: AuthService,
+          useValue: auth,
         },
       ],
     }).compileComponents();
@@ -69,6 +83,19 @@ describe('ProfilePage', () => {
 
   function submitForm(): void {
     const form = fixture.nativeElement.querySelector('form') as HTMLFormElement;
+
+    form.dispatchEvent(
+      new Event('submit', {
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+
+    fixture.detectChanges();
+  }
+
+  function submitPasswordForm(): void {
+    const form = fixture.nativeElement.querySelector('.password-form') as HTMLFormElement;
 
     form.dispatchEvent(
       new Event('submit', {
@@ -226,9 +253,70 @@ describe('ProfilePage', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
   });
 
-  it('should not expose a password field', () => {
+  it('should render a separate password form', () => {
     createPage();
 
-    expect(fixture.nativeElement.querySelector('input[type="password"]')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('input[type="password"]')).toHaveLength(3);
+    expect(fixture.nativeElement.textContent).toContain('Senha atual');
+    expect(fixture.nativeElement.textContent).toContain('Confirmar nova senha');
+  });
+
+  it('should prevent changing the password when confirmation differs', () => {
+    createPage();
+
+    fillInput('profile-current-password', 'SenhaSegura123');
+    fillInput('profile-new-password', 'NovaSenhaSegura456');
+    fillInput('profile-confirm-password', 'OutraSenhaSegura789');
+    submitPasswordForm();
+
+    expect(profileApi.changePassword).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain('As senhas não coincidem.');
+  });
+
+  it('should change the password, show feedback and logout', () => {
+    profileApi.changePassword.mockReturnValue(of(void 0));
+
+    createPage();
+
+    fillInput('profile-current-password', 'SenhaSegura123');
+    fillInput('profile-new-password', 'NovaSenhaSegura456');
+    fillInput('profile-confirm-password', 'NovaSenhaSegura456');
+    submitPasswordForm();
+
+    expect(profileApi.changePassword).toHaveBeenCalledWith({
+      currentPassword: 'SenhaSegura123',
+      newPassword: 'NovaSenhaSegura456',
+    });
+    expect(toast.show).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Senha alterada',
+      message: 'Entre novamente usando sua nova senha.',
+    });
+    expect(auth.logout).toHaveBeenCalledOnce();
+    expect(getInput('profile-current-password').value).toBe('');
+    expect(getInput('profile-new-password').value).toBe('');
+  });
+
+  it('should show an error and clear password inputs when the current password is invalid', () => {
+    const apiError = new ApiRequestError({
+      timestamp: '2026-09-15T12:00:00Z',
+      status: 400,
+      code: 'INVALID_PASSWORD_CHANGE',
+      message: 'A senha atual está incorreta.',
+      path: '/api/v1/users/me/password',
+      fieldErrors: [],
+    });
+    profileApi.changePassword.mockReturnValue(throwError(() => apiError));
+
+    createPage();
+
+    fillInput('profile-current-password', 'SenhaIncorreta999');
+    fillInput('profile-new-password', 'NovaSenhaSegura456');
+    fillInput('profile-confirm-password', 'NovaSenhaSegura456');
+    submitPasswordForm();
+
+    expect(fixture.nativeElement.textContent).toContain('A senha atual está incorreta.');
+    expect(getInput('profile-current-password').value).toBe('');
+    expect(auth.logout).not.toHaveBeenCalled();
   });
 });

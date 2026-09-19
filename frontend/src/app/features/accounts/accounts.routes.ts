@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const ACCOUNT_ROUTES: Routes = [
   {
     path: 'new',
-    title: 'Nova conta | Finance Manager',
+    title: 'Nova conta | Nummo',
     loadComponent: () =>
       import('./pages/account-create-page/account-create-page').then(
         (module) => module.AccountCreatePageComponent,
@@ -11,7 +11,7 @@ export const ACCOUNT_ROUTES: Routes = [
   },
   {
     path: ':id/edit',
-    title: 'Editar conta | Finance Manager',
+    title: 'Editar conta | Nummo',
     loadComponent: () =>
       import('./pages/account-edit-page/account-edit-page').then(
         (module) => module.AccountEditPageComponent,
@@ -19,7 +19,7 @@ export const ACCOUNT_ROUTES: Routes = [
   },
   {
     path: ':id',
-    title: 'Detalhes da conta | Finance Manager',
+    title: 'Detalhes da conta | Nummo',
     loadComponent: () =>
       import('./pages/account-detail-page/account-detail-page').then(
         (module) => module.AccountDetailPage,
@@ -28,7 +28,7 @@ export const ACCOUNT_ROUTES: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    title: 'Contas | Finance Manager',
+    title: 'Contas | Nummo',
     loadComponent: () =>
       import('./pages/account-list-page/account-list-page').then(
         (module) => module.AccountListPage,

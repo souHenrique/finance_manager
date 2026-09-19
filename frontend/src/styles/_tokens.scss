@@ -34,21 +34,31 @@
   --radius-lg: 0.75rem;
   --radius-pill: 9999px;
 
-  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
-  --shadow-md: 0 8px 24px rgb(15 23 42 / 12%);
-  --shadow-lg: 0 16px 40px rgb(15 23 42 / 18%);
+  /* Paleta da marca: azul-marinho, azul profundo e azuis acinzentados. */
+  --color-brand-950: #0b1f3b;
+  --color-brand-800: #123a63;
+  --color-brand-600: #2f5d8c;
+  --color-brand-100: #c9d6e5;
+  --color-brand-50: #f2f5f8;
 
-  --color-canvas: #f8fafc;
+  --shadow-sm: 0 1px 2px rgb(11 31 59 / 8%);
+  --shadow-md: 0 8px 24px rgb(11 31 59 / 12%);
+  --shadow-lg: 0 16px 40px rgb(11 31 59 / 18%);
+
+  --color-canvas: var(--color-brand-50);
   --color-surface: #ffffff;
-  --color-surface-muted: #f1f5f9;
-  --color-text: #0f172a;
-  --color-text-muted: #475569;
-  --color-border: #cbd5e1;
-  --color-border-strong: #94a3b8;
+  --color-surface-muted: var(--color-brand-100);
+  --color-surface-subtle: var(--color-brand-50);
+  --color-text: var(--color-brand-950);
+  --color-text-muted: var(--color-brand-800);
+  --color-text-primary: var(--color-text);
+  --color-text-secondary: var(--color-text-muted);
+  --color-border: var(--color-brand-100);
+  --color-border-strong: var(--color-brand-600);
 
-  --color-primary: #1d4ed8;
-  --color-primary-hover: #1e40af;
-  --color-on-primary: #ffffff;
+  --color-primary: var(--color-brand-800);
+  --color-primary-hover: var(--color-brand-950);
+  --color-on-primary: var(--color-brand-50);
 
   --color-success-text: #166534;
   --color-success-surface: #f0fdf4;
@@ -62,12 +72,15 @@
   --color-danger-surface: #fef2f2;
   --color-danger-border: #fca5a5;
 
-  --color-info-text: #1e40af;
-  --color-info-surface: #eff6ff;
-  --color-info-border: #93c5fd;
+  --color-info-text: var(--color-brand-800);
+  --color-info-surface: var(--color-brand-50);
+  --color-info-border: var(--color-brand-600);
 
   --color-focus-inner: #ffffff;
-  --color-focus-outer: #2563eb;
+  --color-focus-outer: var(--color-brand-600);
+
+  /* Compatibilidade com componentes que usam os nomes semânticos legados. */
+  --color-danger: var(--color-danger-text);
 
   --control-height-sm: 2rem;
   --control-height-md: 2.5rem;
