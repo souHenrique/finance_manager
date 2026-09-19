@@ -14,6 +14,11 @@ import { AppDialogService } from '../../../core/feedback/dialog/dialog.service';
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { ApiRequestError } from '../../../core/http/api-request-error';
 import { User } from '../../../shared/models/user.models';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  passwordComplexityValidator,
+} from '../../../shared/validators/password-complexity.validator';
 import { Alert } from '../../../shared/ui/alert/alert';
 import { Button } from '../../../shared/ui/button/button';
 import { Card } from '../../../shared/ui/card/card';
@@ -96,7 +101,12 @@ export class ProfilePage implements OnInit {
       }),
       newPassword: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8), Validators.maxLength(72)],
+        validators: [
+          Validators.required,
+          Validators.minLength(PASSWORD_MIN_LENGTH),
+          Validators.maxLength(PASSWORD_MAX_LENGTH),
+          passwordComplexityValidator,
+        ],
       }),
       confirmation: new FormControl('', {
         nonNullable: true,
@@ -301,6 +311,10 @@ export class ProfilePage implements OnInit {
 
     if (fieldName === 'newPassword' && control.hasError('maxlength')) {
       return 'A nova senha deve possuir no máximo 72 caracteres.';
+    }
+
+    if (fieldName === 'newPassword' && control.hasError('passwordComplexity')) {
+      return 'Use maiúscula, minúscula, número e caractere especial.';
     }
 
     if (fieldName === 'confirmation' && this.passwordForm.hasError('passwordMismatch')) {

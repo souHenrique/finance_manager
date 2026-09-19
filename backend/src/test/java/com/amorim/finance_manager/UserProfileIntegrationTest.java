@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(PostgresTestContainerConfiguration.class)
 class UserProfileIntegrationTest {
 
-    private static final String PASSWORD = "SenhaSegura123";
+    private static final String PASSWORD = "SenhaSegura123!";
 
     private static final String USER_A_EMAIL =
             "user-a@example.com";
@@ -412,7 +412,7 @@ class UserProfileIntegrationTest {
         );
 
         String token = login(USER_A_EMAIL, PASSWORD);
-        String newPassword = "NovaSenhaSegura456";
+        String newPassword = "NovaSenhaSegura456!";
 
         mockMvc.perform(
                         patch("/api/v1/users/me/password")
@@ -420,8 +420,8 @@ class UserProfileIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
-                                          "currentPassword": "SenhaSegura123",
-                                          "newPassword": "NovaSenhaSegura456"
+                                          "currentPassword": "SenhaSegura123!",
+                                          "newPassword": "NovaSenhaSegura456!"
                                         }
                                         """)
                 )
@@ -472,7 +472,7 @@ class UserProfileIntegrationTest {
                                 .content("""
                                         {
                                           "currentPassword": "SenhaIncorreta999",
-                                          "newPassword": "NovaSenhaSegura456"
+                                          "newPassword": "NovaSenhaSegura456!"
                                         }
                                         """)
                 )
@@ -500,7 +500,7 @@ class UserProfileIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
-                                          "currentPassword": "SenhaSegura123",
+                                          "currentPassword": "SenhaSegura123!",
                                           "newPassword": "curta"
                                         }
                                         """)
@@ -514,8 +514,23 @@ class UserProfileIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
-                                          "currentPassword": "SenhaSegura123",
-                                          "newPassword": "SenhaSegura123"
+                                          "currentPassword": "SenhaSegura123!",
+                                          "newPassword": "NovaSenhaSegura456"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("newPassword"));
+
+        mockMvc.perform(
+                        patch("/api/v1/users/me/password")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "currentPassword": "SenhaSegura123!",
+                                          "newPassword": "SenhaSegura123!"
                                         }
                                         """)
                 )
@@ -559,7 +574,7 @@ class UserProfileIntegrationTest {
                                 .content("""
                                         {
                                           "email": "user-a@example.com",
-                                          "password": "SenhaSegura123"
+                                          "password": "SenhaSegura123!"
                                         }
                                         """)
                 )
@@ -608,12 +623,6 @@ class UserProfileIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        return objectMapper
-                .readTree(
-                        result.getResponse()
-                                .getContentAsString()
-                )
-                .get("token")
-                .asText();
+        return result.getResponse().getCookie("nummo_session").getValue();
     }
 }

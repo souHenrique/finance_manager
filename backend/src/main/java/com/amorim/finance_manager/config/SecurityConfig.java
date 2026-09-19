@@ -1,6 +1,9 @@
 package com.amorim.finance_manager.config;
 
 import com.amorim.finance_manager.security.JwtAuthenticationFilter;
+import com.amorim.finance_manager.security.AuthRateLimitFilter;
+import com.amorim.finance_manager.security.AuthRateLimitProperties;
+import com.amorim.finance_manager.security.AuthCookieProperties;
 import com.amorim.finance_manager.security.RestAuthenticationEntryPoint;
 import com.amorim.finance_manager.user.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
@@ -26,12 +29,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @Configuration
-@EnableConfigurationProperties(CorsProperties.class)
+@EnableConfigurationProperties({CorsProperties.class, AuthRateLimitProperties.class, AuthCookieProperties.class})
 public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            AuthRateLimitFilter authRateLimitFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             RestAuthenticationEntryPoint restAuthenticationEntryPoint
     ) throws Exception {
@@ -47,7 +51,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
                                 "/api/v1/auth/register",
-                                "/api/v1/auth/login")
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/logout")
                         .permitAll()
                         .requestMatchers(
                                 "/actuator/health",
@@ -65,6 +70,10 @@ public class SecurityConfig {
                         .authenticationEntryPoint(restAuthenticationEntryPoint)
                 )
                 .addFilterBefore(
+                        authRateLimitFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+                .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
                 )
@@ -78,8 +87,8 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(corsProperties.allowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        configuration.setExposedHeaders(List.of("Content-Disposition"));
-        configuration.setAllowCredentials(false);
+        configuration.setExposedHeaders(List.of("Content-Disposition", "Retry-After"));
+        configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

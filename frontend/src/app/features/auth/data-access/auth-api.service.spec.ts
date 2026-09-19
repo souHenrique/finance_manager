@@ -37,8 +37,6 @@ describe('AuthApiService', () => {
       password: 'SenhaSegura123',
     };
     const response: AuthResponse = {
-      token: 'jwt-token',
-      tokenType: 'Bearer',
       expiresIn: 3600,
     };
 
@@ -52,6 +50,16 @@ describe('AuthApiService', () => {
     expect(request.request.body).toEqual(payload);
 
     request.flush(response);
+  });
+
+  it('deve solicitar o encerramento da sessão no backend', () => {
+    service.logout().subscribe();
+
+    const request = httpMock.expectOne('/api/v1/auth/logout');
+
+    expect(request.request.method).toBe('POST');
+
+    request.flush(null);
   });
 
   it('deve cadastrar o usuário', () => {

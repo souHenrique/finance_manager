@@ -634,10 +634,7 @@ class BudgetIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        return objectMapper
-                .readTree(result.getResponse().getContentAsString())
-                .get("token")
-                .asText();
+        return result.getResponse().getCookie("nummo_session").getValue();
     }
 
     private UUID createCategory(

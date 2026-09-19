@@ -13,9 +13,11 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.ObjectMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,7 +51,7 @@ class UserRegistrationIntegrationTest {
             {
               "name": "Walter White",
               "email": "walter.white@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -66,12 +68,54 @@ class UserRegistrationIntegrationTest {
     }
 
     @Test
+    void shouldAuthenticateWithAnHttpOnlyCookieWithoutExposingTheJwtInJson() throws Exception {
+        String registerBody = """
+            {
+              "name": "Jesse Pinkman",
+              "email": "jesse.pinkman@example.com",
+              "password": "SenhaSegura123!"
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(registerBody))
+                .andExpect(status().isCreated());
+
+        MvcResult login = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "email": "jesse.pinkman@example.com",
+                              "password": "SenhaSegura123!"
+                            }
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("nummo_session=")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("HttpOnly")))
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("SameSite=Lax")))
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.expiresIn").isNumber())
+                .andReturn();
+
+        mockMvc.perform(get("/api/v1/users/me")
+                        .cookie(login.getResponse().getCookie("nummo_session")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("jesse.pinkman@example.com"));
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .cookie(login.getResponse().getCookie("nummo_session")))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE, containsString("Max-Age=0")));
+    }
+
+    @Test
     void shouldReturnConflictWhenEmailAlreadyExists() throws Exception {
         String body = """
             {
               "name": "Walter White",
               "email": "walter.white@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -102,7 +146,7 @@ class UserRegistrationIntegrationTest {
             {
               "name": "Walter White",
               "email": "email-invalido",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -129,7 +173,7 @@ class UserRegistrationIntegrationTest {
             {
               "name": "   ",
               "email": "walter.white@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -160,12 +204,56 @@ class UserRegistrationIntegrationTest {
     }
 
     @Test
+    void shouldRejectPasswordShorterThanEightCharacters() throws Exception {
+        String body = """
+            {
+              "name": "Walter White",
+              "email": "walter.white@example.com",
+              "password": "curta"
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("password"))
+                .andExpect(jsonPath("$.fieldErrors[?(@.message == 'Senha deve possuir entre 8 e 72 caracteres')]")
+                        .isNotEmpty());
+
+        assertThat(userRepository.count()).isZero();
+    }
+
+    @Test
+    void shouldRejectPasswordWithoutRequiredComplexity() throws Exception {
+        String body = """
+            {
+              "name": "Walter White",
+              "email": "walter.white@example.com",
+              "password": "SenhaSegura123"
+            }
+            """;
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("password"))
+                .andExpect(jsonPath("$.fieldErrors[0].message")
+                        .value("Senha deve conter ao menos uma letra maiúscula, uma minúscula, um número e um caractere especial"));
+
+        assertThat(userRepository.count()).isZero();
+    }
+
+    @Test
     void shouldNormalizeEmail() throws Exception {
         String body = """
             {
               "name": "Walter White",
               "email": "  WALTER.WHITE@Example.COM  ",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -187,7 +275,7 @@ class UserRegistrationIntegrationTest {
 
     @Test
     void shouldStorePasswordAsBcrypt() throws Exception {
-        String rawPassword = "SenhaSegura123";
+        String rawPassword = "SenhaSegura123!";
 
         String body = """
             {
@@ -227,7 +315,7 @@ class UserRegistrationIntegrationTest {
             {
               "name": "Walter White",
               "email": "walter.white@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 

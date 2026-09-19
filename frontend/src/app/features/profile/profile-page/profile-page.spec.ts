@@ -278,8 +278,8 @@ describe('ProfilePage', () => {
   it('should prevent changing the password when confirmation differs', () => {
     createPage();
 
-    fillInput('profile-current-password', 'SenhaSegura123');
-    fillInput('profile-new-password', 'NovaSenhaSegura456');
+    fillInput('profile-current-password', 'SenhaSegura123!');
+    fillInput('profile-new-password', 'NovaSenhaSegura456!');
     fillInput('profile-confirm-password', 'OutraSenhaSegura789');
     submitPasswordForm();
 
@@ -287,19 +287,33 @@ describe('ProfilePage', () => {
     expect(fixture.nativeElement.textContent).toContain('As senhas não coincidem.');
   });
 
+  it('should prevent changing the password when a required character group is missing', () => {
+    createPage();
+
+    fillInput('profile-current-password', 'SenhaSegura123!');
+    fillInput('profile-new-password', 'NovaSenhaSegura456');
+    fillInput('profile-confirm-password', 'NovaSenhaSegura456');
+    submitPasswordForm();
+
+    expect(profileApi.changePassword).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.textContent).toContain(
+      'Use maiúscula, minúscula, número e caractere especial.',
+    );
+  });
+
   it('should change the password, show feedback and logout', () => {
     profileApi.changePassword.mockReturnValue(of(void 0));
 
     createPage();
 
-    fillInput('profile-current-password', 'SenhaSegura123');
-    fillInput('profile-new-password', 'NovaSenhaSegura456');
-    fillInput('profile-confirm-password', 'NovaSenhaSegura456');
+    fillInput('profile-current-password', 'SenhaSegura123!');
+    fillInput('profile-new-password', 'NovaSenhaSegura456!');
+    fillInput('profile-confirm-password', 'NovaSenhaSegura456!');
     submitPasswordForm();
 
     expect(profileApi.changePassword).toHaveBeenCalledWith({
-      currentPassword: 'SenhaSegura123',
-      newPassword: 'NovaSenhaSegura456',
+      currentPassword: 'SenhaSegura123!',
+      newPassword: 'NovaSenhaSegura456!',
     });
     expect(toast.show).toHaveBeenCalledWith({
       tone: 'success',
@@ -325,8 +339,8 @@ describe('ProfilePage', () => {
     createPage();
 
     fillInput('profile-current-password', 'SenhaIncorreta999');
-    fillInput('profile-new-password', 'NovaSenhaSegura456');
-    fillInput('profile-confirm-password', 'NovaSenhaSegura456');
+    fillInput('profile-new-password', 'NovaSenhaSegura456!');
+    fillInput('profile-confirm-password', 'NovaSenhaSegura456!');
     submitPasswordForm();
 
     expect(fixture.nativeElement.textContent).toContain('A senha atual está incorreta.');

@@ -13,6 +13,7 @@ describe('AuthService', () => {
   let authApi: {
     login: ReturnType<typeof vi.fn>;
     register: ReturnType<typeof vi.fn>;
+    logout: ReturnType<typeof vi.fn>;
   };
   let session: {
     start: ReturnType<typeof vi.fn>;
@@ -26,6 +27,7 @@ describe('AuthService', () => {
     authApi = {
       login: vi.fn(),
       register: vi.fn(),
+      logout: vi.fn(),
     };
     session = {
       start: vi.fn(),
@@ -56,14 +58,12 @@ describe('AuthService', () => {
     service = TestBed.inject(AuthService);
   });
 
-  it('should create a session after a successful login', () => {
+  it('should record only the session expiration after a successful login', () => {
     const request: LoginRequest = {
       email: 'jesse.pinkman@example.com',
       password: 'SenhaSegura123',
     };
     const response: AuthResponse = {
-      token: 'jwt-token',
-      tokenType: 'Bearer',
       expiresIn: 3600,
     };
 
@@ -74,11 +74,7 @@ describe('AuthService', () => {
     });
 
     expect(authApi.login).toHaveBeenCalledWith(request);
-    expect(session.start).toHaveBeenCalledWith(
-      response.token,
-      response.tokenType,
-      response.expiresIn,
-    );
+    expect(session.start).toHaveBeenCalledWith(response.expiresIn);
   });
 
   it('should register without creating a session', () => {
@@ -105,9 +101,12 @@ describe('AuthService', () => {
     expect(session.start).not.toHaveBeenCalled();
   });
 
-  it('should clear the session and navigate to login on logout', () => {
+  it('should ask the backend to clear the HttpOnly cookie before navigating to login', () => {
+    authApi.logout.mockReturnValue(of(void 0));
+
     service.logout();
 
+    expect(authApi.logout).toHaveBeenCalledOnce();
     expect(session.clear).toHaveBeenCalledOnce();
     expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });

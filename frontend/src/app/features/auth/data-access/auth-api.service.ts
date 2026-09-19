@@ -17,4 +17,8 @@ export class AuthApiService {
   register(request: RegisterRequest): Observable<User> {
     return this.http.post<User>(this.apiUrl.build('auth/register'), request);
   }
+
+  logout(): Observable<void> {
+    return this.http.post<void>(this.apiUrl.build('auth/logout'), {});
+  }
 }

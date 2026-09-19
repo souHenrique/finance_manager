@@ -53,6 +53,7 @@
       <app-form-field
         label="Senha"
         controlId="register-password"
+        hint="Use ao menos 8 caracteres, com maiúscula, minúscula, número e caractere especial."
         [error]="fieldError('password')"
         [required]="true"
       >
@@ -62,6 +63,8 @@
           type="password"
           formControlName="password"
           autocomplete="new-password"
+          minlength="8"
+          maxlength="72"
           [attr.aria-invalid]="fieldError('password') ? 'true' : null"
           [attr.aria-describedby]="fieldError('password') ? 'register-password-error' : null"
         />

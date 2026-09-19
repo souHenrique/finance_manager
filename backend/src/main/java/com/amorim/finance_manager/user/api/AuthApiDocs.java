@@ -62,6 +62,13 @@ public interface AuthApiDocs {
                     )
             ),
             @ApiResponse(
+                    responseCode = "429",
+                    description = "Limite de tentativas de cadastro excedido",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "409",
                     description = "E-mail já cadastrado",
                     content = @Content(
@@ -86,7 +93,7 @@ public interface AuthApiDocs {
 
     @Operation(
             summary = "Realizar login",
-            description = "Autentica o usuário e devolve um token JWT",
+            description = "Autentica o usuário e grava a sessão no cookie HttpOnly nummo_session",
             requestBody =
             @RequestBody(
                     required = true,
@@ -126,6 +133,13 @@ public interface AuthApiDocs {
                     )
             ),
             @ApiResponse(
+                    responseCode = "429",
+                    description = "Limite de tentativas de login excedido",
+                    content = @Content(
+                            schema = @Schema(implementation = ApiError.class)
+                    )
+            ),
+            @ApiResponse(
                     responseCode = "401",
                     description = "Credenciais inválidas",
                     content = @Content(
@@ -144,4 +158,15 @@ public interface AuthApiDocs {
             )
     })
     ResponseEntity<AuthResponse> login(LoginRequest request);
+
+    @Operation(summary = "Encerrar sessão", description = "Remove o cookie de sessão HttpOnly")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Sessão encerrada"),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Erro interno",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            )
+    })
+    ResponseEntity<Void> logout();
 }

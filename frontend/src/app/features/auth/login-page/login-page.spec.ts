@@ -71,8 +71,6 @@ describe('LoginPage', () => {
 
     auth.login.mockReturnValue(
       of({
-        token: 'jwt-token',
-        tokenType: 'Bearer',
         expiresIn: 3600,
       }),
     );
@@ -94,8 +92,6 @@ describe('LoginPage', () => {
 
     auth.login.mockReturnValue(
       of({
-        token: 'jwt-token',
-        tokenType: 'Bearer',
         expiresIn: 3600,
       }),
     );
@@ -113,8 +109,6 @@ describe('LoginPage', () => {
 
     auth.login.mockReturnValue(
       of({
-        token: 'jwt-token',
-        tokenType: 'Bearer',
         expiresIn: 3600,
       }),
     );

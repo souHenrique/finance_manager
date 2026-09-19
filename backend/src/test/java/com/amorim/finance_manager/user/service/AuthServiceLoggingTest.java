@@ -3,7 +3,7 @@ package com.amorim.finance_manager.user.service;
 import com.amorim.finance_manager.security.JwtService;
 import com.amorim.finance_manager.shared.exception.InvalidCredentialsException;
 import com.amorim.finance_manager.testsupport.LogCapture;
-import com.amorim.finance_manager.user.dto.AuthResponse;
+import com.amorim.finance_manager.user.dto.AuthenticatedSession;
 import com.amorim.finance_manager.user.dto.LoginRequest;
 import com.amorim.finance_manager.user.entity.User;
 import com.amorim.finance_manager.user.entity.UserStatus;
@@ -74,7 +74,7 @@ class AuthServiceLoggingTest {
                 .thenReturn(3600L);
 
         try (LogCapture logs = LogCapture.forClass(AuthService.class)) {
-            AuthResponse response = authService.login(request);
+            AuthenticatedSession response = authService.login(request);
 
             assertThat(response.token()).isEqualTo(JWT);
             assertThat(logs.messages())

@@ -14,7 +14,7 @@ public record LoginRequest(
         @Email(message = "E-mail inválido")
         String email,
 
-        @Schema(description = "Senha do usuário", example = "SenhaSegura123", format = "password")
+        @Schema(description = "Senha do usuário", example = "SenhaSegura123!", format = "password")
         @NotBlank(message = "Senha é obrigatória")
         String password
 ) {

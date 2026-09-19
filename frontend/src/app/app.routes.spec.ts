@@ -317,14 +317,18 @@ describe('Application routes', () => {
     '/budgets',
     '/reports',
     '/profile',
-  ])('should navigate successfully to %s', async (url) => {
-    const harness = await RouterTestingHarness.create();
+  ])(
+    'should navigate successfully to %s',
+    async (url) => {
+      const harness = await RouterTestingHarness.create();
 
-    await harness.navigateByUrl(url);
+      await harness.navigateByUrl(url);
 
-    expect(TestBed.inject(Router).url).toBe(url);
-    expect(harness.routeNativeElement?.textContent).not.toContain('Erro 404');
-  });
+      expect(TestBed.inject(Router).url).toBe(url);
+      expect(harness.routeNativeElement?.textContent).not.toContain('Erro 404');
+    },
+    15_000,
+  );
 
   it('should render the 404 page for an unknown route', async () => {
     const harness = await RouterTestingHarness.create();

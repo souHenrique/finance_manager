@@ -244,14 +244,15 @@ compra.
 
 ## Documentação da API
 
-Com a aplicação em execução:
+Em desenvolvimento, com a aplicação em execução:
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 - OpenAPI YAML: `http://localhost:8080/v3/api-docs.yaml`
 
 Os contratos documentam schemas públicos, parâmetros, exemplos, autenticação e
-respostas de erro padronizadas.
+respostas de erro padronizadas. Swagger UI e os documentos OpenAPI são
+desativados no perfil `prod`, portanto não ficam expostos no deploy público.
 
 ## Banco de dados e migrações
 
@@ -268,6 +269,15 @@ estornos, créditos e orçamentos.
 
 Os testes de integração utilizam PostgreSQL real por meio do Testcontainers.
 Mantenha o Docker em execução.
+
+## Segurança contínua
+
+O GitHub executa CodeQL para Java e TypeScript em pushes, pull requests e uma
+varredura semanal. Pull requests que alteram dependências também passam por uma
+revisão de vulnerabilidades conhecidas. A árvore Maven resolvida, incluindo
+dependências transitivas, é enviada ao Dependency Graph do GitHub para que os
+alertas do Dependabot cubram o backend sem depender de feeds de CVEs externos.
+O Dependabot abre atualizações semanais para Maven, pnpm e GitHub Actions.
 
 ### PowerShell
 

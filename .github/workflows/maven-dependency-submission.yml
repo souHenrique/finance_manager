@@ -1,0 +1,34 @@
+name: Submit Maven dependency graph
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/pom.xml
+      - backend/.mvn/**
+      - backend/mvnw
+      - .github/workflows/maven-dependency-submission.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  submit-dependencies:
+    name: Submit resolved Maven dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Submit the complete Maven dependency graph
+        uses: advanced-security/maven-dependency-submission-action@v5
+        with:
+          directory: backend

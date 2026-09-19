@@ -9,7 +9,7 @@ public final class OpenApiExamples {
             {
               "name": "Henrique Amorim",
               "email": "henrique@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
@@ -36,14 +36,12 @@ public final class OpenApiExamples {
     public static final String LOGIN_REQUEST = """
             {
               "email": "henrique@example.com",
-              "password": "SenhaSegura123"
+              "password": "SenhaSegura123!"
             }
             """;
 
     public static final String AUTH_RESPONSE = """
             {
-              "token": "eyJhbGciOiJIUzI1NiJ9...",
-              "tokenType": "Bearer",
               "expiresIn": 3600
             }
             """;
@@ -189,8 +187,8 @@ public final class OpenApiExamples {
 
     public static final String CHANGE_PASSWORD_REQUEST = """
         {
-          "currentPassword": "SenhaSegura123",
-          "newPassword": "NovaSenhaSegura456"
+          "currentPassword": "SenhaSegura123!",
+          "newPassword": "NovaSenhaSegura456!"
         }
         """;
 

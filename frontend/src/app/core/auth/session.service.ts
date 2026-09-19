@@ -1,46 +1,34 @@
 import { computed, Injectable, signal } from '@angular/core';
 
-interface StoredSession {
-  token: string;
-  tokenType: string;
+interface SessionMetadata {
   expiresAt: number;
 }
 
-const SESSION_STORAGE_KEY = 'nummo.session';
+const SESSION_STORAGE_KEY = 'nummo.session-expiration';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SessionService {
-  private readonly sessionState = signal<StoredSession | null>(this.restoreSession());
+  private readonly sessionState = signal<SessionMetadata | null>(this.restoreSession());
 
   private expirationTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly isAuthenticated = computed(() => {
-    return this.getAuthorizationHeader() !== null;
+    return this.hasValidSession();
   });
 
   constructor() {
     this.scheduleExpiration();
   }
 
-  start(token: string, tokenType: string, expiresInSeconds: number): void {
-    const normalizedToken = token.trim();
-    const normalizedTokenType = tokenType.trim();
-
-    if (
-      !normalizedToken ||
-      !normalizedTokenType ||
-      !Number.isFinite(expiresInSeconds) ||
-      expiresInSeconds <= 0
-    ) {
+  start(expiresInSeconds: number): void {
+    if (!Number.isFinite(expiresInSeconds) || expiresInSeconds <= 0) {
       this.clear();
       throw new Error('Resposta de autenticação inválida.');
     }
 
-    const session: StoredSession = {
-      token: normalizedToken,
-      tokenType: normalizedTokenType,
+    const session: SessionMetadata = {
       expiresAt: Date.now() + expiresInSeconds * 1000,
     };
 
@@ -51,22 +39,18 @@ export class SessionService {
   }
 
   hasValidSession(): boolean {
-    return this.getAuthorizationHeader() !== null;
-  }
-
-  getAuthorizationHeader(): string | null {
     const session = this.sessionState();
 
     if (!session) {
-      return null;
+      return false;
     }
 
     if (session.expiresAt <= Date.now()) {
       this.clear();
-      return null;
+      return false;
     }
 
-    return `${session.tokenType} ${session.token}`;
+    return true;
   }
 
   clear(): void {
@@ -79,7 +63,7 @@ export class SessionService {
     sessionStorage.removeItem(SESSION_STORAGE_KEY);
   }
 
-  private restoreSession(): StoredSession | null {
+  private restoreSession(): SessionMetadata | null {
     const serializedSession = sessionStorage.getItem(SESSION_STORAGE_KEY);
 
     if (!serializedSession) {
@@ -89,7 +73,7 @@ export class SessionService {
     try {
       const session: unknown = JSON.parse(serializedSession);
 
-      if (!this.isStoredSession(session) || session.expiresAt <= Date.now()) {
+      if (!this.isSessionMetadata(session) || session.expiresAt <= Date.now()) {
         sessionStorage.removeItem(SESSION_STORAGE_KEY);
         return null;
       }
@@ -101,18 +85,14 @@ export class SessionService {
     }
   }
 
-  private isStoredSession(value: unknown): value is StoredSession {
+  private isSessionMetadata(value: unknown): value is SessionMetadata {
     if (typeof value !== 'object' || value === null) {
       return false;
     }
 
     const candidate = value as Record<string, unknown>;
 
-    return (
-      typeof candidate['token'] === 'string' &&
-      typeof candidate['tokenType'] === 'string' &&
-      typeof candidate['expiresAt'] === 'number'
-    );
+    return typeof candidate['expiresAt'] === 'number';
   }
 
   private scheduleExpiration(): void {

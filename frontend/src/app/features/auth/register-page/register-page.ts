@@ -13,6 +13,11 @@ import { finalize } from 'rxjs';
 
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { ApiRequestError } from '../../../core/http/api-request-error';
+import {
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_MIN_LENGTH,
+  passwordComplexityValidator,
+} from '../../../shared/validators/password-complexity.validator';
 import { Alert } from '../../../shared/ui/alert/alert';
 import { Button } from '../../../shared/ui/button/button';
 import { InputDirective } from '../../../shared/ui/form-control/input';
@@ -64,7 +69,12 @@ export class RegisterPage {
       }),
       password: new FormControl('', {
         nonNullable: true,
-        validators: [nonBlankValidator],
+        validators: [
+          nonBlankValidator,
+          Validators.minLength(PASSWORD_MIN_LENGTH),
+          Validators.maxLength(PASSWORD_MAX_LENGTH),
+          passwordComplexityValidator,
+        ],
       }),
       confirmPassword: new FormControl('', {
         nonNullable: true,
@@ -129,6 +139,18 @@ export class RegisterPage {
 
     if (fieldName === 'email' && control.hasError('email')) {
       return 'Informe um e-mail válido.';
+    }
+
+    if (fieldName === 'password' && control.hasError('minlength')) {
+      return 'A senha deve possuir ao menos 8 caracteres.';
+    }
+
+    if (fieldName === 'password' && control.hasError('maxlength')) {
+      return 'A senha deve possuir no máximo 72 caracteres.';
+    }
+
+    if (fieldName === 'password' && control.hasError('passwordComplexity')) {
+      return 'Use maiúscula, minúscula, número e caractere especial.';
     }
 
     const serverError = control.getError('server');

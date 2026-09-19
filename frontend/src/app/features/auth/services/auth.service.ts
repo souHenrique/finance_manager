@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { finalize, Observable, tap } from 'rxjs';
 
 import { SessionService } from '../../../core/auth/session.service';
 import { User } from '../../../shared/models/user.models';
@@ -18,7 +18,7 @@ export class AuthService {
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.authApi.login(request).pipe(
       tap((response) => {
-        this.session.start(response.token, response.tokenType, response.expiresIn);
+        this.session.start(response.expiresIn);
       }),
     );
   }
@@ -28,7 +28,14 @@ export class AuthService {
   }
 
   logout(): void {
-    this.session.clear();
-    void this.router.navigate(['/login']);
+    this.authApi
+      .logout()
+      .pipe(
+        finalize(() => {
+          this.session.clear();
+          void this.router.navigate(['/login']);
+        }),
+      )
+      .subscribe({ error: () => undefined });
   }
 }

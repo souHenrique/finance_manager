@@ -3,6 +3,8 @@ package com.amorim.finance_manager.user.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 
 import java.util.Locale;
 
@@ -18,8 +20,19 @@ public record RegisterRequest(
         @Email(message = "E-mail inválido")
         String email,
 
-        @Schema(description = "Senha do usuário", example = "SenhaSegura123", format = "password")
+        @Schema(
+                description = "Senha entre 8 e 72 caracteres, com maiúscula, minúscula, número e caractere especial",
+                example = "SenhaSegura123!",
+                format = "password",
+                minLength = 8,
+                maxLength = 72
+        )
         @NotBlank(message = "Senha é obrigatória")
+        @Size(min = 8, max = 72, message = "Senha deve possuir entre 8 e 72 caracteres")
+        @Pattern(
+                regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$",
+                message = "Senha deve conter ao menos uma letra maiúscula, uma minúscula, um número e um caractere especial"
+        )
         String password
 ) {
     public RegisterRequest {

@@ -105,6 +105,7 @@
         <app-form-field
           label="Nova senha"
           controlId="profile-new-password"
+          hint="Use maiúscula, minúscula, número e caractere especial."
           [error]="passwordFieldError('newPassword')"
           [required]="true"
         >
@@ -114,6 +115,8 @@
             type="password"
             formControlName="newPassword"
             autocomplete="new-password"
+            minlength="8"
+            maxlength="72"
             [attr.aria-invalid]="passwordFieldError('newPassword') ? 'true' : null"
             [attr.aria-describedby]="
               passwordFieldError('newPassword') ? 'profile-new-password-error' : null

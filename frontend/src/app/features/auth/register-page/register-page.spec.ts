@@ -63,8 +63,8 @@ describe('RegisterPage', () => {
   function fillValidForm(): void {
     fillInput('register-name', ' Jesse Pinkman ');
     fillInput('register-email', 'jesse.pinkman@example.com');
-    fillInput('register-password', 'SenhaSegura123');
-    fillInput('register-confirm-password', 'SenhaSegura123');
+    fillInput('register-password', 'SenhaSegura123!');
+    fillInput('register-confirm-password', 'SenhaSegura123!');
   }
 
   it('should not submit invalid required fields', async () => {
@@ -80,13 +80,43 @@ describe('RegisterPage', () => {
     await openRegisterPage();
     fillInput('register-name', 'Jesse Pinkman');
     fillInput('register-email', 'jesse.pinkman@example.com');
-    fillInput('register-password', 'SenhaSegura123');
+    fillInput('register-password', 'SenhaSegura123!');
     fillInput('register-confirm-password', 'SenhaDiferente123');
 
     submitForm();
 
     expect(auth.register).not.toHaveBeenCalled();
     expect(harness.routeNativeElement?.textContent).toContain('As senhas não coincidem.');
+  });
+
+  it('should prevent registration with a password shorter than eight characters', async () => {
+    await openRegisterPage();
+    fillInput('register-name', 'Jesse Pinkman');
+    fillInput('register-email', 'jesse.pinkman@example.com');
+    fillInput('register-password', 'curta');
+    fillInput('register-confirm-password', 'curta');
+
+    submitForm();
+
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(harness.routeNativeElement?.textContent).toContain(
+      'A senha deve possuir ao menos 8 caracteres.',
+    );
+  });
+
+  it('should prevent registration with a password missing a required character group', async () => {
+    await openRegisterPage();
+    fillInput('register-name', 'Jesse Pinkman');
+    fillInput('register-email', 'jesse.pinkman@example.com');
+    fillInput('register-password', 'SenhaSegura123');
+    fillInput('register-confirm-password', 'SenhaSegura123');
+
+    submitForm();
+
+    expect(auth.register).not.toHaveBeenCalled();
+    expect(harness.routeNativeElement?.textContent).toContain(
+      'Use maiúscula, minúscula, número e caractere especial.',
+    );
   });
 
   it('should submit only the API registration contract and redirect to login', async () => {
@@ -109,7 +139,7 @@ describe('RegisterPage', () => {
     expect(auth.register).toHaveBeenCalledWith({
       name: 'Jesse Pinkman',
       email: 'jesse.pinkman@example.com',
-      password: 'SenhaSegura123',
+      password: 'SenhaSegura123!',
     });
     expect(auth.register.mock.calls[0]?.[0]).not.toHaveProperty('confirmPassword');
     expect(toast.show).toHaveBeenCalledWith({

@@ -21,6 +21,17 @@ spring:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  auth-rate-limit:
+    login:
+      max-attempts: ${AUTH_LOGIN_MAX_ATTEMPTS:5}
+      window: ${AUTH_LOGIN_WINDOW:PT15M}
+    register:
+      max-attempts: ${AUTH_REGISTER_MAX_ATTEMPTS:5}
+      window: ${AUTH_REGISTER_WINDOW:PT1H}
+    max-tracked-clients: ${AUTH_RATE_LIMIT_MAX_TRACKED_CLIENTS:10000}
+  auth-cookie:
+    secure: ${AUTH_COOKIE_SECURE:false}
+    same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
 
 management:
   endpoints:

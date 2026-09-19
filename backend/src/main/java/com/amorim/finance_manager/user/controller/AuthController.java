@@ -7,10 +7,12 @@ import com.amorim.finance_manager.user.dto.RegisterRequest;
 import com.amorim.finance_manager.user.dto.UserResponse;
 import com.amorim.finance_manager.user.service.AuthService;
 import com.amorim.finance_manager.user.service.UserService;
+import com.amorim.finance_manager.security.AuthCookieService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +27,7 @@ public class AuthController implements AuthApiDocs {
 
     private final UserService userService;
     private final AuthService authService;
+    private final AuthCookieService authCookieService;
 
     @Override
     @PostMapping("/register")
@@ -39,8 +42,20 @@ public class AuthController implements AuthApiDocs {
     @Override
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
+        var session = authService.login(request);
+        AuthResponse response = new AuthResponse(session.expiresIn());
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE,
+                        authCookieService.createSessionCookie(session.token(), session.expiresIn()).toString())
+                .body(response);
+    }
+
+    @Override
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, authCookieService.clearSessionCookie().toString())
+                .build();
     }
 }

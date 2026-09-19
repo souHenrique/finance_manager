@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { SessionService } from './session.service';
 
-const SESSION_STORAGE_KEY = 'nummo.session';
+const SESSION_STORAGE_KEY = 'nummo.session-expiration';
 
 describe('SessionService', () => {
   let service: SessionService | undefined;
@@ -11,7 +11,6 @@ describe('SessionService', () => {
     sessionStorage.clear();
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-15T12:00:00.000Z'));
-
     TestBed.configureTestingModule({});
   });
 
@@ -22,78 +21,59 @@ describe('SessionService', () => {
     vi.useRealTimers();
   });
 
-  it('should store a valid session and expose its authorization header', () => {
+  it('stores only non-sensitive session expiration metadata', () => {
     service = TestBed.inject(SessionService);
+    service.start(3600);
 
-    service.start(' jwt-token ', ' Bearer ', 3600);
-
-    expect(service.getAuthorizationHeader()).toBe('Bearer jwt-token');
     expect(service.hasValidSession()).toBe(true);
     expect(service.isAuthenticated()).toBe(true);
     expect(JSON.parse(sessionStorage.getItem(SESSION_STORAGE_KEY) ?? '')).toEqual({
-      token: 'jwt-token',
-      tokenType: 'Bearer',
       expiresAt: Date.now() + 3_600_000,
     });
+    expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).not.toContain('token');
   });
 
-  it('should restore a valid session stored by a previous page load', () => {
+  it('restores valid non-sensitive metadata after a page reload', () => {
     sessionStorage.setItem(
       SESSION_STORAGE_KEY,
-      JSON.stringify({
-        token: 'restored-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() + 3_600_000,
-      }),
+      JSON.stringify({ expiresAt: Date.now() + 3_600_000 }),
     );
-
     service = TestBed.inject(SessionService);
 
-    expect(service.getAuthorizationHeader()).toBe('Bearer restored-token');
+    expect(service.hasValidSession()).toBe(true);
   });
 
-  it('should discard an expired session during restoration', () => {
-    sessionStorage.setItem(
-      SESSION_STORAGE_KEY,
-      JSON.stringify({
-        token: 'expired-token',
-        tokenType: 'Bearer',
-        expiresAt: Date.now() - 1,
-      }),
-    );
-
+  it('discards expired metadata during restoration', () => {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ expiresAt: Date.now() - 1 }));
     service = TestBed.inject(SessionService);
 
-    expect(service.getAuthorizationHeader()).toBeNull();
+    expect(service.hasValidSession()).toBe(false);
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
 
-  it('should end the session when its expiration is reached', () => {
+  it('ends the client session state when its expiration is reached', () => {
     service = TestBed.inject(SessionService);
-    service.start('jwt-token', 'Bearer', 1);
-
+    service.start(1);
     vi.advanceTimersByTime(1_000);
 
     expect(service.hasValidSession()).toBe(false);
-    expect(service.getAuthorizationHeader()).toBeNull();
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
 
-  it('should clear the in-memory and persisted session on logout', () => {
+  it('clears the in-memory and persisted metadata on logout', () => {
     service = TestBed.inject(SessionService);
-    service.start('jwt-token', 'Bearer', 3600);
-
+    service.start(3600);
     service.clear();
 
     expect(service.isAuthenticated()).toBe(false);
     expect(sessionStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
 
-  it('should reject an invalid authentication response', () => {
+  it('rejects an invalid authentication response', () => {
     service = TestBed.inject(SessionService);
-    service.start('jwt-token', 'Bearer', 3600);
+    service.start(3600);
 
-    expect(() => service?.start('', 'Bearer', 3600)).toThrow('Resposta de autenticação inválida.');
-    expect(service.getAuthorizationHeader()).toBeNull();
+    expect(() => service?.start(0)).toThrow('Resposta de autenticação inválida.');
+    expect(service.hasValidSession()).toBe(false);
   });
 });
