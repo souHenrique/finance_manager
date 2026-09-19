@@ -3,6 +3,7 @@ package com.amorim.finance_manager.user.service;
 import com.amorim.finance_manager.security.AuthenticatedUserProvider;
 import com.amorim.finance_manager.shared.exception.UnauthenticatedUserException;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -35,7 +36,7 @@ public class CurrentUserService implements AuthenticatedUserProvider {
             throw new UnauthenticatedUserException();
         }
 
-        return userRepository.findByEmail(userDetails.getUsername())
+        return userRepository.findByEmailAndStatus(userDetails.getUsername(), UserStatus.ACTIVE)
                 .orElseThrow(UnauthenticatedUserException::new);
     }
 

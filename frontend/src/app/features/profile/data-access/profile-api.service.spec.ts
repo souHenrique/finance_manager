@@ -109,4 +109,15 @@ describe('ProfileApiService', () => {
 
     request.flush(null, { status: 204, statusText: 'No Content' });
   });
+
+  it('deve solicitar a exclusão lógica da conta autenticada', () => {
+    service.deleteCurrentUser().subscribe();
+
+    const request = httpMock.expectOne('/api/v1/users/me');
+
+    expect(request.request.method).toBe('DELETE');
+    expect(request.request.body).toBeNull();
+
+    request.flush(null, { status: 204, statusText: 'No Content' });
+  });
 });

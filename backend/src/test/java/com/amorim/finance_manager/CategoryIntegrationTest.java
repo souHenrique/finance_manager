@@ -2,6 +2,7 @@ package com.amorim.finance_manager;
 
 import com.amorim.finance_manager.account.repository.AccountRepository;
 import com.amorim.finance_manager.category.entity.Category;
+import com.amorim.finance_manager.category.entity.CategoryIcon;
 import com.amorim.finance_manager.category.entity.CategoryStatus;
 import com.amorim.finance_manager.category.entity.CategoryType;
 import com.amorim.finance_manager.category.repository.CategoryRepository;
@@ -107,6 +108,46 @@ class CategoryIntegrationTest {
         assertThat(category.getUserId()).isEqualTo(user.id());
         assertThat(category.getType()).isEqualTo(CategoryType.EXPENSE);
         assertThat(category.getStatus()).isEqualTo(CategoryStatus.ACTIVE);
+        assertThat(category.getIcon()).isEqualTo(CategoryIcon.TAG);
+    }
+
+    @Test
+    void shouldCreateAndUpdateCategoryIcon() throws Exception {
+        TestUser user = registerUser("User A");
+        String token = login(user);
+
+        MvcResult createResult = mockMvc.perform(
+                        post("/api/v1/categories")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "name": "Alimentação",
+                                          "icon": "FOOD",
+                                          "type": "EXPENSE",
+                                          "parentCategoryId": null
+                                        }
+                                        """)
+                )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.icon").value("FOOD"))
+                .andReturn();
+
+        UUID categoryId = UUID.fromString(
+                objectMapper.readTree(createResult.getResponse().getContentAsString()).get("id").asText()
+        );
+
+        mockMvc.perform(
+                        patch("/api/v1/categories/{id}", categoryId)
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"icon\":\"SHOPPING\"}")
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.icon").value("SHOPPING"));
+
+        assertThat(categoryRepository.findById(categoryId).orElseThrow().getIcon())
+                .isEqualTo(CategoryIcon.SHOPPING);
     }
 
     @Test

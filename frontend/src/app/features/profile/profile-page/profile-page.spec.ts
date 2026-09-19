@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
 
+import { AppDialogService } from '../../../core/feedback/dialog/dialog.service';
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { ApiRequestError } from '../../../core/http/api-request-error';
 import { User } from '../../../shared/models/user.models';
@@ -14,6 +15,10 @@ describe('ProfilePage', () => {
     getCurrentUser: ReturnType<typeof vi.fn>;
     updateCurrentUser: ReturnType<typeof vi.fn>;
     changePassword: ReturnType<typeof vi.fn>;
+    deleteCurrentUser: ReturnType<typeof vi.fn>;
+  };
+  let dialog: {
+    confirm: ReturnType<typeof vi.fn>;
   };
   let toast: {
     show: ReturnType<typeof vi.fn>;
@@ -35,6 +40,11 @@ describe('ProfilePage', () => {
       getCurrentUser: vi.fn().mockReturnValue(of(user)),
       updateCurrentUser: vi.fn(),
       changePassword: vi.fn(),
+      deleteCurrentUser: vi.fn(),
+    };
+
+    dialog = {
+      confirm: vi.fn().mockReturnValue(of(false)),
     };
 
     toast = {
@@ -55,6 +65,10 @@ describe('ProfilePage', () => {
         {
           provide: ToastService,
           useValue: toast,
+        },
+        {
+          provide: AppDialogService,
+          useValue: dialog,
         },
         {
           provide: AuthService,
@@ -317,6 +331,98 @@ describe('ProfilePage', () => {
 
     expect(fixture.nativeElement.textContent).toContain('A senha atual está incorreta.');
     expect(getInput('profile-current-password').value).toBe('');
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('should render an explicit account deletion action', () => {
+    createPage();
+
+    expect(fixture.nativeElement.textContent).toContain('Excluir conta');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Esta ação encerra sua sessão e impede novos acessos.',
+    );
+    expect(
+      fixture.nativeElement.querySelector('.profile-page__danger-actions .button'),
+    ).not.toBeNull();
+  });
+
+  it('should not delete the account when the user declines the confirmation', () => {
+    dialog.confirm.mockReturnValue(of(false));
+    createPage();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.profile-page__danger-actions .button',
+    ) as HTMLButtonElement;
+    deleteButton.click();
+
+    expect(dialog.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Excluir sua conta?',
+        confirmLabel: 'Excluir minha conta',
+        danger: true,
+      }),
+    );
+    expect(profileApi.deleteCurrentUser).not.toHaveBeenCalled();
+    expect(auth.logout).not.toHaveBeenCalled();
+  });
+
+  it('should soft-delete the account, show feedback and end the session after confirmation', () => {
+    dialog.confirm.mockReturnValue(of(true));
+    profileApi.deleteCurrentUser.mockReturnValue(of(void 0));
+    createPage();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.profile-page__danger-actions .button',
+    ) as HTMLButtonElement;
+    deleteButton.click();
+
+    expect(profileApi.deleteCurrentUser).toHaveBeenCalledOnce();
+    expect(toast.show).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Conta excluída',
+      message: 'Sua conta foi desativada e seus dados foram preservados.',
+    });
+    expect(auth.logout).toHaveBeenCalledOnce();
+  });
+
+  it('should prevent duplicate account deletion requests while confirmation is open', () => {
+    const confirmation = new Subject<boolean>();
+    dialog.confirm.mockReturnValue(confirmation.asObservable());
+    createPage();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.profile-page__danger-actions .button',
+    ) as HTMLButtonElement;
+    deleteButton.click();
+    deleteButton.click();
+
+    expect(dialog.confirm).toHaveBeenCalledOnce();
+    expect(profileApi.deleteCurrentUser).not.toHaveBeenCalled();
+
+    confirmation.next(false);
+    confirmation.complete();
+  });
+
+  it('should keep the session and show an error when account deletion fails', () => {
+    const apiError = new ApiRequestError({
+      timestamp: '2026-09-18T12:00:00Z',
+      status: 500,
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Não foi possível excluir a conta.',
+      path: '/api/v1/users/me',
+      fieldErrors: [],
+    });
+    dialog.confirm.mockReturnValue(of(true));
+    profileApi.deleteCurrentUser.mockReturnValue(throwError(() => apiError));
+    createPage();
+
+    const deleteButton = fixture.nativeElement.querySelector(
+      '.profile-page__danger-actions .button',
+    ) as HTMLButtonElement;
+    deleteButton.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível excluir a conta.');
     expect(auth.logout).not.toHaveBeenCalled();
   });
 });

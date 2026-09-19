@@ -11,7 +11,7 @@ import { CreditCard } from '../../../credit-cards/models/credit-card.models';
 import { PageResponse } from '../../../../shared/models/pagination';
 import { TransactionApiService } from '../../data-access/transaction-api.service';
 import { TransactionExportApiService } from '../../data-access/transaction-export-api.service';
-import { Transaction } from '../../models/transaction.models';
+import { Transaction, TransactionListItem } from '../../models/transaction.models';
 import { TransactionListPage } from './transaction-list-page';
 
 describe('TransactionListPage', () => {
@@ -77,8 +77,14 @@ describe('TransactionListPage', () => {
     updatedAt: '2026-09-15T10:00:00Z',
   };
 
-  const result: PageResponse<Transaction> = {
-    content: [transaction],
+  const result: PageResponse<TransactionListItem> = {
+    content: [
+      {
+        transaction,
+        displayAmount: transaction.amount,
+        installmentPurchase: false,
+      },
+    ],
     page: 0,
     size: 20,
     totalElements: 1,
@@ -215,7 +221,7 @@ describe('TransactionListPage', () => {
   });
 
   it('should render skeletons while transactions are loading', () => {
-    const response = new Subject<PageResponse<Transaction>>();
+    const response = new Subject<PageResponse<TransactionListItem>>();
     transactionApi.findAll.mockReturnValue(response.asObservable());
 
     createPage();
@@ -265,6 +271,38 @@ describe('TransactionListPage', () => {
     expect(content).toContain('Concluída');
     expect(content).toContain(category.name);
     expect(content).toContain(account.name);
+  });
+
+  it('should show one total purchase entry for a credit-card installment group', () => {
+    transactionApi.findAll.mockReturnValue(
+      of({
+        ...result,
+        content: [
+          {
+            transaction: {
+              ...transaction,
+              amount: 100,
+              type: 'CREDIT_CARD_PURCHASE',
+              paymentMethod: 'CREDIT_CARD',
+              creditCardId: creditCard.id,
+              installmentGroupId: 'c9d31f8b-4803-40bb-8b30-0eb4a5467991',
+              installmentNumber: 1,
+              installmentCount: 3,
+            },
+            displayAmount: 300,
+            installmentPurchase: true,
+          },
+        ],
+      }),
+    );
+
+    createPage();
+
+    const content = fixture.nativeElement.textContent as string;
+
+    expect(content).toContain('Compra parcelada em 3x');
+    expect(content).toContain('R$300.00');
+    expect(content).toContain('Ver compra e parcelas');
   });
 
   it('should export the exact active filters without pagination', () => {

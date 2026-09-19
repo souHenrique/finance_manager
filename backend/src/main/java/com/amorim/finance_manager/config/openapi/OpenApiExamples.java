@@ -217,6 +217,7 @@ public final class OpenApiExamples {
     public static final String CREATE_CATEGORY_REQUEST = """
         {
           "name": "Alimentação",
+          "icon": "FOOD",
           "type": "EXPENSE",
           "parentCategoryId": null
         }
@@ -225,6 +226,7 @@ public final class OpenApiExamples {
     public static final String CREATE_SUBCATEGORY_REQUEST = """
         {
           "name": "Supermercado",
+          "icon": "SHOPPING",
           "type": "EXPENSE",
           "parentCategoryId": "c487c4cf-d948-4ba8-a85f-e36bb798c928"
         }
@@ -233,6 +235,7 @@ public final class OpenApiExamples {
     public static final String UPDATE_CATEGORY_REQUEST = """
         {
           "name": "Alimentação e mercado",
+          "icon": "SHOPPING",
           "status": "ACTIVE"
         }
         """;
@@ -241,6 +244,7 @@ public final class OpenApiExamples {
         {
           "id": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
           "name": "Alimentação",
+          "icon": "FOOD",
           "type": "EXPENSE",
           "parentCategoryId": null,
           "status": "ACTIVE",
@@ -253,6 +257,7 @@ public final class OpenApiExamples {
         {
           "id": "57b1879c-a98e-4718-b66d-47f970ab6709",
           "name": "Supermercado",
+          "icon": "SHOPPING",
           "type": "EXPENSE",
           "parentCategoryId": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
           "status": "ACTIVE",
@@ -265,6 +270,7 @@ public final class OpenApiExamples {
         {
           "id": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
           "name": "Alimentação e mercado",
+          "icon": "SHOPPING",
           "type": "EXPENSE",
           "parentCategoryId": null,
           "status": "ACTIVE",
@@ -278,6 +284,7 @@ public final class OpenApiExamples {
           {
             "id": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
             "name": "Alimentação",
+            "icon": "FOOD",
             "type": "EXPENSE",
             "parentCategoryId": null,
             "status": "ACTIVE",
@@ -287,6 +294,7 @@ public final class OpenApiExamples {
           {
             "id": "57b1879c-a98e-4718-b66d-47f970ab6709",
             "name": "Supermercado",
+            "icon": "SHOPPING",
             "type": "EXPENSE",
             "parentCategoryId": "c487c4cf-d948-4ba8-a85f-e36bb798c928",
             "status": "ACTIVE",
@@ -582,6 +590,26 @@ public final class OpenApiExamples {
           "totalPages": 0,
           "first": true,
           "last": true
+        }
+        """;
+
+    public static final String TRANSACTION_INSTALLMENT_DETAILS_RESPONSE = """
+        {
+          "totalAmount": 1200.00,
+          "installments": [
+            {
+              "id": "2cb0ba91-bfc4-43be-89ec-336ca64a6231",
+              "description": "Notebook",
+              "amount": 400.00,
+              "competenceDate": "2026-09-11",
+              "dueDate": "2026-10-17",
+              "type": "CREDIT_CARD_PURCHASE",
+              "status": "COMPLETED",
+              "paymentMethod": "CREDIT_CARD",
+              "installmentNumber": 1,
+              "installmentCount": 3
+            }
+          ]
         }
         """;
 
@@ -1430,6 +1458,10 @@ public final class OpenApiExamples {
           "openInvoices": {
             "basis": "COMPETENCE",
             "amount": 400.00
+          },
+          "monthlyOpenInvoices": {
+            "basis": "COMPETENCE",
+            "amount": 300.00
           },
           "budget": {
             "basis": "COMPETENCE",

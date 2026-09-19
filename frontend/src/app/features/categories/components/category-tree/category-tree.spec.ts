@@ -10,6 +10,7 @@ describe('CategoryTreeComponent', () => {
   const child: CategoryTreeNode = {
     id: 'ac36fcee-4401-45ec-80d1-bb9c9464b833',
     name: 'Jesse Pinkman',
+    icon: 'SHOPPING',
     type: 'EXPENSE',
     parentCategoryId: 'a1499b0c-2cca-4eb1-81c1-b82c6c599bd1',
     status: 'INACTIVE',
@@ -21,6 +22,7 @@ describe('CategoryTreeComponent', () => {
   const parent: CategoryTreeNode = {
     id: 'a1499b0c-2cca-4eb1-81c1-b82c6c599bd1',
     name: 'Walter White',
+    icon: 'HOME',
     type: 'EXPENSE',
     parentCategoryId: null,
     status: 'ACTIVE',
@@ -50,6 +52,7 @@ describe('CategoryTreeComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('[role="treeitem"]')).toHaveLength(2);
     expect(fixture.nativeElement.querySelector('[aria-level="1"]')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[aria-level="2"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('app-category-icon')).toHaveLength(2);
   });
 
   it('should identify inactive categories with text', () => {

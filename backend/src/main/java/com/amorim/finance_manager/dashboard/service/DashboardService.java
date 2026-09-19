@@ -69,6 +69,14 @@ public class DashboardService {
                 invoiceRepository
                         .sumTotalAmountOwnedByUserIdAndStatusIn(userId, Set.of(InvoiceStatus.OPEN));
 
+        BigDecimal monthlyOpenInvoices = invoiceRepository
+                .sumTotalAmountOwnedByUserIdAndReferencePeriodAndStatusIn(
+                        userId,
+                        period.getMonthValue(),
+                        period.getYear(),
+                        Set.of(InvoiceStatus.OPEN)
+                );
+
         List<BudgetResponse> budgets = budgetService.findByPeriod(period.getYear(), period.getMonthValue());
 
         return new DashboardResponse(
@@ -84,6 +92,7 @@ public class DashboardService {
                 competence(creditCardPurchaseOutflows),
                 competence(competence.totalExpenses()),
                 competence(openInvoices),
+                competence(monthlyOpenInvoices),
                 budgetSummary(budgets),
                 cash(consolidatedBalance)
         );

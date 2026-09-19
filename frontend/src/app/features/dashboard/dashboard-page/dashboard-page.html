@@ -22,6 +22,7 @@
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
       <app-skeleton height="10rem" />
+      <app-skeleton height="10rem" />
       <app-skeleton height="14rem" />
       <app-skeleton height="10rem" />
     </div>
@@ -42,6 +43,130 @@
           <p class="dashboard__amount">{{ card.indicator.amount | currency: 'BRL' }}</p>
         </app-card>
       }
+    </section>
+
+    <section class="dashboard__charts" aria-label="Visão gráfica das movimentações">
+      <app-card
+        title="Entradas e saídas por mês"
+        subtitle="Verde representa entradas; vermelho representa saídas."
+      >
+        @if (monthlyFlow().length > 0) {
+          <div class="dashboard__flow-chart">
+            <div class="dashboard__flow-legend">
+              <span
+                ><i class="dashboard__legend-dot dashboard__legend-dot--income"></i> Entradas</span
+              >
+              <span
+                ><i class="dashboard__legend-dot dashboard__legend-dot--outflow"></i> Saídas</span
+              >
+            </div>
+
+            <p class="dashboard__chart-tooltip" aria-live="polite">{{ flowTooltipText() }}</p>
+
+            <div
+              class="dashboard__flow-plot"
+              role="group"
+              [attr.aria-label]="monthlyFlowDescription()"
+              (mouseleave)="clearFlowSelection()"
+            >
+              @for (month of monthlyFlow(); track month.month) {
+                <div class="dashboard__flow-month">
+                  <div class="dashboard__flow-bars">
+                    <button
+                      type="button"
+                      class="dashboard__flow-bar dashboard__flow-bar--income"
+                      [style.height.%]="flowBarHeight(month.totals.inflows)"
+                      [attr.aria-label]="
+                        monthShortLabel(month.month) +
+                        ': entradas ' +
+                        (month.totals.inflows | currency: 'BRL')
+                      "
+                      (mouseenter)="selectFlow(month, 'income')"
+                      (focus)="selectFlow(month, 'income')"
+                      (click)="selectFlow(month, 'income')"
+                    ></button>
+                    <button
+                      type="button"
+                      class="dashboard__flow-bar dashboard__flow-bar--outflow"
+                      [style.height.%]="flowBarHeight(month.totals.outflows)"
+                      [attr.aria-label]="
+                        monthShortLabel(month.month) +
+                        ': saídas ' +
+                        (month.totals.outflows | currency: 'BRL')
+                      "
+                      (mouseenter)="selectFlow(month, 'outflow')"
+                      (focus)="selectFlow(month, 'outflow')"
+                      (click)="selectFlow(month, 'outflow')"
+                    ></button>
+                  </div>
+                  <span class="dashboard__flow-label">{{ monthShortLabel(month.month) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        } @else {
+          <p class="dashboard__chart-empty">Não foi possível carregar o fluxo mensal.</p>
+        }
+      </app-card>
+
+      <app-card
+        title="Gastos por categoria"
+        subtitle="Distribuição das saídas do mês de referência."
+      >
+        @if (categoryExpenses().length > 0) {
+          <div class="dashboard__category-chart">
+            <div class="dashboard__category-graphic">
+              <svg
+                class="dashboard__category-donut"
+                viewBox="0 0 100 100"
+                role="group"
+                aria-label="Distribuição dos gastos por categoria"
+                (mouseleave)="clearCategorySelection()"
+              >
+                @for (
+                  segment of categorySegments();
+                  track segment.category.categoryId ?? segment.category.name
+                ) {
+                  <path
+                    class="dashboard__category-segment"
+                    [attr.d]="segment.path"
+                    [attr.fill]="segment.color"
+                    role="button"
+                    tabindex="0"
+                    [attr.aria-label]="
+                      segment.category.name + ': ' + (segment.category.amount | currency: 'BRL')
+                    "
+                    (mouseenter)="selectCategory(segment)"
+                    (focus)="selectCategory(segment)"
+                    (click)="selectCategory(segment)"
+                    (keydown.enter)="selectCategory(segment)"
+                    (keydown.space)="selectCategory(segment)"
+                  />
+                }
+                <circle cx="50" cy="50" r="29" class="dashboard__category-donut-center" />
+              </svg>
+              <strong>{{ categoryTotal() | currency: 'BRL' }}</strong>
+            </div>
+
+            <ul class="dashboard__category-legend" aria-label="Legenda de gastos por categoria">
+              @for (
+                segment of categorySegments();
+                track segment.category.categoryId ?? segment.category.name
+              ) {
+                <li>
+                  <i [style.background]="segment.color"></i>
+                  <span>{{ segment.category.name }}</span>
+                  <strong>{{ segment.percentage | number: '1.0-1' }}%</strong>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <p class="dashboard__chart-tooltip" aria-live="polite">{{ categoryTooltipText() }}</p>
+        } @else {
+          <p class="dashboard__chart-empty">Não há gastos categorizados neste mês.</p>
+        }
+      </app-card>
     </section>
 
     <section class="dashboard__budget" aria-label="Resumo de orçamento">

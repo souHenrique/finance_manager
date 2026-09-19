@@ -4,10 +4,11 @@ import { Category } from '../../models/category.models';
 import { CategoryTreeNode } from '../../models/category-tree.models';
 import { Badge } from '../../../../shared/ui/badge/badge';
 import { Button } from '../../../../shared/ui/button/button';
+import { CategoryIconComponent } from '../category-icon/category-icon';
 
 @Component({
   selector: 'app-category-tree',
-  imports: [CategoryTreeComponent, Badge, Button],
+  imports: [CategoryTreeComponent, Badge, Button, CategoryIconComponent],
   templateUrl: './category-tree.html',
   styleUrl: './category-tree.scss',
 })

@@ -5,6 +5,7 @@ import com.amorim.finance_manager.shared.exception.InvalidCredentialsException;
 import com.amorim.finance_manager.user.dto.AuthResponse;
 import com.amorim.finance_manager.user.dto.LoginRequest;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class AuthService {
             );
 
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            User user = userRepository.findByEmail(userDetails.getUsername())
+            User user = userRepository.findByEmailAndStatus(userDetails.getUsername(), UserStatus.ACTIVE)
                     .orElseThrow(() -> new InvalidCredentialsException("Credenciais inválidas"));
 
             String token = jwtService.generateToken(userDetails, user.getAuthenticationVersion());

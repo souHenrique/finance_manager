@@ -1,3 +1,4 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, finalize, forkJoin, of } from 'rxjs';
@@ -21,7 +22,12 @@ import { Skeleton } from '../../../../shared/ui/skeleton/skeleton';
 import { TransactionFilterFormComponent } from '../../components/transaction-filter-form/transaction-filter-form';
 import { TransactionApiService } from '../../data-access/transaction-api.service';
 import { TransactionExportApiService } from '../../data-access/transaction-export-api.service';
-import { Transaction, TransactionFilters, TransactionQuery } from '../../models/transaction.models';
+import {
+  Transaction,
+  TransactionFilters,
+  TransactionListItem,
+  TransactionQuery,
+} from '../../models/transaction.models';
 
 const TRANSACTION_SORT_OPTIONS = [
   {
@@ -57,6 +63,8 @@ type TransactionListState = 'loading' | 'success' | 'error';
 @Component({
   imports: [
     RouterLink,
+    CurrencyPipe,
+    DatePipe,
     Badge,
     Button,
     EmptyState,
@@ -87,7 +95,7 @@ export class TransactionListPage implements OnInit {
   readonly pageSize = signal(20);
   readonly sort = signal<TransactionSort>('competenceDate,desc');
 
-  readonly result = signal<PageResponse<Transaction> | null>(null);
+  readonly result = signal<PageResponse<TransactionListItem> | null>(null);
   readonly listState = signal<TransactionListState>('loading');
   readonly isExporting = signal(false);
 

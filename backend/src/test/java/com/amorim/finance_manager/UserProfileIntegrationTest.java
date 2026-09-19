@@ -1,6 +1,7 @@
 package com.amorim.finance_manager;
 
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -273,6 +275,11 @@ class UserProfileIntegrationTest {
                                         """)
                 )
                 .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                        delete("/api/v1/users/me")
+                )
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -514,6 +521,49 @@ class UserProfileIntegrationTest {
                 )
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("INVALID_PASSWORD_CHANGE"));
+    }
+
+    @Test
+    void shouldSoftDeleteCurrentUserAndInvalidateExistingSessions() throws Exception {
+        registerUser(
+                "Saul Goodman",
+                USER_A_EMAIL,
+                PASSWORD
+        );
+
+        String token = login(USER_A_EMAIL, PASSWORD);
+        User userBeforeDeletion = userRepository.findByEmail(USER_A_EMAIL).orElseThrow();
+
+        mockMvc.perform(
+                        delete("/api/v1/users/me")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                )
+                .andExpect(status().isNoContent());
+
+        User deletedUser = userRepository.findByEmail(USER_A_EMAIL).orElseThrow();
+
+        assertThat(deletedUser.getId()).isEqualTo(userBeforeDeletion.getId());
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getAuthenticationVersion())
+                .isEqualTo(userBeforeDeletion.getAuthenticationVersion() + 1);
+
+        mockMvc.perform(
+                        get("/api/v1/users/me")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                )
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(
+                        post("/api/v1/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "email": "user-a@example.com",
+                                          "password": "SenhaSegura123"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isUnauthorized());
     }
 
     private void registerUser(

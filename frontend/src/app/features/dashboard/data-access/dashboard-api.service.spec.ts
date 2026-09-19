@@ -65,6 +65,10 @@ describe('DashboardApiService', () => {
         basis: 'COMPETENCE',
         amount: 850,
       },
+      monthlyOpenInvoices: {
+        basis: 'COMPETENCE',
+        amount: 650,
+      },
       budget: {
         basis: 'COMPETENCE',
         totalLimit: 3000,

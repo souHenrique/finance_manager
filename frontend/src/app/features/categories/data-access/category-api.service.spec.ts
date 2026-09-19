@@ -12,6 +12,7 @@ describe('CategoryApiService', () => {
   const category: Category = {
     id: 'c487c4cf-d948-4ba8-a85f-e36bb798c928',
     name: 'Alimentação',
+    icon: 'FOOD',
     type: 'EXPENSE',
     parentCategoryId: null,
     status: 'ACTIVE',
@@ -43,6 +44,7 @@ describe('CategoryApiService', () => {
   it('deve criar uma categoria', () => {
     const payload: CreateCategoryRequest = {
       name: 'Alimentação',
+      icon: 'FOOD',
       type: 'EXPENSE',
       parentCategoryId: null,
     };
@@ -86,6 +88,7 @@ describe('CategoryApiService', () => {
   it('deve atualizar uma categoria', () => {
     const payload: UpdateCategoryRequest = {
       name: 'Supermercado',
+      icon: 'SHOPPING',
       status: 'INACTIVE',
     };
     const response: Category = {

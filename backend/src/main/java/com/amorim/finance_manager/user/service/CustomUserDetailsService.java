@@ -3,6 +3,7 @@ package com.amorim.finance_manager.user.service;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepository.findByEmail(username)
+        User user = userRepository.findByEmailAndStatus(username, UserStatus.ACTIVE)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado"));
 
         return org.springframework.security.core.userdetails.User

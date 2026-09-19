@@ -155,4 +155,18 @@ public interface UserApiDocs {
             )
             ChangePasswordRequest request
     );
+
+    @Operation(
+            summary = "Excluir conta",
+            description = "Realiza a exclusão lógica da conta, preserva os dados financeiros e invalida as sessões ativas."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Conta excluída logicamente"),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            )
+    })
+    ResponseEntity<Void> deleteCurrentUser();
 }

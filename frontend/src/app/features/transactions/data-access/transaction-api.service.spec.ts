@@ -6,6 +6,8 @@ import { PageResponse } from '../../../shared/models/pagination';
 import {
   CreateTransactionRequest,
   Transaction,
+  TransactionInstallmentDetails,
+  TransactionListItem,
   UpdateTransactionRequest,
 } from '../models/transaction.models';
 import { TransactionApiService } from './transaction-api.service';
@@ -83,8 +85,14 @@ describe('TransactionApiService', () => {
   });
 
   it('deve listar transações com filtros e paginação', () => {
-    const page: PageResponse<Transaction> = {
-      content: [transaction],
+    const page: PageResponse<TransactionListItem> = {
+      content: [
+        {
+          transaction,
+          displayAmount: transaction.amount,
+          installmentPurchase: false,
+        },
+      ],
       page: 2,
       size: 10,
       totalElements: 21,
@@ -146,6 +154,23 @@ describe('TransactionApiService', () => {
     expect(request.request.method).toBe('GET');
 
     request.flush(transaction);
+  });
+
+  it('deve buscar o total e as parcelas de uma compra no cartão', () => {
+    const response: TransactionInstallmentDetails = {
+      totalAmount: 300,
+      installments: [transaction],
+    };
+
+    service.findInstallmentDetails(transaction.id).subscribe((result) => {
+      expect(result).toEqual(response);
+    });
+
+    const request = httpMock.expectOne(`/api/v1/transactions/${transaction.id}/installments`);
+
+    expect(request.request.method).toBe('GET');
+
+    request.flush(response);
   });
 
   it('deve atualizar uma transação', () => {

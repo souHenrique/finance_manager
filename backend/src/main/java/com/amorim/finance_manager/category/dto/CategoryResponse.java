@@ -2,6 +2,7 @@ package com.amorim.finance_manager.category.dto;
 
 import com.amorim.finance_manager.category.entity.CategoryStatus;
 import com.amorim.finance_manager.category.entity.CategoryType;
+import com.amorim.finance_manager.category.entity.CategoryIcon;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -19,6 +20,9 @@ public record CategoryResponse(
 
         @Schema(description = "Nome da categoria", example = "Alimentação")
         String name,
+
+        @Schema(description = "Ícone genérico da categoria", example = "FOOD")
+        CategoryIcon icon,
 
         @Schema(description = "Tipo financeiro da categoria", example = "EXPENSE")
         CategoryType type,
@@ -47,4 +51,15 @@ public record CategoryResponse(
         )
         Instant updatedAt
 ) {
+    public CategoryResponse(
+            UUID id,
+            String name,
+            CategoryType type,
+            UUID parentCategoryId,
+            CategoryStatus status,
+            Instant createdAt,
+            Instant updatedAt
+    ) {
+        this(id, name, CategoryIcon.TAG, type, parentCategoryId, status, createdAt, updatedAt);
+    }
 }

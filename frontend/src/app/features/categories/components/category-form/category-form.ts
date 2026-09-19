@@ -3,9 +3,11 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import {
   Category,
+  CategoryIcon,
   CategoryStatus,
   CategoryType,
   CreateCategoryRequest,
+  DEFAULT_CATEGORY_ICON,
   UpdateCategoryRequest,
 } from '../../models/category.models';
 
@@ -13,12 +15,20 @@ import { Button } from '../../../../shared/ui/button/button';
 import { FormField } from '../../../../shared/ui/form-field/form-field';
 import { InputDirective } from '../../../../shared/ui/form-control/input';
 import { SelectDirective } from '../../../../shared/ui/form-control/select';
+import { CATEGORY_ICON_OPTIONS, CategoryIconComponent } from '../category-icon/category-icon';
 
 export type CategoryFormMode = 'create' | 'edit';
 
 @Component({
   selector: 'app-category-form',
-  imports: [ReactiveFormsModule, Button, FormField, InputDirective, SelectDirective],
+  imports: [
+    ReactiveFormsModule,
+    Button,
+    CategoryIconComponent,
+    FormField,
+    InputDirective,
+    SelectDirective,
+  ],
   templateUrl: './category-form.html',
   styleUrl: './category-form.scss',
 })
@@ -34,9 +44,11 @@ export class CategoryFormComponent {
   readonly created = output<CreateCategoryRequest>();
   readonly updated = output<UpdateCategoryRequest>();
   readonly cancelled = output<void>();
+  readonly iconOptions = CATEGORY_ICON_OPTIONS;
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(120)]],
+    icon: [DEFAULT_CATEGORY_ICON as CategoryIcon, Validators.required],
     type: ['EXPENSE' as CategoryType, Validators.required],
     status: ['ACTIVE' as CategoryStatus, Validators.required],
   });
@@ -50,6 +62,7 @@ export class CategoryFormComponent {
       if (mode === 'create') {
         this.form.reset({
           name: '',
+          icon: DEFAULT_CATEGORY_ICON,
           type: parent?.type ?? this.defaultType(),
           status: 'ACTIVE',
         });
@@ -66,6 +79,7 @@ export class CategoryFormComponent {
       if (category) {
         this.form.reset({
           name: category.name,
+          icon: category.icon ?? DEFAULT_CATEGORY_ICON,
           type: category.type,
           status: category.status,
         });
@@ -86,6 +100,7 @@ export class CategoryFormComponent {
     if (this.mode() === 'create') {
       this.created.emit({
         name: value.name.trim(),
+        icon: value.icon,
         type: value.type,
         parentCategoryId: this.parentCategory()?.id ?? null,
       });
@@ -93,9 +108,21 @@ export class CategoryFormComponent {
       return;
     }
 
-    this.updated.emit({
+    const request: UpdateCategoryRequest = {
       name: value.name.trim(),
       status: value.status,
-    });
+    };
+
+    if (value.icon !== (this.category()?.icon ?? DEFAULT_CATEGORY_ICON)) {
+      request.icon = value.icon;
+    }
+
+    this.updated.emit(request);
+  }
+
+  selectIcon(icon: CategoryIcon): void {
+    if (!this.submitting()) {
+      this.form.controls.icon.setValue(icon);
+    }
   }
 }

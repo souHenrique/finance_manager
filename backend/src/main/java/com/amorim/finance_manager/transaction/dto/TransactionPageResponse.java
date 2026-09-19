@@ -9,7 +9,7 @@ import java.util.List;
 public record TransactionPageResponse(
 
     @Schema(description = "Transações presentes nesta página")
-    List<TransactionResponse> content,
+    List<TransactionListItemResponse> content,
 
     @Schema(description = "Número da página, começando em zero", example = "0")
     int page,
@@ -31,7 +31,7 @@ public record TransactionPageResponse(
 ) {
 
         public static TransactionPageResponse from(
-                Page<TransactionResponse> result
+                Page<TransactionListItemResponse> result
         ) {
             return new TransactionPageResponse(
                     List.copyOf(result.getContent()),

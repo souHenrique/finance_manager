@@ -51,6 +51,9 @@ public record DashboardResponse(
         @Schema(description = "Valor atual das faturas com status OPEN")
         DashboardIndicatorResponse openInvoices,
 
+        @Schema(description = "Valor das faturas com status OPEN referentes ao mês exibido")
+        DashboardIndicatorResponse monthlyOpenInvoices,
+
         @Schema(description = "Resumo dos orçamentos do mês atual")
         DashboardBudgetResponse budget,
 

@@ -162,6 +162,41 @@ public interface TransactionApiDocs {
     );
 
     @Operation(
+            summary = "Consultar parcelas de uma compra",
+            description = "Retorna o valor integral e as parcelas de uma compra no cartão pertencente ao usuário autenticado"
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Parcelas encontradas",
+                    content = @Content(
+                            schema = @Schema(implementation = TransactionInstallmentDetailsResponse.class),
+                            examples = @ExampleObject(value = TRANSACTION_INSTALLMENT_DETAILS_RESPONSE)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "401",
+                    description = "Usuário não autenticado",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Transação não encontrada",
+                    content = @Content(schema = @Schema(implementation = ApiError.class))
+            )
+    })
+    ResponseEntity<TransactionInstallmentDetailsResponse> findInstallmentDetails(
+            @Parameter(
+                    name = "id",
+                    description = "Identificador da transação de referência",
+                    required = true,
+                    example = "2cb0ba91-bfc4-43be-89ec-336ca64a6231",
+                    schema = @Schema(type = "string", format = "uuid")
+            )
+            UUID id
+    );
+
+    @Operation(
             summary = "Atualizar transação",
             description = "Reverte o impacto antigo e aplica o novo impacto",
             requestBody =
@@ -327,6 +362,8 @@ public interface TransactionApiDocs {
                 A descrição usa busca parcial sem diferenciar maiúsculas e minúsculas.
                 Sem filtro de status, inclui todos os status.
                 A paginação começa em zero, com tamanho padrão 20 e máximo efetivo 100.
+                Compras parceladas aparecem uma única vez, com o valor integral em displayAmount.
+                As parcelas individuais estão disponíveis no detalhe da compra.
                 """
     )
     @ApiResponses({

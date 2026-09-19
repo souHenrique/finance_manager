@@ -144,6 +144,7 @@ describe('Application routes', () => {
                 creditCardPurchaseOutflows: { basis: 'COMPETENCE', amount: 0 },
                 competenceExpenses: { basis: 'COMPETENCE', amount: 0 },
                 openInvoices: { basis: 'COMPETENCE', amount: 0 },
+                monthlyOpenInvoices: { basis: 'COMPETENCE', amount: 0 },
                 budget: {
                   basis: 'COMPETENCE',
                   totalLimit: 0,

@@ -97,7 +97,7 @@ public class CategoryService {
     }
 
     private void validadeUpdate(UpdateCategoryRequest request) {
-        if (request.name() == null && request.status() == null) {
+        if (request.name() == null && request.icon() == null && request.status() == null) {
             throw new InvalidCategoryUpdateException("Informe ao menos um campo para atualização");
         }
 

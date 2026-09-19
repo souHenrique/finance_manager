@@ -107,10 +107,12 @@ class TransactionSearchIntegrationTest {
 
         assertThat(ids(page)).containsExactlyInAnyOrderElementsOf(transactionIds(expected));
         assertPage(page, 0, 20, 3, 1, true, true);
-        for (JsonNode transaction : page.path("content")) {
+        for (JsonNode item : page.path("content")) {
+            JsonNode transaction = item.path("transaction");
             assertThat(transaction.path("userId").isMissingNode()).isTrue();
             assertThat(transaction.path("description").asString()).isNotBlank();
             assertThat(transaction.path("amount").decimalValue()).isEqualByComparingTo("50.00");
+            assertThat(item.path("displayAmount").decimalValue()).isEqualByComparingTo("50.00");
             assertThat(transaction.path("createdAt").asString()).isNotBlank();
             assertThat(transaction.path("updatedAt").asString()).isNotBlank();
         }
@@ -572,7 +574,10 @@ class TransactionSearchIntegrationTest {
         JsonNode content = page.path("content");
         assertThat(content.isArray()).isTrue();
         return IntStream.range(0, content.size())
-                .mapToObj(index -> UUID.fromString(content.path(index).path("id").asString())).toList();
+                .mapToObj(index -> UUID.fromString(
+                        content.path(index).path("transaction").path("id").asString()
+                ))
+                .toList();
     }
 
     private List<UUID> transactionIds(List<Transaction> transactions) {

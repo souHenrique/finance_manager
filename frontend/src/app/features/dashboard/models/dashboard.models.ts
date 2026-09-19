@@ -37,6 +37,11 @@ export interface Dashboard {
   creditCardPurchaseOutflows: DashboardIndicator;
   competenceExpenses: DashboardIndicator;
   openInvoices: DashboardIndicator;
+  /**
+   * Optional only while clients may still be connected to an API deployed
+   * before the monthly invoice indicator was introduced.
+   */
+  monthlyOpenInvoices?: DashboardIndicator;
   budget: DashboardBudget;
   consolidatedBalance: DashboardIndicator;
 }

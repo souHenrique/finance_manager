@@ -144,6 +144,8 @@ curl --request POST http://localhost:8080/api/v1/auth/login \
 | `POST`  | `/api/v1/auth/login`           | Autenticar e obter JWT         |
 | `GET`   | `/api/v1/users/me`             | Consultar o perfil autenticado |
 | `PATCH` | `/api/v1/users/me`             | Atualizar o perfil autenticado |
+| `PATCH` | `/api/v1/users/me/password`    | Alterar a senha                |
+| `DELETE`| `/api/v1/users/me`             | Excluir a conta logicamente    |
 | `POST`  | `/api/v1/accounts`             | Criar conta                    |
 | `GET`   | `/api/v1/accounts`             | Listar contas                  |
 | `GET`   | `/api/v1/accounts/{id}`        | Consultar conta                |

@@ -6,6 +6,7 @@ import com.amorim.finance_manager.testsupport.LogCapture;
 import com.amorim.finance_manager.user.dto.AuthResponse;
 import com.amorim.finance_manager.user.dto.LoginRequest;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,7 +64,7 @@ class AuthServiceLoggingTest {
                 .thenReturn(userDetails);
         when(userDetails.getUsername())
                 .thenReturn(EMAIL);
-        when(userRepository.findByEmail(EMAIL))
+        when(userRepository.findByEmailAndStatus(EMAIL, UserStatus.ACTIVE))
                 .thenReturn(Optional.of(user));
         when(user.getAuthenticationVersion())
                 .thenReturn(0);

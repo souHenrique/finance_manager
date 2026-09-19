@@ -42,4 +42,11 @@ public class UserController implements UserApiDocs {
         userProfileService.changeCurrentPassword(request);
         return ResponseEntity.noContent().build();
     }
+
+    @Override
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser() {
+        userProfileService.deleteCurrentUser();
+        return ResponseEntity.noContent().build();
+    }
 }

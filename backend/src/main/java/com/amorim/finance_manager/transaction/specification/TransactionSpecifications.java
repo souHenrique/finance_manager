@@ -133,6 +133,17 @@ public final class TransactionSpecifications {
         };
     }
 
+    /**
+     * Keeps transaction pagination stable while representing an installment purchase only once.
+     * The full set of installments remains available from the purchase detail endpoint.
+     */
+    public static Specification<Transaction> firstInstallmentOrStandalone() {
+        return (root, query, builder) -> builder.or(
+                builder.isNull(root.get("installmentGroupId")),
+                builder.equal(root.get("installmentNumber"), 1)
+        );
+    }
+
     private static String escapeLike(String value) {
         return value
                 .replace("!", "!!")

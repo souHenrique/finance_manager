@@ -6,6 +6,7 @@ import com.amorim.finance_manager.category.repository.CategoryRepository;
 import com.amorim.finance_manager.shared.exception.InvalidTransactionException;
 import com.amorim.finance_manager.shared.exception.UnauthenticatedUserException;
 import com.amorim.finance_manager.transaction.dto.TransactionFilterRequest;
+import com.amorim.finance_manager.transaction.dto.TransactionListItemResponse;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.mapper.TransactionMapper;
@@ -201,9 +202,13 @@ class TransactionSearchServiceTest {
         )).thenAnswer(invocation -> new PageImpl<>(List.of(transaction), invocation.getArgument(1), 5));
         when(transactionMapper.toResponse(transaction)).thenReturn(response);
 
-        Page<TransactionResponse> result = transactionService.list(NO_FILTERS, PageRequest.of(1, 1));
+        Page<TransactionListItemResponse> result = transactionService.list(NO_FILTERS, PageRequest.of(1, 1));
 
-        assertThat(result.getContent()).containsExactly(response);
+        assertThat(result.getContent()).singleElement().satisfies(item -> {
+            assertThat(item.transaction()).isEqualTo(response);
+            assertThat(item.displayAmount()).isNull();
+            assertThat(item.installmentPurchase()).isFalse();
+        });
         assertThat(result.getNumber()).isEqualTo(1);
         assertThat(result.getTotalElements()).isEqualTo(5);
         assertThat(result.getTotalPages()).isEqualTo(5);

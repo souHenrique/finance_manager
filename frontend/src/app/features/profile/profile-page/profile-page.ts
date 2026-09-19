@@ -8,8 +8,9 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { EMPTY, finalize, switchMap, take } from 'rxjs';
 
+import { AppDialogService } from '../../../core/feedback/dialog/dialog.service';
 import { ToastService } from '../../../core/feedback/toast/toast.service';
 import { ApiRequestError } from '../../../core/http/api-request-error';
 import { User } from '../../../shared/models/user.models';
@@ -60,6 +61,7 @@ type PasswordField = 'currentPassword' | 'newPassword' | 'confirmation';
 })
 export class ProfilePage implements OnInit {
   private readonly profileApi = inject(ProfileApiService);
+  private readonly dialog = inject(AppDialogService);
   private readonly toast = inject(ToastService);
   private readonly auth = inject(AuthService);
 
@@ -67,11 +69,13 @@ export class ProfilePage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly saving = signal(false);
   protected readonly passwordSaving = signal(false);
+  protected readonly deletingAccount = signal(false);
   protected readonly submitted = signal(false);
   protected readonly passwordSubmitted = signal(false);
   protected readonly loadError = signal<string | undefined>(undefined);
   protected readonly submissionError = signal<string | undefined>(undefined);
   protected readonly passwordSubmissionError = signal<string | undefined>(undefined);
+  protected readonly deletionError = signal<string | undefined>(undefined);
 
   protected readonly form = new FormGroup({
     name: new FormControl('', {
@@ -236,6 +240,46 @@ export class ProfilePage implements OnInit {
         },
         error: (error: unknown) => {
           this.handlePasswordError(error);
+        },
+      });
+  }
+
+  protected confirmAccountDeletion(): void {
+    if (this.deletingAccount()) {
+      return;
+    }
+
+    this.deletionError.set(undefined);
+    this.deletingAccount.set(true);
+
+    this.dialog
+      .confirm({
+        title: 'Excluir sua conta?',
+        message: 'Sua conta será desativada e você perderá o acesso imediatamente.',
+        confirmLabel: 'Excluir minha conta',
+        cancelLabel: 'Manter minha conta',
+        danger: true,
+      })
+      .pipe(
+        take(1),
+        switchMap((confirmed) => (confirmed ? this.profileApi.deleteCurrentUser() : EMPTY)),
+        finalize(() => this.deletingAccount.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.toast.show({
+            tone: 'success',
+            title: 'Conta excluída',
+            message: 'Sua conta foi desativada e seus dados foram preservados.',
+          });
+          this.auth.logout();
+        },
+        error: (error: unknown) => {
+          this.deletionError.set(
+            error instanceof ApiRequestError
+              ? error.message
+              : 'Não foi possível excluir sua conta. Tente novamente.',
+          );
         },
       });
   }

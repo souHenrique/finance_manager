@@ -47,7 +47,9 @@ public interface DashboardApiDocs {
                     transações pela competenceDate. Compras no cartão compõem
                     esse indicador; pagamentos de fatura não.
 
-                    openInvoices soma exclusivamente faturas com status OPEN.
+                    openInvoices soma exclusivamente todas as faturas com status OPEN.
+                    monthlyOpenInvoices aplica a mesma regra, limitada ao mês e
+                    ano de referência do dashboard.
 
                     budget considera os orçamentos do mês atual e seu consumo
                     por competenceDate.

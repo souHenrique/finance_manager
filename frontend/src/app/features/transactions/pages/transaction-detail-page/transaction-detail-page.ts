@@ -1,7 +1,7 @@
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { EMPTY, catchError, finalize, forkJoin, of, switchMap, take } from 'rxjs';
+import { EMPTY, catchError, finalize, forkJoin, map, of, switchMap, take } from 'rxjs';
 
 import { AppDialogService } from '../../../../core/feedback/dialog/dialog.service';
 import { ToastService } from '../../../../core/feedback/toast/toast.service';
@@ -21,13 +21,14 @@ import { TransactionApiService } from '../../data-access/transaction-api.service
 import {
   PaymentMethod,
   Transaction,
+  TransactionInstallmentDetails,
   TransactionStatus,
   TransactionType,
 } from '../../models/transaction.models';
 
 @Component({
   selector: 'app-transaction-detail-page',
-  imports: [Alert, Badge, Button, Card, CurrencyPipe, ErrorState, Skeleton],
+  imports: [Alert, Badge, Button, Card, CurrencyPipe, DatePipe, ErrorState, Skeleton],
   templateUrl: './transaction-detail-page.html',
   styleUrl: './transaction-detail-page.scss',
 })
@@ -49,6 +50,7 @@ export class TransactionDetailPage implements OnInit {
   readonly hasLoadError = signal(false);
   readonly isCancelling = signal(false);
   readonly isLoading = signal(true);
+  readonly installmentDetails = signal<TransactionInstallmentDetails | null>(null);
   readonly transaction = signal<Transaction | null>(null);
 
   ngOnInit(): void {
@@ -63,6 +65,7 @@ export class TransactionDetailPage implements OnInit {
 
     this.isLoading.set(true);
     this.hasLoadError.set(false);
+    this.installmentDetails.set(null);
 
     forkJoin({
       transaction: this.transactionApi.findById(this.transactionId),
@@ -70,13 +73,25 @@ export class TransactionDetailPage implements OnInit {
       categories: this.categoryApi.findAll().pipe(catchError(() => of([]))),
       creditCards: this.creditCardApi.findAll().pipe(catchError(() => of([]))),
     })
-      .pipe(finalize(() => this.isLoading.set(false)))
+      .pipe(
+        switchMap((data) => {
+          if (!this.isInstallmentPurchase(data.transaction)) {
+            return of({ ...data, installmentDetails: null });
+          }
+
+          return this.transactionApi
+            .findInstallmentDetails(data.transaction.id)
+            .pipe(map((installmentDetails) => ({ ...data, installmentDetails })));
+        }),
+        finalize(() => this.isLoading.set(false)),
+      )
       .subscribe({
-        next: ({ transaction, accounts, categories, creditCards }) => {
+        next: ({ transaction, accounts, categories, creditCards, installmentDetails }) => {
           this.transaction.set(transaction);
           this.accounts.set(accounts);
           this.categories.set(categories);
           this.creditCards.set(creditCards);
+          this.installmentDetails.set(installmentDetails);
         },
         error: () => {
           this.hasLoadError.set(true);
@@ -244,6 +259,14 @@ export class TransactionDetailPage implements OnInit {
       transaction.status !== 'CANCELLED' &&
       transaction.type !== 'CREDIT_CARD_PURCHASE' &&
       transaction.type !== 'CREDIT_CARD_PAYMENT'
+    );
+  }
+
+  isInstallmentPurchase(transaction: Transaction): boolean {
+    return (
+      transaction.type === 'CREDIT_CARD_PURCHASE' &&
+      transaction.installmentGroupId !== null &&
+      (transaction.installmentCount ?? 0) > 1
     );
   }
 }

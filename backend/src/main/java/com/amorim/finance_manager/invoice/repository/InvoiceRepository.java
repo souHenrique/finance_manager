@@ -48,4 +48,23 @@ public interface InvoiceRepository extends JpaRepository<Invoice, UUID>, JpaSpec
             @Param("userId") UUID userId,
             @Param("statuses") Collection<InvoiceStatus> statuses
     );
+
+    @Query("""
+        select coalesce(sum(invoice.totalAmount), 0)
+        from Invoice invoice
+        where invoice.status in :statuses
+          and invoice.referenceMonth = :referenceMonth
+          and invoice.referenceYear = :referenceYear
+          and invoice.creditCardId in (
+              select card.id
+              from CreditCard card
+              where card.userId = :userId
+          )
+        """)
+    BigDecimal sumTotalAmountOwnedByUserIdAndReferencePeriodAndStatusIn(
+            @Param("userId") UUID userId,
+            @Param("referenceMonth") int referenceMonth,
+            @Param("referenceYear") int referenceYear,
+            @Param("statuses") Collection<InvoiceStatus> statuses
+    );
 }

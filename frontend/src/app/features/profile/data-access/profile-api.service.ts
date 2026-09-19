@@ -21,4 +21,8 @@ export class ProfileApiService {
   changePassword(request: ChangePasswordRequest): Observable<void> {
     return this.http.patch<void>(this.apiUrl.build('users/me/password'), request);
   }
+
+  deleteCurrentUser(): Observable<void> {
+    return this.http.delete<void>(this.apiUrl.build('users/me'));
+  }
 }

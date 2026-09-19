@@ -6,6 +6,8 @@ import { PageResponse } from '../../../shared/models/pagination';
 import {
   CreateTransactionRequest,
   Transaction,
+  TransactionInstallmentDetails,
+  TransactionListItem,
   TransactionQuery,
   UpdateTransactionRequest,
 } from '../models/transaction.models';
@@ -20,14 +22,20 @@ export class TransactionApiService {
     return this.http.post<Transaction>(this.apiUrl.build('transactions'), request);
   }
 
-  findAll(query: TransactionQuery = {}): Observable<PageResponse<Transaction>> {
-    return this.http.get<PageResponse<Transaction>>(this.apiUrl.build('transactions'), {
+  findAll(query: TransactionQuery = {}): Observable<PageResponse<TransactionListItem>> {
+    return this.http.get<PageResponse<TransactionListItem>>(this.apiUrl.build('transactions'), {
       params: buildTransactionQueryParams(query),
     });
   }
 
   findById(id: string): Observable<Transaction> {
     return this.http.get<Transaction>(this.apiUrl.build(`transactions/${encodeURIComponent(id)}`));
+  }
+
+  findInstallmentDetails(id: string): Observable<TransactionInstallmentDetails> {
+    return this.http.get<TransactionInstallmentDetails>(
+      this.apiUrl.build(`transactions/${encodeURIComponent(id)}/installments`),
+    );
   }
 
   update(id: string, request: UpdateTransactionRequest): Observable<Transaction> {

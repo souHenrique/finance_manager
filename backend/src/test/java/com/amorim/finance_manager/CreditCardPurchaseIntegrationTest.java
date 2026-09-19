@@ -54,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -225,6 +226,44 @@ class CreditCardPurchaseIntegrationTest {
                 .containsExactly(new BigDecimal("50.00"), new BigDecimal("50.00"));
         assertThat(creditCardRepository.findById(card.getId()).orElseThrow().getAvailableLimit())
                 .isEqualByComparingTo("900.00");
+    }
+
+    @Test
+    void shouldShowAnInstallmentPurchaseOnceInTheTransactionListAndExposeItsInstallments() throws Exception {
+        CreditCard card = createCard(userA, CreditCardStatus.ACTIVE, "1000.00", "1000.00");
+
+        MvcResult purchaseResult = performPurchase(
+                userA,
+                card.getId(),
+                "Notebook",
+                "100.00",
+                PURCHASE_DATE,
+                2
+        )
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode purchase = objectMapper.readTree(
+                purchaseResult.getResponse().getContentAsString(StandardCharsets.UTF_8)
+        );
+        String firstInstallmentId = purchase.get(0).path("id").asString();
+
+        mockMvc.perform(get("/api/v1/transactions")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userA.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].transaction.id").value(firstInstallmentId))
+                .andExpect(jsonPath("$.content[0].transaction.amount").value(50.00))
+                .andExpect(jsonPath("$.content[0].displayAmount").value(100.00))
+                .andExpect(jsonPath("$.content[0].installmentPurchase").value(true));
+
+        mockMvc.perform(get("/api/v1/transactions/{id}/installments", firstInstallmentId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + userA.token()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalAmount").value(100.00))
+                .andExpect(jsonPath("$.installments.length()").value(2))
+                .andExpect(jsonPath("$.installments[0].installmentNumber").value(1))
+                .andExpect(jsonPath("$.installments[1].installmentNumber").value(2));
     }
 
     @Test

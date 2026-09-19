@@ -6,17 +6,35 @@
 }
 
 .transaction-list__toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
   align-items: center;
-  justify-content: flex-end;
   gap: var(--space-3);
   margin-block: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.transaction-list__toolbar label {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+
+.transaction-list__toolbar select {
+  min-width: 0;
+  width: 100%;
 }
 
 .transaction-list__table-wrapper {
   overflow-x: auto;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
 }
 
 table {
@@ -27,16 +45,25 @@ table {
 
 th,
 td {
-  padding: var(--space-3);
+  padding: var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--color-border);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
-  color: var(--color-text-muted);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+}
+
+tbody tr {
+  transition: background-color 160ms ease;
+}
+
+tbody tr:hover {
+  background: var(--color-surface-muted);
 }
 
 tbody tr:last-child td {
@@ -59,14 +86,58 @@ tbody tr:last-child td {
   font-size: var(--font-size-xs);
 }
 
+.transaction-list__installment-note {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--color-primary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.transaction-list__date,
+.transaction-list__amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.transaction-list__type {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.transaction-list__amount {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+
+.transaction-list__actions {
+  white-space: nowrap;
+}
+
+.transaction-list__actions a {
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
 @media (max-width: 640px) {
-  .transaction-list__header-actions,
-  .transaction-list__toolbar {
+  .transaction-list__header-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
+  .transaction-list__toolbar {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
   .transaction-list__header-actions app-button {
     width: 100%;
+  }
+
+  th,
+  td {
+    padding: var(--space-3);
   }
 }

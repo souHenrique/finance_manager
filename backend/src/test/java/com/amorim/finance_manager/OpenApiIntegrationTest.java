@@ -43,6 +43,7 @@ class OpenApiIntegrationTest {
             "get /api/v1/users/me",
             "patch /api/v1/users/me",
             "patch /api/v1/users/me/password",
+            "delete /api/v1/users/me",
             "post /api/v1/accounts",
             "get /api/v1/accounts",
             "get /api/v1/accounts/{id}",
@@ -63,6 +64,7 @@ class OpenApiIntegrationTest {
             "post /api/v1/transactions",
             "get /api/v1/transactions",
             "get /api/v1/transactions/{id}",
+            "get /api/v1/transactions/{id}/installments",
             "patch /api/v1/transactions/{id}",
             "post /api/v1/transactions/{id}/cancel",
             "post /api/v1/transfers",
@@ -135,6 +137,8 @@ class OpenApiIntegrationTest {
             "CreateTransactionRequest",
             "UpdateTransactionRequest",
             "TransactionResponse",
+            "TransactionListItemResponse",
+            "TransactionInstallmentDetailsResponse",
             "TransactionPageResponse",
             "CategoryCashFlowResponse",
             "CashFlowSummaryResponse",
@@ -481,7 +485,7 @@ class OpenApiIntegrationTest {
                 .containsExactlyInAnyOrder("content", "page", "size", "totalElements", "totalPages", "first", "last");
         assertThat(properties.path("content").path("type").asString()).isEqualTo("array");
         assertThat(properties.path("content").path("items").path("$ref").asString())
-                .isEqualTo("#/components/schemas/TransactionResponse");
+                .isEqualTo("#/components/schemas/TransactionListItemResponse");
 
         JsonNode example = response.path("examples").path("Página vazia").path("value");
         assertThat(example.isObject()).isTrue();
@@ -822,6 +826,7 @@ class OpenApiIntegrationTest {
                 "creditCardPurchaseOutflows",
                 "competenceExpenses",
                 "openInvoices",
+                "monthlyOpenInvoices",
                 "budget",
                 "consolidatedBalance"
         );

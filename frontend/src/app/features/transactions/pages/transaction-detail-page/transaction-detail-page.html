@@ -62,8 +62,10 @@
 
       <dl class="transaction-detail-page__details">
         <div>
-          <dt>Valor</dt>
-          <dd>{{ currentTransaction.amount | currency: 'BRL' }}</dd>
+          <dt>{{ installmentDetails() ? 'Valor total da compra' : 'Valor' }}</dt>
+          <dd>
+            {{ installmentDetails()?.totalAmount ?? currentTransaction.amount | currency: 'BRL' }}
+          </dd>
         </div>
 
         <div>
@@ -105,7 +107,56 @@
           <dt>Conta ou cartão</dt>
           <dd>{{ accountOrCardLabel(currentTransaction) }}</dd>
         </div>
+
+        @if (installmentDetails()) {
+          <div>
+            <dt>Parcelamento</dt>
+            <dd>{{ currentTransaction.installmentCount }} parcelas</dd>
+          </div>
+        }
       </dl>
     </app-card>
+
+    @if (installmentDetails(); as details) {
+      <app-card
+        class="transaction-detail-page__installments"
+        title="Parcelas da compra"
+        [subtitle]="'Total da compra: ' + (details.totalAmount | currency: 'BRL')"
+      >
+        <div class="transaction-detail-page__installments-table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Parcela</th>
+                <th scope="col">Data</th>
+                <th scope="col">Vencimento</th>
+                <th scope="col">Status</th>
+                <th scope="col">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (installment of details.installments; track installment.id) {
+                <tr>
+                  <td>{{ installment.installmentNumber }}/{{ installment.installmentCount }}</td>
+                  <td>{{ installment.competenceDate | date: 'dd/MM/yyyy' }}</td>
+                  <td>
+                    {{ installment.dueDate ? (installment.dueDate | date: 'dd/MM/yyyy') : '—' }}
+                  </td>
+                  <td>
+                    <app-badge
+                      [label]="statusLabel(installment.status)"
+                      [tone]="statusTone(installment.status)"
+                    />
+                  </td>
+                  <td class="transaction-detail-page__installment-amount">
+                    {{ installment.amount | currency: 'BRL' }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </app-card>
+    }
   }
 </section>

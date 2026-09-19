@@ -10,6 +10,7 @@ describe('CategoryFormComponent', () => {
   const parentCategory: Category = {
     id: '8c11df5a-9683-407d-a25b-3ed88e1e5e27',
     name: 'Gus Fring',
+    icon: 'HOME',
     type: 'EXPENSE',
     parentCategoryId: null,
     status: 'ACTIVE',
@@ -20,6 +21,7 @@ describe('CategoryFormComponent', () => {
   const category: Category = {
     id: 'fac77ea6-a8ea-4e2e-a6e7-9f9bc4457cd9',
     name: 'Jesse Pinkman',
+    icon: 'WORK',
     type: 'INCOME',
     parentCategoryId: null,
     status: 'INACTIVE',
@@ -67,6 +69,7 @@ describe('CategoryFormComponent', () => {
 
     expect(created).toHaveBeenCalledWith({
       name: 'Walter White',
+      icon: 'TAG',
       type: 'EXPENSE',
       parentCategoryId: null,
     });
@@ -82,6 +85,7 @@ describe('CategoryFormComponent', () => {
 
     expect(created).toHaveBeenCalledWith({
       name: 'Saul Goodman',
+      icon: 'TAG',
       type: 'INCOME',
       parentCategoryId: null,
     });
@@ -97,6 +101,7 @@ describe('CategoryFormComponent', () => {
 
     expect(created).toHaveBeenCalledWith({
       name: 'Mike Ehrmantraut',
+      icon: 'TAG',
       type: 'EXPENSE',
       parentCategoryId: parentCategory.id,
     });
@@ -127,6 +132,7 @@ describe('CategoryFormComponent', () => {
 
     expect(component.form.controls.name.value).toBe(category.name);
     expect(component.form.controls.status.value).toBe(category.status);
+    expect(component.form.controls.icon.value).toBe(category.icon);
   });
 
   it('should not display type or parent category in edit mode', () => {
@@ -149,6 +155,28 @@ describe('CategoryFormComponent', () => {
       name: 'Skyler White',
       status: 'ACTIVE',
     });
+  });
+
+  it('should emit the selected icon when editing a category', () => {
+    createComponent('edit', category);
+    const updated = vi.fn();
+    component.updated.subscribe(updated);
+
+    component.selectIcon('SHOPPING');
+    submitForm();
+
+    expect(updated).toHaveBeenCalledWith({
+      name: category.name,
+      status: category.status,
+      icon: 'SHOPPING',
+    });
+  });
+
+  it('should render a selectable generic icon palette', () => {
+    createComponent();
+
+    expect(fixture.nativeElement.querySelectorAll('[role="radio"]')).toHaveLength(15);
+    expect(fixture.nativeElement.querySelector('[aria-label="Alimentação"]')).not.toBeNull();
   });
 
   it('should disable both actions while submitting', () => {

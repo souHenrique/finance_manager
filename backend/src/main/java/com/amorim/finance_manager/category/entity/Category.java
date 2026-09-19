@@ -34,6 +34,10 @@ public class Category {
     private String name;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private CategoryIcon icon = CategoryIcon.TAG;
+
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CategoryType type;
 
@@ -53,6 +57,9 @@ public class Category {
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();
+        if (icon == null) {
+            icon = CategoryIcon.TAG;
+        }
         createdAt = now;
         updatedAt = now;
     }

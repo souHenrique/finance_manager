@@ -29,6 +29,17 @@ export interface Transaction {
   updatedAt: string;
 }
 
+export interface TransactionListItem {
+  transaction: Transaction;
+  displayAmount: number;
+  installmentPurchase: boolean;
+}
+
+export interface TransactionInstallmentDetails {
+  totalAmount: number;
+  installments: Transaction[];
+}
+
 export interface CreateTransactionRequest {
   description: string;
   amount: number;

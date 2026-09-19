@@ -2,6 +2,7 @@ package com.amorim.finance_manager.user.service;
 
 import com.amorim.finance_manager.shared.exception.UnauthenticatedUserException;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ public class CurrentUserServiceTest {
 
         authenticateAs("user-a@example.com");
 
-        when(userRepository.findByEmail("user-a@example.com"))
+        when(userRepository.findByEmailAndStatus("user-a@example.com", UserStatus.ACTIVE))
                 .thenReturn(Optional.of(user));
 
         UUID result = currentUserService.getCurrentUserId();
@@ -55,7 +56,7 @@ public class CurrentUserServiceTest {
         assertThat(result).isEqualTo(userId);
 
         verify(userRepository)
-                .findByEmail("user-a@example.com");
+                .findByEmailAndStatus("user-a@example.com", UserStatus.ACTIVE);
     }
 
     @Test
@@ -66,7 +67,7 @@ public class CurrentUserServiceTest {
 
         authenticateAs("user-a@example.com");
 
-        when(userRepository.findByEmail("user-a@example.com"))
+        when(userRepository.findByEmailAndStatus("user-a@example.com", UserStatus.ACTIVE))
                 .thenReturn(Optional.of(user));
 
         User result = currentUserService.getCurrentUser();

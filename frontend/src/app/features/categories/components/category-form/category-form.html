@@ -19,6 +19,27 @@
     />
   </app-form-field>
 
+  <fieldset class="category-form__icon-picker" [disabled]="submitting()">
+    <legend>Ícone</legend>
+    <p>Escolha um ícone para facilitar a identificação desta categoria.</p>
+
+    <div class="category-form__icon-options" role="radiogroup" aria-label="Ícone da categoria">
+      @for (option of iconOptions; track option.value) {
+        <button
+          type="button"
+          class="category-form__icon-option"
+          [class.category-form__icon-option--selected]="form.controls.icon.value === option.value"
+          [attr.aria-checked]="form.controls.icon.value === option.value"
+          [attr.aria-label]="option.label"
+          role="radio"
+          (click)="selectIcon(option.value)"
+        >
+          <app-category-icon [icon]="option.value" />
+        </button>
+      }
+    </div>
+  </fieldset>
+
   @if (mode() === 'create') {
     <app-form-field label="Tipo" controlId="category-type" [required]="true">
       <select appSelect id="category-type" formControlName="type">

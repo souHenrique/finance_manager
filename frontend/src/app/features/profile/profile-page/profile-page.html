@@ -147,5 +147,34 @@
         </div>
       </form>
     </app-card>
+
+    <app-card
+      class="profile-page__danger-zone"
+      title="Excluir conta"
+      subtitle="Desative sua conta e encerre o acesso a qualquer momento."
+    >
+      @if (deletionError()) {
+        <app-alert
+          tone="danger"
+          title="Não foi possível excluir a conta"
+          [message]="deletionError()!"
+        />
+      }
+
+      <p class="profile-page__danger-description">
+        Esta ação encerra sua sessão e impede novos acessos.
+      </p>
+
+      <div class="profile-page__danger-actions">
+        <app-button
+          variant="danger"
+          [loading]="deletingAccount()"
+          [disabled]="deletingAccount()"
+          (pressed)="confirmAccountDeletion()"
+        >
+          Excluir minha conta
+        </app-button>
+      </div>
+    </app-card>
   }
 </section>

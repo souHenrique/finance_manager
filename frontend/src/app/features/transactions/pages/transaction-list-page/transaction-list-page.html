@@ -2,7 +2,7 @@
   <header class="page__header">
     <div>
       <h1 id="transactions-title">Transações</h1>
-      <p>Consulte e gerencie suas movimentações financeiras.</p>
+      <p>Consulte suas movimentações e abra os detalhes para acompanhar compras parceladas.</p>
     </div>
 
     <div class="transaction-list__header-actions">
@@ -83,14 +83,23 @@
           </thead>
 
           <tbody>
-            @for (transaction of page.content; track transaction.id) {
+            @for (item of page.content; track item.transaction.id) {
+              @let transaction = item.transaction;
               <tr [class.transaction-list__row--cancelled]="transaction.status === 'CANCELLED'">
-                <td>{{ transaction.competenceDate }}</td>
+                <td class="transaction-list__date">
+                  {{ transaction.competenceDate | date: 'dd/MM/yyyy' }}
+                </td>
 
                 <td>
                   <span class="transaction-list__description">
                     {{ transaction.description }}
                   </span>
+
+                  @if (item.installmentPurchase) {
+                    <span class="transaction-list__installment-note">
+                      Compra parcelada em {{ transaction.installmentCount }}x · valor total
+                    </span>
+                  }
 
                   @if (transaction.status === 'CANCELLED') {
                     <span class="transaction-list__history-note">
@@ -99,7 +108,11 @@
                   }
                 </td>
 
-                <td>{{ transactionTypeLabel(transaction.type) }}</td>
+                <td>
+                  <span class="transaction-list__type">{{
+                    transactionTypeLabel(transaction.type)
+                  }}</span>
+                </td>
 
                 <td>
                   <app-badge
@@ -120,10 +133,14 @@
                   }
                 </td>
 
-                <td>{{ transaction.amount }}</td>
+                <td class="transaction-list__amount">
+                  {{ item.displayAmount | currency: 'BRL' }}
+                </td>
 
-                <td>
-                  <a [routerLink]="['/transactions', transaction.id]"> Ver detalhes </a>
+                <td class="transaction-list__actions">
+                  <a [routerLink]="['/transactions', transaction.id]">
+                    {{ item.installmentPurchase ? 'Ver compra e parcelas' : 'Ver detalhes' }}
+                  </a>
                 </td>
               </tr>
             }

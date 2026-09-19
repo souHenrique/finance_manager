@@ -1,6 +1,7 @@
 package com.amorim.finance_manager.transaction.repository;
 
 import com.amorim.finance_manager.budget.projection.BudgetSpendAggregate;
+import com.amorim.finance_manager.transaction.projection.InstallmentGroupTotal;
 import com.amorim.finance_manager.transaction.entity.Transaction;
 import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
@@ -28,6 +29,21 @@ public interface TransactionRepository
             UUID installmentGroupId,
             UUID creditCardId,
             UUID userId
+    );
+
+    @Query("""
+        select new com.amorim.finance_manager.transaction.projection.InstallmentGroupTotal(
+            transaction.installmentGroupId,
+            sum(transaction.amount)
+        )
+        from Transaction transaction
+        where transaction.userId = :userId
+          and transaction.installmentGroupId in :installmentGroupIds
+        group by transaction.installmentGroupId
+        """)
+    List<InstallmentGroupTotal> sumByInstallmentGroupIds(
+            @Param("userId") UUID userId,
+            @Param("installmentGroupIds") Collection<UUID> installmentGroupIds
     );
 
     boolean existsByInvoiceIdAndUserIdAndTypeAndStatus(

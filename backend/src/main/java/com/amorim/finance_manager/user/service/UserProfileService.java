@@ -7,6 +7,7 @@ import com.amorim.finance_manager.user.dto.ChangePasswordRequest;
 import com.amorim.finance_manager.user.dto.UpdateProfileRequest;
 import com.amorim.finance_manager.user.dto.UserResponse;
 import com.amorim.finance_manager.user.entity.User;
+import com.amorim.finance_manager.user.entity.UserStatus;
 import com.amorim.finance_manager.user.mapper.UserMapper;
 import com.amorim.finance_manager.user.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -66,6 +67,15 @@ public class UserProfileService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setAuthenticationVersion(user.getAuthenticationVersion() + 1);
+        userRepository.saveAndFlush(user);
+    }
+
+    @Transactional
+    public void deleteCurrentUser() {
+        User user = currentUserService.getCurrentUser();
+
+        user.setStatus(UserStatus.DELETED);
         user.setAuthenticationVersion(user.getAuthenticationVersion() + 1);
         userRepository.saveAndFlush(user);
     }

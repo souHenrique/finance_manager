@@ -10,6 +10,8 @@ import com.amorim.finance_manager.category.repository.CategoryRepository;
 import com.amorim.finance_manager.shared.exception.*;
 import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
 import com.amorim.finance_manager.transaction.dto.TransactionFilterRequest;
+import com.amorim.finance_manager.transaction.dto.TransactionInstallmentDetailsResponse;
+import com.amorim.finance_manager.transaction.dto.TransactionListItemResponse;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
 import com.amorim.finance_manager.transaction.entity.PaymentMethod;
@@ -18,6 +20,7 @@ import com.amorim.finance_manager.transaction.entity.TransactionStatus;
 import com.amorim.finance_manager.transaction.entity.TransactionType;
 import com.amorim.finance_manager.transaction.mapper.TransactionMapper;
 import com.amorim.finance_manager.transaction.repository.TransactionRepository;
+import com.amorim.finance_manager.transaction.projection.InstallmentGroupTotal;
 import com.amorim.finance_manager.transaction.specification.TransactionSpecifications;
 import com.amorim.finance_manager.user.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +34,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -173,14 +179,55 @@ public class TransactionService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TransactionResponse> list(TransactionFilterRequest filters, Pageable pageable) {
-        Specification<Transaction> specification = ownedSpecification(filters);
+    public Page<TransactionListItemResponse> list(TransactionFilterRequest filters, Pageable pageable) {
+        UUID userId = currentUserService.getCurrentUserId();
+        Specification<Transaction> specification = ownedSpecification(filters)
+                .and(TransactionSpecifications.firstInstallmentOrStandalone());
 
         Pageable safePageable = normalizePageable(pageable);
 
-        return transactionRepository
-                .findAll(specification, safePageable)
-                .map(transactionMapper::toResponse);
+        Page<Transaction> transactions = transactionRepository.findAll(specification, safePageable);
+
+        Map<UUID, BigDecimal> totalsByGroupId = findInstallmentTotals(userId, transactions.getContent());
+
+        return transactions.map(transaction -> {
+            TransactionResponse response = transactionMapper.toResponse(transaction);
+            BigDecimal displayAmount = transaction.getInstallmentGroupId() == null
+                    ? transaction.getAmount()
+                    : totalsByGroupId.getOrDefault(
+                            transaction.getInstallmentGroupId(),
+                            transaction.getAmount()
+                    );
+
+            return TransactionListItemResponse.from(response, displayAmount);
+        });
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionInstallmentDetailsResponse findInstallmentDetails(UUID transactionId) {
+        UUID userId = currentUserService.getCurrentUserId();
+
+        Transaction transaction = transactionRepository
+                .findByIdAndUserId(transactionId, userId)
+                .orElseThrow(TransactionNotFoundException::new);
+
+        List<Transaction> installments = transaction.getInstallmentGroupId() == null
+                ? List.of(transaction)
+                : transactionRepository
+                        .findAllByInstallmentGroupIdAndCreditCardIdAndUserIdOrderByInstallmentNumberAsc(
+                                transaction.getInstallmentGroupId(),
+                                transaction.getCreditCardId(),
+                                userId
+                        );
+
+        BigDecimal totalAmount = installments.stream()
+                .map(Transaction::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new TransactionInstallmentDetailsResponse(
+                totalAmount,
+                installments.stream().map(transactionMapper::toResponse).toList()
+        );
     }
 
     @Transactional(readOnly = true)
@@ -190,6 +237,29 @@ public class TransactionService {
                 .stream()
                 .map(transactionMapper::toResponse)
                 .toList();
+    }
+
+    private Map<UUID, BigDecimal> findInstallmentTotals(
+            UUID userId,
+            List<Transaction> transactions
+    ) {
+        List<UUID> installmentGroupIds = transactions.stream()
+                .map(Transaction::getInstallmentGroupId)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (installmentGroupIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return transactionRepository
+                .sumByInstallmentGroupIds(userId, installmentGroupIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        InstallmentGroupTotal::installmentGroupId,
+                        InstallmentGroupTotal::totalAmount
+                ));
     }
 
     private void applyBalance(CreateTransactionRequest request, UUID userId, UUID accountId) {

@@ -33,6 +33,43 @@
   font-weight: var(--font-weight-medium);
 }
 
+.transaction-detail-page__installments {
+  display: block;
+  margin-top: var(--space-5);
+}
+
+.transaction-detail-page__installments-table-wrapper {
+  overflow-x: auto;
+}
+
+.transaction-detail-page__installments table {
+  width: 100%;
+  min-width: 38rem;
+  border-collapse: collapse;
+}
+
+.transaction-detail-page__installments th,
+.transaction-detail-page__installments td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.transaction-detail-page__installments th {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.transaction-detail-page__installments tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.transaction-detail-page__installment-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold);
+  text-align: right !important;
+}
+
 @media (max-width: 900px) {
   .transaction-detail-page__details {
     grid-template-columns: repeat(2, minmax(0, 1fr));

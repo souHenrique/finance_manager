@@ -191,7 +191,7 @@ public interface CategoryDocsApi {
 
     @Operation(
             summary = "Atualizar categoria",
-            description = "Atualiza parcialmente o nome ou status de uma categoria",
+            description = "Atualiza parcialmente o nome, ícone ou status de uma categoria",
             requestBody =
             @RequestBody(
                     required = true,

@@ -39,6 +39,10 @@ public class User {
     @Column(name = "authentication_version", nullable = false)
     private int authenticationVersion;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserStatus status = UserStatus.ACTIVE;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -48,6 +52,9 @@ public class User {
     @PrePersist
     void onCreate() {
         Instant now = Instant.now();
+        if (status == null) {
+            status = UserStatus.ACTIVE;
+        }
         this.createdAt = now;
         this.updatedAt = now;
     }

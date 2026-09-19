@@ -14,26 +14,40 @@
 
 .profile-page__loading,
 .profile-form,
-.password-form {
+.password-form,
+.profile-page__danger-zone {
   display: grid;
   gap: var(--space-4);
 }
 
 .profile-form__actions,
-.password-form__actions {
+.password-form__actions,
+.profile-page__danger-actions {
   display: flex;
   justify-content: flex-end;
   padding-top: var(--space-2);
 }
 
+.profile-page__danger-zone {
+  --card-surface: var(--color-danger-surface);
+  --card-border: var(--color-danger-border);
+}
+
+.profile-page__danger-description {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
 @media (max-width: 40rem) {
   .profile-form__actions,
-  .password-form__actions {
+  .password-form__actions,
+  .profile-page__danger-actions {
     justify-content: stretch;
   }
 
   .profile-form__actions app-button,
-  .password-form__actions app-button {
+  .password-form__actions app-button,
+  .profile-page__danger-actions app-button {
     width: 100%;
   }
 }

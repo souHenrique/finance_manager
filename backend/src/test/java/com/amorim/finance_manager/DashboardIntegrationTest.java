@@ -124,7 +124,7 @@ class DashboardIntegrationTest {
         saveTransaction(owner, TransactionType.CREDIT_CARD_PAYMENT, "500.00",
                 LocalDate.of(2026, 9, 15), LocalDate.of(2026, 9, 15));
 
-        saveInvoice(owner.creditCardId(), 8, InvoiceStatus.CLOSED, "200.00");
+        saveInvoice(owner.creditCardId(), 8, InvoiceStatus.OPEN, "200.00");
         saveInvoice(owner.creditCardId(), 7, InvoiceStatus.PAID, "100.00");
 
         Budget savedBudget = new Budget();
@@ -150,7 +150,7 @@ class DashboardIntegrationTest {
                         "referenceDate", "year", "month", "periodStart", "periodEnd",
                         "monthlyBalance", "monthlyInflows", "totalOutflows",
                         "monthlyOutflows", "creditCardPurchaseOutflows",
-                        "competenceExpenses", "openInvoices", "budget", "consolidatedBalance"
+                        "competenceExpenses", "openInvoices", "monthlyOpenInvoices", "budget", "consolidatedBalance"
                 );
         assertThat(response.path("referenceDate").asText()).isEqualTo("2026-09-15");
         assertThat(response.path("year").asInt()).isEqualTo(2026);
@@ -164,7 +164,8 @@ class DashboardIntegrationTest {
         assertIndicator(response, "monthlyOutflows", "800.00", "CASH");
         assertIndicator(response, "creditCardPurchaseOutflows", "700.00", "COMPETENCE");
         assertIndicator(response, "competenceExpenses", "300.00", "COMPETENCE");
-        assertIndicator(response, "openInvoices", "700.00", "COMPETENCE");
+        assertIndicator(response, "openInvoices", "900.00", "COMPETENCE");
+        assertIndicator(response, "monthlyOpenInvoices", "700.00", "COMPETENCE");
         assertIndicator(response, "consolidatedBalance", "5000.00", "CASH");
 
         JsonNode budget = response.path("budget");
@@ -196,6 +197,7 @@ class DashboardIntegrationTest {
         assertIndicator(response, "creditCardPurchaseOutflows", "0.00", "COMPETENCE");
         assertIndicator(response, "competenceExpenses", "0.00", "COMPETENCE");
         assertIndicator(response, "openInvoices", "0.00", "COMPETENCE");
+        assertIndicator(response, "monthlyOpenInvoices", "0.00", "COMPETENCE");
         assertIndicator(response, "consolidatedBalance", "0.00", "CASH");
 
         JsonNode budget = response.path("budget");

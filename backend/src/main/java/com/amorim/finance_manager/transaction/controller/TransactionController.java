@@ -3,6 +3,7 @@ package com.amorim.finance_manager.transaction.controller;
 import com.amorim.finance_manager.config.openapi.OpenApiConfig;
 import com.amorim.finance_manager.transaction.api.TransactionApiDocs;
 import com.amorim.finance_manager.transaction.dto.CreateTransactionRequest;
+import com.amorim.finance_manager.transaction.dto.TransactionInstallmentDetailsResponse;
 import com.amorim.finance_manager.transaction.dto.TransactionResponse;
 import com.amorim.finance_manager.transaction.dto.UpdateTransactionRequest;
 import com.amorim.finance_manager.transaction.service.TransactionService;
@@ -42,6 +43,14 @@ public class TransactionController implements TransactionApiDocs {
     @GetMapping("/{id}")
     public ResponseEntity<TransactionResponse> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(transactionService.findById(id));
+    }
+
+    @Override
+    @GetMapping("/{id}/installments")
+    public ResponseEntity<TransactionInstallmentDetailsResponse> findInstallmentDetails(
+            @PathVariable UUID id
+    ) {
+        return ResponseEntity.ok(transactionService.findInstallmentDetails(id));
     }
 
     @Override
